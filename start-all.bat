@@ -6,7 +6,19 @@ echo ==================================================================
 echo   Starting DFAR Integrated Ecosystem (MSDFAR + HEALTH)
 echo ==================================================================
 
-set "ROOT_DIR=%~dp0"
+set "SCRIPT_DIR=%~dp0"
+if exist "%SCRIPT_DIR%MSDFAR\dfar_ms" (
+    set "ROOT_DIR=%SCRIPT_DIR%"
+) else if exist "%SCRIPT_DIR%HEALTH-MSDFAR\Untitled\MSDFAR\dfar_ms" (
+    set "ROOT_DIR=%SCRIPT_DIR%HEALTH-MSDFAR\Untitled\"
+) else if exist "%SCRIPT_DIR%Untitled\MSDFAR\dfar_ms" (
+    set "ROOT_DIR=%SCRIPT_DIR%Untitled\"
+) else if exist "%USERPROFILE%\Desktop\HEALTH-MSDFAR\Untitled\MSDFAR\dfar_ms" (
+    set "ROOT_DIR=%USERPROFILE%\Desktop\HEALTH-MSDFAR\Untitled\"
+) else (
+    set "ROOT_DIR=%SCRIPT_DIR%"
+)
+
 cd /d "!ROOT_DIR!"
 
 :: 1. Check / Start MySQL
@@ -34,10 +46,10 @@ if exist "C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\PHP.PHP
 )
 
 echo Starting MSDFAR Backend on http://localhost:8080 ...
-start "MSDFAR-Backend" /min cmd /c "cd /d \"!ROOT_DIR!MSDFAR\dfar_ms\" && \"!PHP_BIN!\" -S 127.0.0.1:8080 -t backend/web backend/web/router.php"
+start "MSDFAR-Backend" /min cmd /c "cd /d \"!ROOT_DIR!MSDFAR\dfar_ms\" && \"!PHP_BIN!\" -S 0.0.0.0:8080 -t backend/web backend/web/router.php"
 
 echo Starting MSDFAR Frontend on http://localhost:8081 ...
-start "MSDFAR-Frontend" /min cmd /c "cd /d \"!ROOT_DIR!MSDFAR\dfar_ms\" && \"!PHP_BIN!\" -S 127.0.0.1:8081 -t frontend/web frontend/web/router.php"
+start "MSDFAR-Frontend" /min cmd /c "cd /d \"!ROOT_DIR!MSDFAR\dfar_ms\" && \"!PHP_BIN!\" -S 0.0.0.0:8081 -t frontend/web frontend/web/router.php"
 
 :: 4. Start HEALTH .NET API & Angular Client
 echo Starting HEALTH .NET Backend API...

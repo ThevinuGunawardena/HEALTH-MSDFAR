@@ -4,11 +4,33 @@
 # DFAR Integrated Ecosystem - One-Click Launcher (MSDFAR Main + HEALTH Subdomain)
 # ==============================================================================
 
-ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [ -d "$SCRIPT_DIR/MSDFAR/dfar_ms" ]; then
+    ROOT_DIR="$SCRIPT_DIR"
+elif [ -d "$SCRIPT_DIR/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms" ]; then
+    ROOT_DIR="$SCRIPT_DIR/HEALTH-MSDFAR/Untitled"
+elif [ -d "$SCRIPT_DIR/Untitled/MSDFAR/dfar_ms" ]; then
+    ROOT_DIR="$SCRIPT_DIR/Untitled"
+elif [ -d "$HOME/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms" ]; then
+    ROOT_DIR="$HOME/Desktop/HEALTH-MSDFAR/Untitled"
+elif [ -d "/Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms" ]; then
+    ROOT_DIR="/Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled"
+else
+    FOUND_PATH=$(find "$HOME/Desktop" "$HOME" -maxdepth 4 -name "dfar_ms" 2>/dev/null | head -n 1)
+    if [ -n "$FOUND_PATH" ]; then
+        ROOT_DIR="$(dirname "$(dirname "$FOUND_PATH")")"
+    else
+        echo "❌ Error: Could not locate MSDFAR project directory."
+        exit 1
+    fi
+fi
+
 cd "$ROOT_DIR"
 
 echo "=================================================================="
 echo "  🌟 Starting DFAR Integrated Ecosystem (MSDFAR + HEALTH SSO)"
+echo "  📁 Working Directory: $ROOT_DIR"
 echo "=================================================================="
 
 # 1. Clean up old processes on all ports
@@ -81,9 +103,11 @@ end tell
 EOF
 
 echo "⏳ Waiting for MSDFAR Backend to be ready..."
-for i in {1..30}; do
-    if curl -s -o /dev/null http://127.0.0.1:8080/site/login 2>/dev/null; then
-        echo "✅ MSDFAR Backend is responding!"
+SERVER_READY=0
+for i in {1..35}; do
+    if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8080/login" 2>/dev/null | grep -q "200\|302"; then
+        SERVER_READY=1
+        echo " ✅ MSDFAR Backend is responding!"
         break
     fi
     printf "."
