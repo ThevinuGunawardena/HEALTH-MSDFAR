@@ -102,12 +102,33 @@ tell application "Terminal"
 end tell
 EOF
 
-echo "⏳ Waiting for MSDFAR Backend to be ready..."
-SERVER_READY=0
-for i in {1..35}; do
+echo "⏳ Waiting for all services to finish initializing..."
+
+# Check MSDFAR
+echo "  [1/3] Checking MSDFAR..."
+for i in {1..20}; do
     if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:8080/login" 2>/dev/null | grep -q "200\|302"; then
-        SERVER_READY=1
-        echo " ✅ MSDFAR Backend is responding!"
+        echo "  ✅ MSDFAR Main Portal is ready."
+        break
+    fi
+    sleep 1
+done
+
+# Check HEALTH API
+echo "  [2/3] Checking HEALTH .NET API..."
+for i in {1..30}; do
+    if curl -k -s -o /dev/null -w "%{http_code}" "https://127.0.0.1:7239/swagger/index.html" 2>/dev/null | grep -q "200\|302\|404"; then
+        echo "  ✅ HEALTH .NET Backend API is ready."
+        break
+    fi
+    sleep 1
+done
+
+# Check HEALTH Angular
+echo "  [3/3] Compiling and loading HEALTH Angular UI..."
+for i in {1..45}; do
+    if curl -k -s -o /dev/null -w "%{http_code}" "https://127.0.0.1:57549/" 2>/dev/null | grep -q "200\|304"; then
+        echo "  ✅ HEALTH Angular Client is ready!"
         break
     fi
     printf "."
