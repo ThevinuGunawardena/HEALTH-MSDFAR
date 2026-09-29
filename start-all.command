@@ -19,6 +19,7 @@ lsof -ti:7239 | xargs kill -9 2>/dev/null
 lsof -ti:5064 | xargs kill -9 2>/dev/null
 lsof -ti:57549 | xargs kill -9 2>/dev/null
 pkill -f "MEA.Server" 2>/dev/null
+pkill -f "php -S" 2>/dev/null
 sleep 1
 echo "✅ Ports are clear."
 
@@ -51,17 +52,17 @@ for i in {1..20}; do
     sleep 1
 done
 
-# 3. Launch MSDFAR (Main Portal)
+# 3. Launch MSDFAR (Main Portal - listening on 0.0.0.0 to support both localhost and 127.0.0.1 in Safari)
 echo "🏛️  [3/4] Launching MSDFAR Main System..."
 osascript <<EOF
 tell application "Terminal"
-    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Backend (http://localhost:8080) ===' && php -S 127.0.0.1:8080 -t backend/web backend/web/router.php"
+    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Backend (http://localhost:8080) ===' && php -S 0.0.0.0:8080 -t backend/web backend/web/router.php"
 end tell
 EOF
 
 osascript <<EOF
 tell application "Terminal"
-    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Frontend (http://localhost:8081) ===' && php -S 127.0.0.1:8081 -t frontend/web frontend/web/router.php"
+    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Frontend (http://localhost:8081) ===' && php -S 0.0.0.0:8081 -t frontend/web frontend/web/router.php"
 end tell
 EOF
 
@@ -79,10 +80,10 @@ tell application "Terminal"
 end tell
 EOF
 
-echo "⏳ Waiting for services to initialize..."
-for i in {1..40}; do
-    if nc -z 127.0.0.1 57549 2>/dev/null && nc -z 127.0.0.1 8080 2>/dev/null; then
-        echo "✅ All services are active and listening!"
+echo "⏳ Waiting for MSDFAR Backend to be ready..."
+for i in {1..30}; do
+    if curl -s -o /dev/null http://127.0.0.1:8080/site/login 2>/dev/null; then
+        echo "✅ MSDFAR Backend is responding!"
         break
     fi
     printf "."
@@ -92,7 +93,7 @@ echo ""
 
 # Open FIRST and ONLY the MSDFAR login page in default browser
 sleep 1
-echo "🖥️  Opening MSDFAR Main Login page in browser..."
+echo "🖥️  Opening MSDFAR Main Login page in Safari/Browser..."
 open "http://localhost:8080/login"
 
 echo "=================================================================="
