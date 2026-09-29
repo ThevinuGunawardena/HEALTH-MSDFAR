@@ -12631,3 +12631,32 @@ Stack trace:
 #7 {main}
     in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\controllers\ErrorController.php:74
     in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\controllers\ErrorController.php:33
+2026-09-30 00:13:32 [127.0.0.1][1648][f7525554976c9fc7648cf4c4de02ee2d][error][yii\web\HttpException:404] yii\base\InvalidRouteException: Unable to resolve the request: officer/ftco-32x32.png in /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Controller.php:153
+Stack trace:
+#0 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Module.php(547): yii\base\Controller->runAction('ftco-32x32.png', Array)
+#1 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Application.php(105): yii\base\Module->runAction('officer/ftco-32...', Array)
+#2 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#3 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/web/index.php(24): yii\base\Application->run()
+#4 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/web/router.php(10): require_once('/Users/mesandas...')
+#5 {main}
+
+Next yii\web\NotFoundHttpException: Page not found. in /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Application.php:117
+Stack trace:
+#0 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#1 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/web/index.php(24): yii\base\Application->run()
+#2 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/web/router.php(10): require_once('/Users/mesandas...')
+#3 {main}
+2026-09-30 00:13:32 [127.0.0.1][1648][f7525554976c9fc7648cf4c4de02ee2d][error][secure-error] Error reference: ERR-20260930-001332-BCQK_U9B
+HTTP status: 404
+Route: officer/ftco-32x32.png
+Exception: yii\web\NotFoundHttpException
+Message: Page not found.
+File: /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Application.php
+Line: 117
+Stack trace:
+#0 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#1 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/web/index.php(24): yii\base\Application->run()
+#2 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/web/router.php(10): require_once('/Users/mesandas...')
+#3 {main}
+    in /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/controllers/ErrorController.php:74
+    in /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/controllers/ErrorController.php:33
