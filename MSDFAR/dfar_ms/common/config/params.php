@@ -23,4 +23,11 @@ return [
     'healthPortalUrl' => 'https://health.msdfar.com/#/auth/sso',
     'healthPortalLocalUrl' => 'https://localhost:57549/#/auth/sso',
     'healthSsoSecret' => 'GiveASecretKeyHAVINGAtLeast32Characters',
+
+    // Cloudflare Turnstile Human Verification
+    'turnstile' => [
+        'enabled' => true,
+        'siteKey' => '1x00000000000000000000AA',
+        'secretKey' => '1x0000000000000000000000000000000AA',
+    ],
 ];

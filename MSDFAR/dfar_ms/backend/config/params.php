@@ -66,10 +66,11 @@ return [
     ],
 
    
- 'turnstile' => [
-      'siteKey' => '1x00000000000000000000AA',
-    'secretKey' => '1x0000000000000000000000000000000AA',
-], 
+    'turnstile' => [
+        'enabled' => true,
+        'siteKey' => '1x00000000000000000000AA',
+        'secretKey' => '1x0000000000000000000000000000000AA',
+    ],
     
      'subscriptionId' => 293, // Your real subscription ID
 
