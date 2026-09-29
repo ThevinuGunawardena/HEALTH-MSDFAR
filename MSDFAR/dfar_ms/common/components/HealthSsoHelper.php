@@ -74,7 +74,9 @@ class HealthSsoHelper
             || in_array((string)Constant::DIRECTOR, $userTypes, true)
             || in_array((string)Constant::QUALITY_EXPORT_OFFICER, $userTypes, true)
             || in_array((string)Constant::MEA, $userTypes, true)
-            || strcasecmp((string)$user->nic, 'adminHEALTH') === 0;
+            || in_array((string)Constant::ADMIN, $userTypes, true)
+            || strcasecmp((string)$user->nic, 'adminHEALTH') === 0
+            || strcasecmp((string)$user->nic, 'adminDFAR') === 0;
 
         $role = $isCompany ? 'Company' : ($isAdmin ? 'Admin' : 'User');
 
@@ -144,7 +146,7 @@ class HealthSsoHelper
         $separator = (strpos($url, '?') !== false) ? '&' : '?';
         $url .= $separator . 'token=' . urlencode($token);
 
-        if (!empty($returnUrl)) {
+        if (!empty($returnUrl) && $returnUrl !== $portalUrl && stripos($returnUrl, 'auth/sso') === false && stripos($returnUrl, 'sso-to-health') === false) {
             $url .= '&returnUrl=' . urlencode($returnUrl);
         }
 

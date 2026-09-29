@@ -17,12 +17,18 @@ namespace MEA.Server.Controllers
     public class IdentityUserController : ControllerBase
     {
         private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IOptions<AppSettings> _appSettings;
         private readonly AppDbContext _dbContext;
 
-        public IdentityUserController(UserManager<AppUser> userManager, IOptions<AppSettings> appSettings, AppDbContext dbContext)
+        public IdentityUserController(
+            UserManager<AppUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            IOptions<AppSettings> appSettings,
+            AppDbContext dbContext)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _appSettings = appSettings;
             _dbContext = dbContext;
         }
@@ -166,6 +172,10 @@ namespace MEA.Server.Controllers
                         return BadRequest(createResult.Errors);
                     }
 
+                    if (!await _roleManager.RoleExistsAsync(role))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(role));
+                    }
                     await _userManager.AddToRoleAsync(user, role);
                 }
                 else
@@ -178,6 +188,15 @@ namespace MEA.Server.Controllers
                 }
 
                 var userRoles = await _userManager.GetRolesAsync(user);
+                if (userRoles.Count == 0)
+                {
+                    if (!await _roleManager.RoleExistsAsync(role))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                    await _userManager.AddToRoleAsync(user, role);
+                    userRoles = await _userManager.GetRolesAsync(user);
+                }
                 var assignedRole = userRoles.FirstOrDefault() ?? role;
 
                 var companyName = principal.FindFirst("companyName")?.Value;

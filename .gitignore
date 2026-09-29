@@ -1,2 +1,59 @@
+# ==============================================================================
+# Git Ignore Configuration for HEALTH + MSDFAR Ecosystem
+# ==============================================================================
+
 # Database dumps (keep compressed .sql.zip tracked)
 MSDFAR/dfar_ms.sql
+*.sql
+!*.sql.zip
+
+# Node / Angular dependencies & build output
+node_modules/
+**/node_modules/
+.angular/
+**/.angular/
+dist/
+**/dist/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# .NET / C# Build & Cache Artifacts
+bin/
+**/bin/
+obj/
+**/obj/
+obj*
+**/obj*
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+**/.vs/
+Generated_Code/
+
+# Yii2 / PHP Runtime, Logs, & Asset Cache
+**/runtime/*
+!**/runtime/.gitignore
+**/assets/*
+!**/assets/.gitignore
+**/web/assets/*
+!**/web/assets/.gitignore
+hs_err_pid*.log
+
+# OS & Editor generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.idea/
+**/.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json

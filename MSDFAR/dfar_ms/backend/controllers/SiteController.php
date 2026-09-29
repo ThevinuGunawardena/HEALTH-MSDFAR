@@ -410,13 +410,20 @@ class SiteController extends Controller
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
             $user = Yii::$app->user->identity;
 
-            // Route HEALTH users directly to HEALTH certificate portal via SSO
-            if ($user && (
+            $savedReturnUrl = Yii::$app->user->getReturnUrl(null);
+            $isHealthReturn = !empty($savedReturnUrl) && (
+                stripos($savedReturnUrl, 'sso') !== false ||
+                stripos($savedReturnUrl, 'health') !== false ||
+                stripos($savedReturnUrl, '57549') !== false
+            );
+
+            // Route HEALTH users or users returning to HEALTH directly via SSO
+            if ($user && ($isHealthReturn ||
                 strcasecmp($user->nic, 'adminHEALTH') === 0 ||
                 stripos($user->nic, 'health') !== false ||
                 UserTypeUtil::hasType(Constant::MEA)
             )) {
-                return $this->actionSsoToHealth();
+                return $this->redirect(HealthSsoHelper::getHealthSsoUrl($user, $isHealthReturn ? $savedReturnUrl : null));
             }
 
             return $this->goBack();

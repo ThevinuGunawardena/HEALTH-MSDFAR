@@ -114,7 +114,7 @@ export class SsoComponent implements OnInit {
                     const returnUrl = params['returnUrl'];
                     
                     let targetUrl = returnUrl;
-                    if (!targetUrl) {
+                    if (!targetUrl || targetUrl.includes('/auth/sso') || targetUrl.includes('sso-to-health') || targetUrl.includes('#/auth/sso')) {
                         targetUrl = role === 'company' ? '/company-log-dashboard' : '/uikit/admin/dashboard';
                     }
 

@@ -1,0 +1,15 @@
+# Yii2 runtime & assets
+/runtime/*
+!/runtime/.gitignore
+/backend/runtime/*
+!/backend/runtime/.gitignore
+/frontend/runtime/*
+!/frontend/runtime/.gitignore
+/console/runtime/*
+!/console/runtime/.gitignore
+/backend/web/assets/*
+!/backend/web/assets/.gitignore
+/frontend/web/assets/*
+!/frontend/web/assets/.gitignore
+hs_err_pid*.log
+.DS_Store

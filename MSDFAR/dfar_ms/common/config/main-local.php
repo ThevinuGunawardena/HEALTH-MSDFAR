@@ -6,7 +6,7 @@ return [
             'class' => 'yii\db\Connection',
             'dsn' => 'mysql:host=localhost;dbname=dfar_ms',
             'username' => 'root',
-            'password' => '',
+            'password' => '12345',
             'charset' => 'utf8',
         ],
         'mailer' => [
