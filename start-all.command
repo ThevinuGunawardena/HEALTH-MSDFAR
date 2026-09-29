@@ -31,6 +31,7 @@ if nc -z 127.0.0.1 3306 2>/dev/null; then
 else
     echo "  ⚠️ Starting MySQL service..."
     mysql.server start 2>/dev/null || brew services start mysql 2>/dev/null || true
+    sleep 2
 fi
 
 # Docker SQL Server
@@ -89,15 +90,15 @@ for i in {1..40}; do
 done
 echo ""
 
+# Open FIRST and ONLY the MSDFAR login page in default browser
 sleep 1
-echo "🖥️  Opening portals in browser..."
-open "http://localhost:8080"
-open "https://localhost:57549"
+echo "🖥️  Opening MSDFAR Main Login page in browser..."
+open "http://localhost:8080/login"
 
 echo "=================================================================="
 echo "  🎉 Ecosystem is now fully running!"
-echo "  - MSDFAR Main Backend: http://localhost:8080"
-echo "  - MSDFAR Main Frontend: http://localhost:8081"
+echo "  - MSDFAR Main Login:     http://localhost:8080/login"
+echo "  - MSDFAR Main Frontend:  http://localhost:8081"
 echo "  - HEALTH Angular Portal: https://localhost:57549"
 echo "  - HEALTH .NET API:       https://localhost:7239"
 echo "  - HEALTH Swagger Docs:   https://localhost:7239/swagger"
