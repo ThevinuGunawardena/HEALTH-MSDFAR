@@ -1,10 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using MEA.Server.Data;
 using MEA.Server.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,11 +18,13 @@ namespace MEA.Server.Controllers
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly IOptions<AppSettings> _appSettings;
+        private readonly AppDbContext _dbContext;
 
-        public IdentityUserController(UserManager<AppUser> userManager, IOptions<AppSettings> appSettings)
+        public IdentityUserController(UserManager<AppUser> userManager, IOptions<AppSettings> appSettings, AppDbContext dbContext)
         {
             _userManager = userManager;
             _appSettings = appSettings;
+            _dbContext = dbContext;
         }
 
         [HttpPost("signup")]
@@ -176,6 +180,48 @@ namespace MEA.Server.Controllers
                 var userRoles = await _userManager.GetRolesAsync(user);
                 var assignedRole = userRoles.FirstOrDefault() ?? role;
 
+                var companyName = principal.FindFirst("companyName")?.Value;
+                var companyRegNo = principal.FindFirst("companyRegNo")?.Value;
+
+                // Auto-link or provision Company record in MEA database if applicable
+                if (assignedRole == "Company" && !string.IsNullOrWhiteSpace(companyName) && !user.CompanyId.HasValue)
+                {
+                    var existingCompany = await _dbContext.Companies.FirstOrDefaultAsync(c =>
+                        c.CompanyName == companyName ||
+                        (!string.IsNullOrEmpty(companyRegNo) && c.RegistrationNo == companyRegNo));
+
+                    if (existingCompany != null)
+                    {
+                        user.CompanyId = existingCompany.Id;
+                        if (string.IsNullOrEmpty(existingCompany.UserId))
+                        {
+                            existingCompany.UserId = user.Id;
+                        }
+                        await _userManager.UpdateAsync(user);
+                        await _dbContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        var defaultStatus = await _dbContext.CompanyStatuses.FirstOrDefaultAsync();
+                        var defaultCountry = await _dbContext.ListedCountries.FirstOrDefaultAsync();
+                        var newCompany = new Company
+                        {
+                            CompanyName = companyName,
+                            RegistrationNo = !string.IsNullOrEmpty(companyRegNo) ? companyRegNo : "REG-" + user.Id.Substring(0, Math.Min(8, user.Id.Length)),
+                            CompanyEmail = email,
+                            CompanyPhone = "000-0000000",
+                            CompanyAddress = "Sri Lanka",
+                            CompanyStatusId = defaultStatus?.Id ?? 1,
+                            ListedCountryId = defaultCountry?.Id ?? 1,
+                            UserId = user.Id
+                        };
+                        _dbContext.Companies.Add(newCompany);
+                        await _dbContext.SaveChangesAsync();
+                        user.CompanyId = newCompany.Id;
+                        await _userManager.UpdateAsync(user);
+                    }
+                }
+
                 // Issue application session JWT
                 var signInKey = new SymmetricSecurityKey(key);
                 var claims = new ClaimsIdentity(new Claim[]
@@ -184,7 +230,8 @@ namespace MEA.Server.Controllers
                     new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
                     new Claim(ClaimTypes.Name, user.FullName ?? string.Empty),
                     new Claim(ClaimTypes.Role, assignedRole),
-                    new Claim("role", assignedRole)
+                    new Claim("role", assignedRole),
+                    new Claim("CompanyId", user.CompanyId?.ToString() ?? string.Empty)
                 });
 
                 var tokenDescriptor = new SecurityTokenDescriptor
@@ -206,7 +253,9 @@ namespace MEA.Server.Controllers
                     email = user.Email ?? string.Empty,
                     userId = user.Id,
                     role = assignedRole,
-                    name = user.FullName ?? string.Empty
+                    name = user.FullName ?? string.Empty,
+                    companyId = user.CompanyId,
+                    companyName = companyName
                 });
             }
             catch (Exception ex)

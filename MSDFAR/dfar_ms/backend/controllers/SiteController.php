@@ -27,6 +27,7 @@ use backend\models\Skipper;
 use backend\models\SkipperRenew;
 use backend\models\User;
 use backend\services\CommonService;
+use common\components\HealthSsoHelper;
 use common\components\WebUser;
 use common\models\LoginForm;
 use Exception;
@@ -59,7 +60,7 @@ class SiteController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['login', 'error', 'language', 'signup', 'expire', 'license-validation', 'importdata', 'request-password-reset', 'reset-password'],
+                        'actions' => ['login', 'error', 'language', 'signup', 'expire', 'license-validation', 'importdata', 'request-password-reset', 'reset-password', 'sso-to-health'],
                         'allow' => true,
                     ],
                     [
@@ -400,31 +401,24 @@ class SiteController extends Controller
 
         $this->layout = 'blank';
 
+        $returnUrl = Yii::$app->request->get('returnUrl');
+        if (!empty($returnUrl)) {
+            Yii::$app->user->setReturnUrl($returnUrl);
+        }
+
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            // Redirect users to their appropriate dashboards based on user type
-        //    $user = Yii::$app->user->identity;
-        //    if ($user->type == Constant::HARBOUR_OFFICER) {
-        //         return $this->redirect(['e-log-temp/create']);
-        //     }
-//            if ($user) {
-//                switch ($user->type) {
-//                    case Constant::DM:
-//                        return $this->redirect(['analytics/dm-dashboard']);
-//                    case Constant::DG:
-//                        return $this->redirect(['analytics/dg-dashboard']);
-//                    // case Constant::FI:
-//                    //     return $this->redirect(['prototype/fi-index']);
-//                    // case Constant::AD:
-//                    //     return $this->redirect(['prototype/ad-index']);
-//                    // case Constant::FISHERMAN:
-//                    //     return $this->redirect(['prototype/fm-index']);
-//                    // case Constant::EXPORT_COMPANY:
-//                    //     return $this->redirect(['prototype/export-company-index']);
-//                    default:
-//                        return $this->goBack();
-//                }
-//            }
+            $user = Yii::$app->user->identity;
+
+            // Route HEALTH users directly to HEALTH certificate portal via SSO
+            if ($user && (
+                strcasecmp($user->nic, 'adminHEALTH') === 0 ||
+                stripos($user->nic, 'health') !== false ||
+                UserTypeUtil::hasType(Constant::MEA)
+            )) {
+                return $this->actionSsoToHealth();
+            }
+
             return $this->goBack();
         }
 
@@ -433,6 +427,25 @@ class SiteController extends Controller
         return $this->render('login', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * Single Sign-On (SSO) action to authenticate active MSDFAR user into the HEALTH certificate portal
+     *
+     * @param string|null $returnUrl Optional destination route within HEALTH portal
+     * @return Response
+     */
+    public function actionSsoToHealth(?string $returnUrl = null)
+    {
+        if (Yii::$app->user->isGuest) {
+            // Save requested action as returnUrl so after login, user proceeds straight to HEALTH
+            return $this->redirect(['site/login', 'returnUrl' => Yii::$app->request->url]);
+        }
+
+        $user = Yii::$app->user->identity;
+        $targetUrl = HealthSsoHelper::getHealthSsoUrl($user, $returnUrl);
+
+        return $this->redirect($targetUrl);
     }
 
     public function actionLicenseValidation(

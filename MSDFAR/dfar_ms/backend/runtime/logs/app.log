@@ -12603,3 +12603,31 @@ Stack trace:
 #13 C:\Users\Administrator\Downloads\DFAR\dfar_ms\backend\web\index.php(24): yii\base\Application->run()
 #14 C:\Users\Administrator\Downloads\DFAR\dfar_ms\backend\web\router.php(10): require_once('C:\\Users\\Admini...')
 #15 {main}
+2026-09-29 16:34:03 [127.0.0.1][9][r9uk33pibac1ab0qp5uv8e3okd][error][yii\web\HttpException:400] yii\web\BadRequestHttpException: Unable to verify your data submission. in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\web\Controller.php:336
+Stack trace:
+#0 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\components\Controller.php(50): yii\web\Controller->beforeAction(Object(yii\base\InlineAction))
+#1 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Controller.php(180): backend\components\Controller->beforeAction(Object(yii\base\InlineAction))
+#2 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Module.php(547): yii\base\Controller->runAction('login', Array)
+#3 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\web\Application.php(105): yii\base\Module->runAction('site/login', Array)
+#4 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#5 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\web\index.php(24): yii\base\Application->run()
+#6 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\web\router.php(10): require_once('C:\\Users\\Admini...')
+#7 {main}
+2026-09-29 16:34:03 [127.0.0.1][9][r9uk33pibac1ab0qp5uv8e3okd][error][secure-error] Error reference: ERR-20260929-163403-59BQW3QI
+HTTP status: 400
+Route: site/login
+Exception: yii\web\BadRequestHttpException
+Message: Unable to verify your data submission.
+File: C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\web\Controller.php
+Line: 336
+Stack trace:
+#0 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\components\Controller.php(50): yii\web\Controller->beforeAction(Object(yii\base\InlineAction))
+#1 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Controller.php(180): backend\components\Controller->beforeAction(Object(yii\base\InlineAction))
+#2 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Module.php(547): yii\base\Controller->runAction('login', Array)
+#3 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\web\Application.php(105): yii\base\Module->runAction('site/login', Array)
+#4 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#5 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\web\index.php(24): yii\base\Application->run()
+#6 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\web\router.php(10): require_once('C:\\Users\\Admini...')
+#7 {main}
+    in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\controllers\ErrorController.php:74
+    in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\controllers\ErrorController.php:33

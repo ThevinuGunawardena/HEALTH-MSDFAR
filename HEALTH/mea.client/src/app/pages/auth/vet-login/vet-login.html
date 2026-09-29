@@ -44,6 +44,17 @@
                             {{ loading ? 'Logging in...' : 'Login' }}
                         </button>
                     </form>
+
+                    <div class="relative flex py-5 items-center">
+                        <div class="grow border-t border-slate-200"></div>
+                        <span class="shrink mx-4 text-slate-400 text-xs uppercase tracking-wider font-semibold">Or</span>
+                        <div class="grow border-t border-slate-200"></div>
+                    </div>
+
+                    <a [href]="msdfarLoginUrl" class="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border-2 border-blue-600 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition-all shadow-sm text-sm no-underline text-center cursor-pointer">
+                        <i class="pi pi-shield text-blue-600"></i>
+                        <span>Login with MSDFAR Portal</span>
+                    </a>
                 </div>
             </div>
         </div>

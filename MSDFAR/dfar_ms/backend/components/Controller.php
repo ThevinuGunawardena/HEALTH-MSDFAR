@@ -18,6 +18,7 @@ class Controller extends \yii\web\Controller
         'site/request-password-reset',
         'site/reset-password',
         'site/expire',
+        'site/sso-to-health',
         'error/index',
         'api/v1/report-website',
         'api/v1/catch-production',

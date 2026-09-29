@@ -18,4 +18,9 @@ return [
     'blueTrackerPassword' => 'd3m0.user!SRILANKA#',
     'blueTrackerApiUrl' =>
         'https://bluetraker.net/api.srilanka/api/GetMessages',
+
+    // Health Certificate System (subdomain: health.msdfar.com) SSO Settings
+    'healthPortalUrl' => 'https://health.msdfar.com/#/auth/sso',
+    'healthPortalLocalUrl' => 'https://localhost:57549/#/auth/sso',
+    'healthSsoSecret' => 'GiveASecretKeyHAVINGAtLeast32Characters',
 ];

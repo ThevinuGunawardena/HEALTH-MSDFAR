@@ -469,6 +469,23 @@ if (
                         <!--                        </li>-->
 
 
+                        <?php if (!Yii::$app->user->isGuest && (
+                            UserTypeUtil::hasType(Constant::EXPORT_COMPANY) ||
+                            UserTypeUtil::hasType(Constant::EXPORTER) ||
+                            UserTypeUtil::hasType(Constant::DG) ||
+                            UserTypeUtil::hasType(Constant::AD) ||
+                            UserTypeUtil::hasType(Constant::ITD) ||
+                            UserTypeUtil::hasType(Constant::ADMINISTRATION) ||
+                            UserTypeUtil::hasType(Constant::QUALITY_EXPORT_OFFICER) ||
+                            UserTypeUtil::hasType(Constant::MEA)
+                        )) { ?>
+                            <li class="nav-item mr-2">
+                                <a class="btn btn-sm btn-outline-primary mt-2" href="<?= $webURL ?>/site/sso-to-health" target="_blank" title="<?= Yii::t('app', 'Access Health Certificate System (MEA)') ?>" style="border-radius: 20px; font-weight: 500;">
+                                    <i class="fa fa-stethoscope text-primary mr-1"></i><?= Yii::t('app', 'Health Portal') ?>
+                                </a>
+                            </li>
+                        <?php } ?>
+
                         <li class="nav-item dropdown nav-user order-lg-4 ">
                             <a class="nav-link nav-user-img" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false"><img src="<?= Constant::$FILE_VIEW_PATH
@@ -772,6 +789,27 @@ if (
                             <?php if (UserTypeUtil::hasType(Constant::QUALITY_EXPORT_OFFICER)) {
                                 require("quality-export-officer-menu.php");
                             } ?>
+
+                            <?php if (!Yii::$app->user->isGuest && (
+                                UserTypeUtil::hasType(Constant::EXPORT_COMPANY) ||
+                                UserTypeUtil::hasType(Constant::EXPORTER) ||
+                                UserTypeUtil::hasType(Constant::DG) ||
+                                UserTypeUtil::hasType(Constant::AD) ||
+                                UserTypeUtil::hasType(Constant::ITD) ||
+                                UserTypeUtil::hasType(Constant::ADMINISTRATION) ||
+                                UserTypeUtil::hasType(Constant::QUALITY_EXPORT_OFFICER) ||
+                                UserTypeUtil::hasType(Constant::MEA)
+                            )) { ?>
+                                <li class="nav-divider text-primary font-weight-bold pt-3 pb-1" style="font-size: 0.72rem; letter-spacing: 0.5px; border-top: 1px solid #e9ecef; margin-top: 12px;">
+                                    <i class="fa fa-heartbeat text-danger mr-1"></i><?= Yii::t('app', 'HEALTH SERVICES') ?>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?= $webURL ?>/site/sso-to-health" target="_blank" style="background: rgba(89, 105, 255, 0.08); border-radius: 6px; color: #3b50df; font-weight: 600; margin: 4px 8px;">
+                                        <i class="fa fa-fw fa-stethoscope text-primary"></i><?= Yii::t('app', 'Health Certificates') ?>
+                                        <span class="badge badge-primary float-right" style="font-size: 0.65rem; padding: 3px 6px;">SSO</span>
+                                    </a>
+                                </li>
+                            <?php } ?>
 
 
                             <!--                            --><?php //if (UserTypeUtil::hasType(Constant::DFI) {

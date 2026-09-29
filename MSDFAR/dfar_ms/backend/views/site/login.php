@@ -54,6 +54,16 @@ if (!empty(Yii::$app->params['turnstile']['enabled'])) {
             <div class="card-body">
             <?= Html::img($formlogoPath, ['class' => 'form-logo', 'id' => 'form-logo']) ?>
 
+                <div class="alert alert-light border mb-3 py-2 px-3 text-left" style="font-size: 0.8rem; border-left: 4px solid #5969ff !important; background: #f8faff; border-radius: 6px;">
+                    <div class="font-weight-bold text-dark mb-1">
+                        <i class="fa fa-shield text-primary mr-1"></i> Multi-Portal Access
+                    </div>
+                    <div class="text-muted" style="line-height: 1.4;">
+                        • <strong>adminDFAR</strong> &rarr; Logs into <strong>MSDFAR Main Portal</strong><br>
+                        • <strong>adminHEALTH</strong> &rarr; Redirects to <strong>Health Portal</strong>
+                    </div>
+                </div>
+
                 <p>Please fill out the following fields to login:</p>
 
                 <?php $form = ActiveForm::begin(['id' => 'login-form']); ?>

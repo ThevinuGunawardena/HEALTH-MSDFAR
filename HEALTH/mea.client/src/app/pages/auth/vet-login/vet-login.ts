@@ -26,6 +26,7 @@ export class VetLogin implements OnInit {
     submitted: boolean = false;
     showPassword: boolean = false;
     loading: boolean = false;
+    msdfarLoginUrl: string = 'https://msdfar.com/backend/web/site/login';
 
     togglePasswordVisibility() {
         this.showPassword = !this.showPassword;
@@ -64,7 +65,10 @@ export class VetLogin implements OnInit {
         });
     }
     ngOnInit(): void {
-        //if (this.service.isLoggedIn()) this.router.navigateByUrl('/auth/testdashboard');
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const msdfarBase = isLocal ? 'http://localhost:8080' : 'https://msdfar.com/backend/web';
+        const targetSso = window.location.origin + '/#/auth/sso';
+        this.msdfarLoginUrl = `${msdfarBase}/site/login?returnUrl=${encodeURIComponent(targetSso)}`;
     }
 
     onSubmit() {
