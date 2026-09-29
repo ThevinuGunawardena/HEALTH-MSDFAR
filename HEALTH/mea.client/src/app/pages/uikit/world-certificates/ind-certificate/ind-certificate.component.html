@@ -1,0 +1,878 @@
+<div class="ind-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">India (IND)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('certificateNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateNumber')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- 2 Radio Buttons Selection (print-hide) -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Mode:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="import_fish" inputId="vm_import_fish" (onClick)="onViewModeChange('import_fish')"></p-radiobutton>
+            <span>HEALTH CERTIFICATE FOR IMPORT OF FISH AND FISH PRODUCTS INTO INDIA</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="processed_seafood" inputId="vm_processed_seafood" (onClick)="onViewModeChange('processed_seafood')"></p-radiobutton>
+            <span>HEALTH CERTIFICATE - PROCESSED SEAFOOD</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'processed_seafood' ? 'HEALTH CERTIFICATE - PROCESSED SEAFOOD' : 'HEALTH CERTIFICATE FOR IMPORT OF FISH AND FISH PRODUCTS INTO INDIA' }}
+        </span>
+    </div>
+
+    <!-- ========================================================================= -->
+        <!-- OPTION 1: IMPORT OF FISH AND FISH PRODUCTS INTO INDIA (3 PAGES)           -->
+        <!-- ========================================================================= -->
+        <ng-container *ngIf="viewMode === 'import_fish'">
+            <!-- ═══ PAGE 1/3 ═══ -->
+            <div class="ind-page">
+                <div class="ind-content">
+                    <div class="ind-header">
+                        <div class="cert-header-top-row mb-1">
+                            <div class="cert-header-spacer"></div>
+                            <div class="ind-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="ind-logo" /></div>
+                            <div class="cert-header-qr-slot">
+                                <app-certificate-qr
+                                    [refNumber]="form.get('certificateNumber')?.value"
+                                    [certificateRequestId]="certificateRequestId"
+                                    [consignor]="form.get('consignorName')?.value"
+                                    [consignee]="form.get('consigneeName')?.value"
+                                    [destination]="form.get('countryOfDestination')?.value || 'India'"
+                                    [viewOnly]="viewOnly"
+                                    [size]="68"
+                                ></app-certificate-qr>
+                            </div>
+                        </div>
+                        <div class="ind-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                        <div class="ind-addr">P.O. Box 531, Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                        <div class="ind-addr">Telephone: +94-2449170, 2472186, 2472192</div>
+                        <div class="ind-addr">Fax: +94-11-2424086, 2449170</div>
+                        <div class="ind-addr">E-mail: dgdfar@gmail.com</div>
+                    </div>
+
+                    <div class="ind-outer-box">
+                        <div class="ind-title">HEALTH CERTIFICATE FOR IMPORT OF FISH AND FISH PRODUCTS INTO INDIA</div>
+                        <div class="ind-dispatch">Country of dispatch: <strong>SRI LANKA</strong></div>
+
+                        <table class="ind-table">
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <div class="ind-field-lbl">1. Consignor / Exporter</div>
+                                    <div class="ind-sub-row ind-mt4"><span class="ind-sub-lbl">Name:</span><input pInputText formControlName="consignorName" class="ind-input font-bold" /></div>
+                                    <div class="ind-sub-row ind-mt4"><span class="ind-sub-lbl">Address:</span><textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="ind-input"></textarea></div>
+                                    <div class="ind-sub-row ind-mt4"><span class="ind-sub-lbl">Tel: No.</span><input pInputText formControlName="consignorTel" class="ind-input" /></div>
+                                </td>
+                                <td class="ind-td ind-td-right ind-td-stack">
+                                    <div class="ind-stack-cell ind-bb">
+                                        <div class="ind-field-lbl">2. Certificate number:</div>
+                                        <input pInputText formControlName="certificateNumber" class="ind-input font-bold" />
+                                    </div>
+                                    <div class="ind-stack-cell">
+                                        <div class="ind-field-lbl">3. Competent Authority and its contact details:</div>
+                                        <textarea pInputTextarea formControlName="competentAuthorityDetails" rows="4" [autoResize]="true" class="ind-input"></textarea>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td" colspan="2">
+                                    <div class="ind-field-lbl">4. Consignee / Importer</div>
+                                    <div class="ind-sub-row ind-mt4"><span class="ind-sub-lbl">Name:</span><input pInputText formControlName="consigneeName" class="ind-input font-bold" /></div>
+                                    <div class="ind-sub-row ind-mt4"><span class="ind-sub-lbl">Address:</span><textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="ind-input"></textarea></div>
+                                    <div class="ind-sub-row ind-mt4"><span class="ind-sub-lbl">Tel no:</span><input pInputText formControlName="consigneeTel" class="ind-input" /></div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <span class="ind-field-lbl">5. Country of origin:</span>
+                                    <input pInputText formControlName="countryOfOrigin" class="ind-input ind-mt4" />
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <span class="ind-field-lbl">ISO code:</span>
+                                    <input pInputText formControlName="countryOfOriginIso" class="ind-input ind-mt4" />
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <span class="ind-field-lbl">6. Country of destination:</span>
+                                    <input pInputText formControlName="countryOfDestination" class="ind-input ind-mt4" />
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <span class="ind-field-lbl">ISO code:</span>
+                                    <input pInputText formControlName="countryOfDestinationIso" class="ind-input ind-mt4" />
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td" colspan="2">
+                                    <span class="ind-field-lbl">7. Place of loading:</span>
+                                    <input pInputText formControlName="placeOfLoading" class="ind-input ind-mt4" />
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <span class="ind-field-lbl">8. Means of transport:</span>
+                                    <input pInputText formControlName="meansOfTransport" class="ind-input ind-mt4" />
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <span class="ind-field-lbl">9. Declared point of entry:</span>
+                                    <input pInputText formControlName="declaredPointOfEntry" class="ind-input ind-mt4" />
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <span class="ind-field-lbl">10. Conditions for transport/storage:</span>
+                                    <input pInputText formControlName="conditionsForTransportStorage" class="ind-input ind-mt4" />
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <span class="ind-field-lbl">11. Total quantity:</span>
+                                    <input pInputText formControlName="totalQuantity" (keypress)="onlyDecimals($event)" inputmode="decimal" class="ind-input ind-mt4" />
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td" colspan="2">
+                                    <span class="ind-field-lbl">12. Invoice no. &amp; Date:</span>
+                                    <input pInputText formControlName="invoiceNoDate" class="ind-input ind-mt4" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="ind-footer">
+                    <span class="ind-footer-brand"></span>
+                    <span class="ind-footer-page">1/3</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 2/3 ═══ -->
+            <div class="ind-page">
+                <div class="ind-content">
+                    <div class="ind-outer-box">
+                        <div class="ind-certno-bar">
+                            <span class="ind-field-lbl">Certificate number:</span>
+                            <input pInputText formControlName="certificateNumber" class="ind-line-input font-bold w-48 ml-2" />
+                        </div>
+
+                        <div class="ind-section-hdr">13. Identification of food products as described below (multiple lines may be used for multiple products):</div>
+
+                        <table class="ind-table">
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <span class="ind-field-lbl">a) Description of the food including HS code and Species (scientific name):</span>
+                                    <textarea pInputTextarea formControlName="foodDescription" rows="2" [autoResize]="true" class="ind-input ind-mt4"></textarea>
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <span class="ind-field-lbl">Intended purpose:</span>
+                                    <input pInputText formControlName="intendedPurpose" class="ind-input ind-mt4 font-bold" />
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <span class="ind-field-lbl">b) Producer/manufacturer (name and address):</span>
+                                    <textarea pInputTextarea formControlName="producerNameAddress" rows="3" [autoResize]="true" class="ind-input ind-mt4 font-bold"></textarea>
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <span class="ind-field-lbl">Approval number/s of establishment/s (Number/Date/Validity):</span>
+                                    <textarea pInputTextarea formControlName="approvalNumberDetails" rows="3" [autoResize]="true" class="ind-input ind-mt4 font-bold"></textarea>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td" colspan="2" style="padding: 0;">
+                                    <table class="ind-prod-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 25%;">c) Name of the product</th>
+                                                <th style="width: 15%;">Lot no./Batch no.</th>
+                                                <th style="width: 30%;">Type of packaging</th>
+                                                <th style="width: 15%;">Number of packages</th>
+                                                <th style="width: 15%;">Net weight:</th>
+                                                <th *ngIf="!viewOnly" class="print-hide" style="width: 30px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody formArrayName="products">
+                                            <tr *ngFor="let product of products.controls; let i = index" [formGroupName]="i">
+                                                <td><textarea pInputTextarea formControlName="nameOfProduct" rows="2" [autoResize]="true" class="ind-tinput font-bold"></textarea></td>
+                                                <td><input pInputText formControlName="lotNo" class="ind-tinput" /></td>
+                                                <td><textarea pInputTextarea formControlName="typeOfPackaging" rows="2" [autoResize]="true" class="ind-tinput"></textarea></td>
+                                                <td><input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" type="number" class="ind-tinput text-right" /></td>
+                                                <td><input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" type="number" class="ind-tinput text-right" /></td>
+                                                <td *ngIf="!viewOnly" class="print-hide text-center">
+                                                    <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeProduct(i)" *ngIf="products.length > 1"></button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="print-hide p-2 flex justify-end" *ngIf="!viewOnly">
+                                        <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProduct()"></p-button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="ind-td" colspan="2">
+                                    <div class="ind-dates-row">
+                                        <div class="ind-date-field">
+                                            <span class="ind-field-lbl">d) Date of manufacture or Packaging:</span>
+                                            <p-datepicker formControlName="dateOfManufacture" [showIcon]="true" appendTo="body"></p-datepicker>
+                                        </div>
+                                        <div class="ind-date-field">
+                                            <span class="ind-field-lbl">Best before:</span>
+                                            <p-datepicker formControlName="bestBefore" [showIcon]="true" appendTo="body"></p-datepicker>
+                                        </div>
+                                        <div class="ind-date-field">
+                                            <span class="ind-field-lbl">Date of Expiry:</span>
+                                            <p-datepicker formControlName="dateOfExpiry" [showIcon]="true" appendTo="body"></p-datepicker>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="ind-footer">
+                    <span class="ind-footer-brand"></span>
+                    <span class="ind-footer-page">2/3</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 3/3 ═══ -->
+            <div class="ind-page last-page">
+                <div class="ind-content">
+                    <div class="ind-outer-box">
+                        <div class="ind-certno-bar">
+                            <span class="ind-field-lbl">Certificate number:</span>
+                            <input pInputText formControlName="certificateNumber" class="ind-line-input font-bold w-48 ml-2" />
+                        </div>
+
+                        <div class="ind-section-hdr">15. Attestations**</div>
+
+                        <div class="ind-attest-block">
+                            <p class="ind-attest-intro">The undersigned has certified that the product(s) described above satisfies the following Sanitary/food safety related requirement:</p>
+                            <p class="ind-attest-p">
+                                <span class="ind-alpha">a)</span> were manufactured at (an) establishment(s) that has/have been approved by, or otherwise determined to be in good regulatory standing with the Competent Authority in the exporting country
+                            </p>
+                            <p class="ind-attest-p"><span class="ind-alpha">b)</span> complies with the standards of fish and fish products as specified under the Food Safety and Standards (Food Product Standards and Food Additives) Regulations, 2011</p>
+                            <p class="ind-attest-p">
+                                <span class="ind-alpha">c)</span> prepared, packed, held and transported prior to export under good hygienic conditions and an effective food safety control system, implemented within the context of HACCP systems where appropriate and in accordance with the requirements specified in Schedule 4, as applicable, of the Food Safety and Standards (Licensing and Registration of Food Businesses) Regulations, 2011(India) and such other guidelines as specified from time to time under the provisions of the Food Safety and Standard Act, 2006.
+                            </p>
+                            <p class="ind-attest-p"><span class="ind-alpha">d)</span> conforms to the microbiological requirements specified an Appendix ‘B’ of Food Safety and Standards (Food Product Standards and Food Additives) Regulations, 2011.</p>
+                            <p class="ind-attest-p">
+                                <span class="ind-alpha">e)</span> does not contain drug/antibiotics/mycotoxins/pesticides/heavy metal residues etc., above the limits prescribed by the Food Safety and Standards (Contaminants, toxins and Residues) Regulations, 2011.
+                            </p>
+                            <p class="ind-attest-p">
+                                <span class="ind-alpha">f)</span> contains only those food additives as specified in Appendix ‘A’ of Food Safety and Standards (Food Product Standards and Food Additives) Regulations, 2011 and within the limits specified.
+                            </p>
+                            <p class="ind-attest-p"><span class="ind-alpha">g)</span> Regular inspection/monitoring of checks in accordance with FSS Act, 2006, rules and Regulations made thereunder and as per the criteria specified by FSSAI.</p>
+                            <p class="ind-attest-p"><span class="ind-alpha">h)</span> The product has undergone processing conditions eliminating the presence of the OIE listed pathogens as per the OIE Aquatic Animal Health Code.</p>
+                        </div>
+
+                        <div class="ind-section-hdr ind-mt8">16. Authorised official:</div>
+
+                        <table class="ind-table">
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <div class="ind-field-lbl">Name:</div>
+                                    <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2">
+                                        <p-select
+                                            [options]="userOptions"
+                                            formControlName="signatoryUserId"
+                                            placeholder="Select Authorized Officer"
+                                            (onChange)="onSignatoryChange($event.value)"
+                                            styleClass="w-full text-xs"
+                                            appendTo="body"
+                                        ></p-select>
+                                    </div>
+                                    <div class="sig-name font-bold">{{ form.get('signatoryName')?.value }}</div>
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <div class="ind-field-lbl">Designation:</div>
+                                    <textarea pInputTextarea formControlName="qualification" rows="3" [autoResize]="true" class="ind-input font-bold"></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ind-td ind-td-left">
+                                    <div class="ind-field-lbl">Date:</div>
+                                    <p-datepicker formControlName="authorizedOfficialDate" [showIcon]="true" appendTo="body"></p-datepicker>
+                                </td>
+                                <td class="ind-td ind-td-right">
+                                    <div class="ind-field-lbl">Signature:</div>
+                                    <div
+                                        class="ind-sig-placeholder"
+                                        [class.ind-drop-active]="isDraggingSignature"
+                                        [class.has-content]="!!form.get('authorizedOfficialSignature')?.value"
+                                        (click)="!viewOnly && sigInputForm1.click()"
+                                        (dragover)="onSignatureDragOver($event)"
+                                        (dragleave)="onSignatureDragLeave($event)"
+                                        (drop)="onSignatureDrop($event)"
+                                        (paste)="onSignaturePaste($event)"
+                                        tabindex="0"
+                                    >
+                                        <input type="file" #sigInputForm1 (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                        <!-- Empty State -->
+                                        <div *ngIf="!form.get('authorizedOfficialSignature')?.value" class="ind-empty-upload flex flex-col items-center justify-center p-1 text-center">
+                                            <i class="pi pi-pencil text-slate-400 text-xs mb-0.5 print-hide"></i>
+                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                        </div>
+
+                                        <!-- Uploaded Image -->
+                                        <div *ngIf="form.get('authorizedOfficialSignature')?.value && !isPdf(form.get('authorizedOfficialSignature')?.value)" class="ind-preview-container">
+                                            <img [src]="form.get('authorizedOfficialSignature')?.value" alt="Signature" class="ind-sig-img" />
+                                            <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); sigInputForm1.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="ind-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Uploaded PDF -->
+                                        <div *ngIf="form.get('authorizedOfficialSignature')?.value && isPdf(form.get('authorizedOfficialSignature')?.value)" class="ind-preview-container">
+                                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="ind-pdf-preview"></object>
+                                            <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); sigInputForm1.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="ind-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ind-td" colspan="2">
+                                    <div class="ind-field-lbl">Official stamp:</div>
+                                    <div
+                                        class="ind-stamp-placeholder"
+                                        [class.ind-drop-active]="isDraggingStamp"
+                                        [class.has-content]="!!form.get('officialStamp')?.value"
+                                        (click)="!viewOnly && stampInputForm1.click()"
+                                        (dragover)="onStampDragOver($event)"
+                                        (dragleave)="onStampDragLeave($event)"
+                                        (drop)="onStampDrop($event)"
+                                        (paste)="onStampPaste($event)"
+                                        tabindex="0"
+                                    >
+                                        <input type="file" #stampInputForm1 (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                        <!-- Empty State -->
+                                        <div *ngIf="!form.get('officialStamp')?.value" class="ind-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
+                                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                                        </div>
+
+                                        <!-- Uploaded Image -->
+                                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ind-preview-container">
+                                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ind-stamp-img" />
+                                            <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); stampInputForm1.click()" title="Change Stamp">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="ind-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Uploaded PDF -->
+                                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ind-preview-container">
+                                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ind-pdf-preview"></object>
+                                            <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); stampInputForm1.click()" title="Change Stamp">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="ind-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="ind-validity-note">This certificate is valid for 90 days from the date of issue.</p>
+                    </div>
+                </div>
+                <div class="ind-footer">
+                    <span class="ind-footer-brand"></span>
+                    <span class="ind-footer-page">3/3</span>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- ========================================================================= -->
+        <!-- OPTION 2: HEALTH CERTIFICATE - PROCESSED SEAFOOD (2 PAGES)                -->
+        <!-- ========================================================================= -->
+        <ng-container *ngIf="viewMode === 'processed_seafood'">
+            <!-- ═══ PAGE 1/2 ═══ -->
+            <div class="ind-page">
+                <div class="ind-content">
+                    <div class="ind-letterhead-top">
+                        <div class="cert-header-top-row mb-1">
+                            <div class="cert-header-spacer"></div>
+                            <div class="flex justify-center">
+                                <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" style="height: 65px;" />
+                            </div>
+                            <div class="cert-header-qr-slot">
+                                <app-certificate-qr
+                                    [refNumber]="form.get('myRef')?.value"
+                                    [certificateRequestId]="certificateRequestId"
+                                    [consignor]="form.get('consignorAddress')?.value"
+                                    [consignee]="form.get('consigneeAddress')?.value"
+                                    [item]="form.get('itemDescription')?.value"
+                                    [date]="form.get('date')?.value"
+                                    [officer]="form.get('signatoryName')?.value"
+                                    [destination]="'India'"
+                                    [viewOnly]="viewOnly"
+                                    [size]="68"
+                                ></app-certificate-qr>
+                            </div>
+                        </div>
+                        <div class="text-center font-bold text-sm leading-tight">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                        <div class="text-center font-bold text-xs leading-tight">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                        <div class="text-center font-bold text-sm tracking-wide leading-tight">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                        <div class="text-center text-xs mt-1">web site : http://www.fisheriesdept.gov.lk &nbsp;&nbsp;&nbsp;&nbsp; E - mail : info&#64;fisheriesdept.gov.lk</div>
+                        <div class="text-center text-xs leading-tight text-slate-700">புதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை &nbsp;&nbsp; නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව &nbsp;&nbsp; New Secretariat, Maligawaththa, Colombo 10</div>
+                    </div>
+
+                    <div class="ind-ref-bar flex justify-between items-center mt-2 mb-2 pb-1 border-b border-black text-xs">
+                        <div>
+                            <span>මගේ අංකය / எனது இல / My Ref &#125; </span>
+                            <input pInputText formControlName="myRef" class="ind-ref-input font-bold" />
+                        </div>
+                        <div>
+                            <span>ඔබේ අංකය / உமது இல / Your Ref &#125; </span>
+                            <input pInputText formControlName="yourRef" class="ind-ref-input" />
+                        </div>
+                        <div>
+                            <span>දිනය / திகதி / Date &#125; </span>
+                            <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" styleClass="p-inputtext-sm"></p-datepicker>
+                        </div>
+                    </div>
+
+                    <div class="ind-proc-title-block text-center mt-2 mb-3">
+                        <div class="font-bold underline text-sm tracking-wider">HEALTH CERTIFICATE</div>
+                        <p class="text-xs text-justify mt-2 leading-relaxed">
+                            The undersigned official inspector hereby certifies that the following consignment of fishery product has been processed in an approved fish processing establishment under the relevant conditions laid down in Fish Products (Export) Regulations, 1998 required for the production of fishery products for human consumption and intended for export market.
+                        </p>
+                        <div class="font-bold underline text-xs mt-2">Fish and Fishery Products</div>
+                    </div>
+
+                    <div class="ind-proc-fields-block text-xs leading-relaxed">
+                        <div class="mb-2">
+                            <span class="font-bold">Item: </span>
+                            <input pInputText formControlName="itemDescription" class="ind-line-input font-bold" />
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-bold">No. of packages: </span>
+                            <input pInputText formControlName="numberOfPackagesStr" class="ind-line-input" />
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-bold">Net weight: </span>
+                            <input pInputText formControlName="netWeightStr" class="ind-line-input" />
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-bold">Name and address of the processing plant: </span>
+                            <textarea pInputTextarea formControlName="processingPlantNameAddress" rows="2" [autoResize]="true" class="ind-line-input font-bold"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-bold">Competent Authority Reg. No.: </span>
+                            <input pInputText formControlName="processingPlantRegNo" class="ind-line-input font-bold" />
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-bold">Name and address of consignor: </span>
+                            <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="ind-line-input font-bold"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-bold">Name and address of consignee: </span>
+                            <textarea pInputTextarea formControlName="consigneeAddress" rows="3" [autoResize]="true" class="ind-line-input font-bold"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="font-bold mb-1">The above fishery products are to be dispatched</div>
+                            <div>from: <input pInputText formControlName="dispatchFrom" class="ind-line-input font-bold" /></div>
+                            <div>to: <input pInputText formControlName="dispatchTo" class="ind-line-input font-bold" /></div>
+                            <div class="font-bold mt-1"><input pInputText formControlName="modeOfTransport" class="ind-line-input font-bold" /></div>
+                        </div>
+                    </div>
+
+                    <div class="ind-proc-sig-row flex justify-between items-start mt-4 pt-3 text-xs">
+                        <div style="width: 45%;">
+                            <div class="font-bold mb-1">Official stamp:</div>
+                            <div
+                                class="ind-stamp-placeholder"
+                                [class.ind-drop-active]="isDraggingStamp"
+                                [class.has-content]="!!form.get('officialStamp')?.value"
+                                (click)="!viewOnly && stampInputForm2.click()"
+                                (dragover)="onStampDragOver($event)"
+                                (dragleave)="onStampDragLeave($event)"
+                                (drop)="onStampDrop($event)"
+                                (paste)="onStampPaste($event)"
+                                tabindex="0"
+                            >
+                                <input type="file" #stampInputForm2 (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                <!-- Empty State -->
+                                <div *ngIf="!form.get('officialStamp')?.value" class="ind-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                    <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
+                                    <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                                </div>
+
+                                <!-- Uploaded Image -->
+                                <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ind-preview-container">
+                                    <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ind-stamp-img" />
+                                    <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); stampInputForm2.click()" title="Change Stamp">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="ind-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Uploaded PDF -->
+                                <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ind-preview-container">
+                                    <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ind-pdf-preview"></object>
+                                    <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); stampInputForm2.click()" title="Change Stamp">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="ind-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="width: 50%;">
+                            <div class="font-bold mb-1">Signature of Official Inspector:</div>
+                            <div
+                                class="ind-sig-placeholder mb-2"
+                                [class.ind-drop-active]="isDraggingSignature"
+                                [class.has-content]="!!form.get('authorizedOfficialSignature')?.value"
+                                (click)="!viewOnly && sigInputForm2.click()"
+                                (dragover)="onSignatureDragOver($event)"
+                                (dragleave)="onSignatureDragLeave($event)"
+                                (drop)="onSignatureDrop($event)"
+                                (paste)="onSignaturePaste($event)"
+                                tabindex="0"
+                            >
+                                <input type="file" #sigInputForm2 (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                <!-- Empty State -->
+                                <div *ngIf="!form.get('authorizedOfficialSignature')?.value" class="ind-empty-upload flex flex-col items-center justify-center p-1 text-center">
+                                    <i class="pi pi-pencil text-slate-400 text-xs mb-0.5 print-hide"></i>
+                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                    <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                </div>
+
+                                <!-- Uploaded Image -->
+                                <div *ngIf="form.get('authorizedOfficialSignature')?.value && !isPdf(form.get('authorizedOfficialSignature')?.value)" class="ind-preview-container">
+                                    <img [src]="form.get('authorizedOfficialSignature')?.value" alt="Signature" class="ind-sig-img" />
+                                    <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); sigInputForm2.click()" title="Change Signature">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="ind-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Uploaded PDF -->
+                                <div *ngIf="form.get('authorizedOfficialSignature')?.value && isPdf(form.get('authorizedOfficialSignature')?.value)" class="ind-preview-container">
+                                    <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="ind-pdf-preview"></object>
+                                    <div class="ind-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="ind-mini-btn" (click)="$event.stopPropagation(); sigInputForm2.click()" title="Change Signature">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="ind-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2">
+                                <p-select
+                                    [options]="userOptions"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select Authorized Officer"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                    styleClass="w-full text-xs"
+                                    appendTo="body"
+                                ></p-select>
+                            </div>
+                            <div><span class="font-bold">Name: </span>{{ form.get('signatoryName')?.value }}</div>
+                            <div><span class="font-bold">Designation: </span><span class="text-xs whitespace-pre-line">{{ form.get('qualification')?.value }}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ind-letterhead-footer border-t border-black pt-1 text-xs">
+                    <div class="flex justify-between items-center text-slate-700">
+                        <div>තැ.පෙ. / த.பெ.எண / P.O.Box &#125; 531</div>
+                        <div>පොදු දුරකථනය / பொது தொலைபேசி / Gen. Telephone &#125; +94(0)112446183 (2 lines)</div>
+                        <div>ෆැක්ස් / தொலைநகல் / Fax &#125; +94(0) 112449170</div>
+                    </div>
+                    <div class="text-center text-slate-500 text-xxs mt-1">This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20</div>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 2/2 ═══ -->
+            <div class="ind-page">
+                <div class="ind-content">
+                    <div class="text-xs leading-relaxed mb-2">
+                        <div class="font-bold text-justify flex items-center gap-2">
+                            <span>This is to certify that the consignment bearing "</span>
+                            <input pInputText formControlName="previousCertRef" class="ind-line-input font-bold inline flex-1" placeholder="Health Certificate No. TC 4213" />
+                            <span>" satisfies the following requirements:</span>
+                        </div>
+                        <ul class="list-disc pl-4 mt-1 space-y-1 text-justify">
+                            <li>The product is processed in compliance with HACCP norms in approved seafood processing establishments,</li>
+                            <li>The product is free from OIE listed pathogens for aquatic animals’ viz, disease of fish, the fish is free from dehydration, discoloration and spots, The temperature is less than 4ºC, The materials does not show any sign of deterioration and is free from off odour and foreign odour, The texture of the meat is normal and consistent and have characteristics flavor of fresh fish, and the material is free from extraneous matter.</li>
+                            <li>It has met the microbiological parameters as below:</li>
+                        </ul>
+                    </div>
+
+                    <!-- Microbiological Parameters Table -->
+                    <table class="ind-micro-table mb-2">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Limit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Total bacterial count (TPC) at 37ºC</td>
+                                <td>&lt;5 × 10<sup>5</sup> cfu/g</td>
+                            </tr>
+                            <tr>
+                                <td>Total coliform</td>
+                                <td>&lt;100 MPN/g</td>
+                            </tr>
+                            <tr>
+                                <td>Escherichia coli</td>
+                                <td>&lt;500MPN/g</td>
+                            </tr>
+                            <tr>
+                                <td>Salmonella spp</td>
+                                <td>Absence in 25g</td>
+                            </tr>
+                            <tr>
+                                <td>Staphylococcus aureus</td>
+                                <td>&lt;100 cfu/g</td>
+                            </tr>
+                            <tr>
+                                <td>Vibrio parahaemoliticus</td>
+                                <td>Absence in 25g</td>
+                            </tr>
+                            <tr>
+                                <td>Vibrio cholera</td>
+                                <td>Absence in 25g</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="text-xs mb-1">
+                        <div class="font-bold underline">Standard Condition for import of Processed Seafood into India</div>
+                        <div class="flex items-center gap-2 mt-1"><span class="font-bold whitespace-nowrap">Product Description: </span><input pInputText formControlName="productDescription" class="ind-line-input font-bold flex-1" /></div>
+                        <div class="flex items-center gap-2 mt-1"><span class="font-bold whitespace-nowrap">Species (Common name and scientific name): </span><input pInputText formControlName="speciesName" class="ind-line-input italic flex-1" /></div>
+                    </div>
+
+                    <!-- 16-Grid Processed Seafood Table -->
+                    <table class="ind-grid-16-table mb-2">
+                        <tr>
+                            <td style="width: 50%;">
+                                <div class="font-bold">1. Consignor (name and address in full)</div>
+                                <textarea pInputTextarea formControlName="consignorAddress" rows="3" [autoResize]="true" class="ind-tinput font-bold mt-1"></textarea>
+                            </td>
+                            <td style="width: 50%;">
+                                <div class="font-bold">2. Health certificate</div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span>No : </span>
+                                    <input pInputText formControlName="certificateNumber" class="ind-line-input font-bold flex-1" />
+                                </div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span>Date : </span>
+                                    <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" styleClass="p-inputtext-sm"></p-datepicker>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="font-bold">3. Consignee (name and address in full)</div>
+                                <textarea pInputTextarea formControlName="consigneeAddress" rows="3" [autoResize]="true" class="ind-tinput font-bold mt-1"></textarea>
+                            </td>
+                            <td>
+                                <div class="font-bold">4. Country of origin</div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <input pInputText formControlName="countryOfOrigin" class="ind-line-input font-bold flex-1" placeholder="SRI LANKA" />
+                                    <input pInputText formControlName="countryOfOriginIso" class="ind-line-input font-bold w-16 text-center" placeholder="LK" />
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="font-bold">5. Competent Authority</div>
+                                <div class="font-bold text-xs">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                                <div class="text-xs mt-1">5.1 Ministry : <input pInputText formControlName="countryOfDispatch" class="ind-line-input inline w-48" placeholder="DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES" /></div>
+                                <div class="text-xs mt-1">5.2 Department : <span class="font-bold">QUALITY CONTROL</span></div>
+                            </td>
+                            <td>
+                                <div class="font-bold">6. Place of loading</div>
+                                <input pInputText formControlName="placeOfLoading" class="ind-line-input font-bold w-full mt-1" placeholder="COLOMBO – SRI LANKA" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="font-bold">7. Quantity (in word and figures)</div>
+                                <div class="flex items-center gap-1 mt-1">
+                                    <span class="whitespace-nowrap">7.1 Number of packs: </span>
+                                    <input pInputText formControlName="numberOfPackagesStr" class="ind-line-input font-bold flex-1" />
+                                </div>
+                                <div class="flex items-center gap-1 mt-1">
+                                    <span class="whitespace-nowrap">7.2 Net weight : </span>
+                                    <input pInputText formControlName="netWeightStr" class="ind-line-input font-bold flex-1" />
+                                </div>
+                            </td>
+                            <td>
+                                <div class="font-bold">8. Consignment identification details</div>
+                                <div class="text-xs mt-1">(Batch number of products):</div>
+                                <input pInputText formControlName="consignmentIdentificationDetails" class="ind-line-input font-bold w-full mt-1" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="font-bold">9. Address and manufacturing plant :</div>
+                                <textarea pInputTextarea formControlName="processingPlantNameAddress" rows="3" [autoResize]="true" class="ind-tinput font-bold mt-1"></textarea>
+                            </td>
+                            <td>
+                                <div class="font-bold">10. Port of Entry :</div>
+                                <input pInputText formControlName="dispatchTo" class="ind-line-input font-bold w-full mt-1" placeholder="NHAVA SHEVA - INDIA" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="font-bold">11. Registration</div>
+                                <input pInputText formControlName="processingPlantRegNo" class="ind-line-input font-bold w-full mt-1" placeholder="DFAR/FPE/98/31" />
+                            </td>
+                            <td>
+                                <div class="font-bold">12. Mode of Transport:</div>
+                                <input pInputText formControlName="modeOfTransport" class="ind-line-input font-bold w-full mt-1" placeholder="BY SEA FREIGHT" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="font-bold">13. Name and address of the Registration / Accreditation authority :</div>
+                                <div class="font-bold text-xs mt-1">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                            </td>
+                            <td>
+                                <div class="font-bold">14. Intended use :</div>
+                                <input pInputText formControlName="intendedPurpose" class="ind-line-input font-bold w-full mt-1" placeholder="HUMAN CONSUMPTION" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="font-bold">15. H.S Code</div>
+                                <input pInputText formControlName="hsCode" class="ind-line-input font-bold w-full mt-1" placeholder="0304 49 40" />
+                            </td>
+                            <td>
+                                <div class="font-bold">16. Place:</div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span>Place: </span>
+                                    <input pInputText formControlName="attestationPlace" class="ind-line-input font-bold flex-1" placeholder="COLOMBO – SRI LANKA" />
+                                </div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span>Date : </span>
+                                    <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" styleClass="p-inputtext-sm"></p-datepicker>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="mt-3 mb-2 text-xs">
+                        <div>……………………………………………………</div>
+                        <div class="font-bold">Quality Control Unit</div>
+                        <div class="font-bold">Department of Fisheries &amp; Aquatic Resources</div>
+                    </div>
+                </div>
+
+                <div class="ind-letterhead-footer border-t border-black pt-1 text-xs">
+                    <div class="flex justify-between items-center text-slate-700">
+                        <div>තැ.පෙ. / த.பெ.எண / P.O.Box &#125; 531</div>
+                        <div>පොදු දුරකථනය / பொது தொலைபேසි / Gen. Telephone &#125; +94(0)112446183 (2 lines)</div>
+                        <div>ෆැක්ස් / தொலைநகல் / Fax &#125; +94(0) 112449170</div>
+                    </div>
+                    <div class="text-center text-slate-500 text-xxs mt-1">This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20</div>
+                </div>
+            </div>
+        </ng-container>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

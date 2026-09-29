@@ -1,0 +1,114 @@
+<div class="">
+    <p-card header="Certificate Reports">
+        <div class="flex flex-column gap-4">
+            <!-- Report Type Selection -->
+            <div class="flex flex-wrap gap-4">
+                <div class="flex align-items-center">
+                    <p-radiobutton name="reportType" value="country" [(ngModel)]="reportType" inputId="typeCountry" (onClick)="onTypeChange()"> </p-radiobutton>
+                    <label for="typeCountry" class="ml-2 font-medium">By Country</label>
+                </div>
+
+                <div class="flex align-items-center">
+                    <p-radiobutton name="reportType" value="company" [(ngModel)]="reportType" inputId="typeCompany" (onClick)="onTypeChange()"> </p-radiobutton>
+                    <label for="typeCompany" class="ml-2 font-medium">By Company</label>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex flex-column md:flex-row gap-3">
+                <div *ngIf="reportType === 'country'" class="flex flex-column gap-2 w-full md:w-20rem">
+                    <label for="countrySelect" class="font-bold">Select Country</label>
+                    <p-select
+                        [options]="countries"
+                        [(ngModel)]="selectedCountry"
+                        optionLabel="name"
+                        [filter]="true"
+                        filterBy="name"
+                        [showClear]="true"
+                        placeholder="Select a Country"
+                        class="w-full"
+                        inputId="countrySelect"
+                        (onChange)="filterReports()"
+                    >
+                    </p-select>
+                </div>
+
+                <div *ngIf="reportType === 'company'" class="flex flex-column gap-2 w-full md:w-20rem">
+                    <label for="companySelect" class="font-bold">Select Company</label>
+                    <p-select
+                        [options]="companies"
+                        [(ngModel)]="selectedCompany"
+                        optionLabel="name"
+                        [filter]="true"
+                        filterBy="name"
+                        [showClear]="true"
+                        placeholder="Select a Company"
+                        class="w-full"
+                        inputId="companySelect"
+                        (onChange)="filterReports()"
+                    >
+                    </p-select>
+                </div>
+            </div>
+
+            <!-- Report Table -->
+            <div class="mt-4">
+                <p-table
+                    [value]="filteredRequests"
+                    [loading]="loading"
+                    [paginator]="true"
+                    [rows]="10"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                    [rowsPerPageOptions]="[10, 25, 50]"
+                    styleClass="p-datatable-striped p-datatable-gridlines"
+                    [tableStyle]="{ 'min-width': '50rem' }"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th pSortableColumn="referenceNumber">Ref Number <p-sortIcon field="referenceNumber"></p-sortIcon></th>
+                            <th pSortableColumn="certificateType">Certificate Type <p-sortIcon field="certificateType"></p-sortIcon></th>
+                            <th *ngIf="reportType !== 'country'" pSortableColumn="countryName">Country <p-sortIcon field="countryName"></p-sortIcon></th>
+                            <th *ngIf="reportType !== 'company'" pSortableColumn="companyName">Company <p-sortIcon field="companyName"></p-sortIcon></th>
+                            <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt"></p-sortIcon></th>
+                            <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                            <th>Action</th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-request>
+                        <tr>
+                            <td>{{ request.referenceNumber }}</td>
+                            <td>{{ formatCertificateType(request.certificateType) }}</td>
+                            <td *ngIf="reportType !== 'country'">{{ request.countryName || (formatCertificateType(request.certificateType) === 'EU' ? 'European Union' : 'N/A') }}</td>
+                            <td *ngIf="reportType !== 'company'">{{ request.companyName }}</td>
+                            <td>{{ request.createdAt | date: 'mediumDate' }}</td>
+                            <td>
+                                <p-tag [value]="formatStatus(getEffectiveStatus(request))" [severity]="getStatusSeverity(getEffectiveStatus(request))"></p-tag>
+                            </td>
+                            <td>
+                                <p-button
+                                    label="View"
+                                    icon="pi pi-eye"
+                                    severity="info"
+                                    [outlined]="true"
+                                    size="small"
+                                    (onClick)="viewRequest(request)"
+                                    [disabled]="!isRequestConfirmed(request)"
+                                ></p-button>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td [attr.colspan]="(reportType === 'country' || reportType === 'company') ? 6 : 6" class="text-center p-4">
+                                {{ selectedCountry || selectedCompany ? 'No certificate details found for the selection.' : 'Please select a ' + reportType + ' to view report.' }}
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    </p-card>
+</div>

@@ -1,0 +1,63 @@
+<div class="card">
+    <p-card>
+        <div class="flex flex-column md:flex-row md:justify-between gap-3 mb-4">
+            <div class="font-semibold text-xl">Company Request History</div>
+            <div class="flex flex-column sm:flex-row gap-2 w-full sm:w-auto">
+                <input
+                    id="companySearchRef"
+                    type="text"
+                    pInputText
+                    [(ngModel)]="searchTerm"
+                    (input)="applySearch()"
+                    placeholder="Enter reference number"
+                    class="w-full sm:w-64"
+                />
+                <p-button label="Clear" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="clearSearch()"></p-button>
+            </div>
+        </div>
+        <p-table
+            [value]="filteredRequests"
+            [loading]="loading"
+            dataKey="id"
+            [paginator]="true"
+            [rows]="10"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            styleClass="p-datatable-striped p-datatable-gridlines"
+            [tableStyle]="{ 'min-width': '50rem' }"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="referenceNumber">Ref Number <p-sortIcon field="referenceNumber"></p-sortIcon></th>
+                    <th pSortableColumn="certificateType">Type <p-sortIcon field="certificateType"></p-sortIcon></th>
+                    <th pSortableColumn="countryName">Country <p-sortIcon field="countryName"></p-sortIcon></th>
+                    <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt"></p-sortIcon></th>
+                    <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-request>
+                <tr>
+                    <td>{{ request.referenceNumber }}</td>
+                    <td>{{ request.certificateType }}</td>
+                    <td>{{ request.countryName }}</td>
+                    <td>{{ request.createdAt | date: 'mediumDate' }}</td>
+                    <td>
+                        <p-tag [value]="formatStatus(request.status)" [severity]="getStatusSeverity(request.status)"></p-tag>
+                    </td>
+                    <td>
+                        <p-button label="View" icon="pi pi-eye" severity="info" [outlined]="true" size="small" (onClick)="onView(request)"></p-button>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="text-center p-4">No requests found.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>

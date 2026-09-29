@@ -1,0 +1,975 @@
+<div class="il-wrap" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Israel (IL)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('certificationNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificationNo')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load 20 Attachment Items"
+                icon="pi pi-file-import"
+                severity="help"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadDefaultAttachmentProducts()"
+                pTooltip="Load 20 standard items for Israel Attachment"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Single Mode Items"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadDefaultSingleProducts()"
+                pTooltip="Load 2 standard commodities for Single Mode"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- 2 Radio Buttons Selection (print-hide) -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Mode:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment" inputId="vm_il_attachment" (onClick)="onViewModeChange('attachment')"></p-radiobutton>
+            <span class="font-bold">VETERINARY HEALTH CERTIFICATE FOR EXPORT OF FISH AND FISHERY PRODUCTS TO ISRAEL (ATTACHMENT)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="single" inputId="vm_il_single" (onClick)="onViewModeChange('single')"></p-radiobutton>
+            <span class="font-bold">VETERINARY HEALTH CERTIFICATE FOR EXPORT OF FISH AND FISHERY PRODUCTS TO ISRAEL</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'attachment' ? 'VETERINARY HEALTH CERTIFICATE (ATTACHMENT MODE)' : 'VETERINARY HEALTH CERTIFICATE (STANDARD MODE)' }}
+        </span>
+    </div>
+
+    <!-- ════ PAGE 1 ════ -->
+    <div class="il-page">
+        <div class="il-content">
+            <!-- Header -->
+            <div class="il-hdr">
+                <div class="cert-header-top-row mb-1">
+                    <div class="cert-header-spacer"></div>
+                    <div class="il-logo flex justify-center">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="il-logo-img" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('certificationNo')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [destination]="'Israel'"
+                            [viewOnly]="viewOnly"
+                            [size]="68"
+                        ></app-certificate-qr>
+                    </div>
+                </div>
+                <div class="il-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="il-addr">P.O.Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka.</div>
+                <div class="il-addr">Telephone: +94 -11- 2449170, 2472186, 2472192</div>
+                <div class="il-addr">Fax: +94 -11- 2449170, 2424086</div>
+                <div class="il-addr">E-mail: dgdfar&#64;gmail.com</div>
+                <div class="il-title">
+                    <em><strong>VETERINARY HEALTH CERTIFICATE FOR EXPORT OF FISH AND FISHERY PRODUCTS INTEDED FOR HUMAN CONSUMPTION TO ISRAEL</strong></em>
+                </div>
+            </div>
+
+            <!-- Main grid -->
+            <table class="il-tbl">
+                <!-- Row 1: Cert No | Central CA | Local CA -->
+                <tr>
+                    <td class="il-td il-w25">
+                        <div class="il-lbl font-bold">Certification No. :</div>
+                        <input pInputText formControlName="certificationNo" class="il-inp font-bold il-mt2" />
+                    </td>
+                    <td class="il-td il-w45">
+                        <div class="il-lbl font-bold">Central competent authority/E-mail address:</div>
+                        <div class="il-fixed-val il-mt2 font-bold">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                        <div class="il-fixed-val">E-mail: dgdfar&#64;gmail.com</div>
+                    </td>
+                    <td class="il-td il-w30">
+                        <div class="il-lbl font-bold">Local competent authority/E-mail address:</div>
+                        <div class="il-fixed-val il-mt2">NONE</div>
+                    </td>
+                </tr>
+
+                <!-- Row 2: Country of origin | Place of origin -->
+                <tr>
+                    <td class="il-td" colspan="2">
+                        <div class="il-inline-field">
+                            <span class="il-lbl font-bold">Country of origin:</span>
+                            <input pInputText formControlName="countryOfOrigin" class="il-inp-inline font-bold" />
+                        </div>
+                    </td>
+                    <td class="il-td" rowspan="2">
+                        <div class="il-lbl font-bold mb-1">Place of origin</div>
+                        <div class="il-sub-row"><span class="il-rlbl font-bold">Name:</span><input pInputText formControlName="placeOfOriginName" class="il-inp font-bold" /></div>
+                        <div class="il-sub-row il-mt2"><span class="il-rlbl font-bold">Address:</span><textarea pInputTextarea formControlName="placeOfOriginAddress" rows="2" [autoResize]="true" class="il-inp font-bold"></textarea></div>
+                        <div class="il-sub-row il-mt2"><span class="il-rlbl font-bold">Approval No :</span><input pInputText formControlName="placeOfOriginApprovalNo" class="il-inp font-bold" /></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="il-td" colspan="2" style="height: 6px; border-top: none;"></td>
+                </tr>
+
+                <!-- Row 3: Consignor | Consignee -->
+                <tr>
+                    <td class="il-td" colspan="2">
+                        <div class="il-lbl font-bold mb-1">Consignor:</div>
+                        <div class="il-sub-row"><span class="il-rlbl font-bold">Name:</span><input pInputText formControlName="consignorName" class="il-inp font-bold" /></div>
+                        <div class="il-sub-row il-mt2"><span class="il-rlbl font-bold">Address:</span><textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="il-inp font-bold"></textarea></div>
+                        <div class="flex items-center gap-4 il-mt2">
+                            <div class="flex items-center gap-1 flex-1"><span class="il-rlbl font-bold">Postal code:</span><input pInputText formControlName="postalCodeConsignor" class="il-inp" /></div>
+                            <div class="flex items-center gap-1 flex-1"><span class="il-rlbl font-bold">Tel No:</span><input pInputText formControlName="telNoConsignor" class="il-inp" /></div>
+                        </div>
+                        <div class="il-sub-row il-mt2"><span class="il-rlbl font-bold">E-mail :</span><input pInputText formControlName="emailConsignor" class="il-inp" /></div>
+                    </td>
+                    <td class="il-td">
+                        <div class="il-lbl font-bold mb-1">Consignee:</div>
+                        <div class="il-sub-row"><span class="il-rlbl font-bold">Name:</span><input pInputText formControlName="consigneeName" class="il-inp font-bold" /></div>
+                        <div class="il-sub-row il-mt2"><span class="il-rlbl font-bold">Address:</span><textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="il-inp font-bold"></textarea></div>
+                        <div class="flex items-center gap-4 il-mt2">
+                            <div class="flex items-center gap-1 flex-1"><span class="il-rlbl font-bold">Postal code:</span><input pInputText formControlName="postalCodeConsignee" class="il-inp" /></div>
+                            <div class="flex items-center gap-1 flex-1"><span class="il-rlbl font-bold">Tel No:</span><input pInputText formControlName="telNoConsignee" class="il-inp" /></div>
+                        </div>
+                        <div class="il-sub-row il-mt2"><span class="il-rlbl font-bold">E-mail :</span><input pInputText formControlName="emailConsignee" class="il-inp" /></div>
+                    </td>
+                </tr>
+
+                <!-- Row 4: Place of loading | Port of entry -->
+                <tr>
+                    <td class="il-td" colspan="2">
+                        <div class="il-inline-field"><span class="il-lbl font-bold">Place of loading: :</span><input pInputText formControlName="placeOfLoading" class="il-inp-inline font-bold" /></div>
+                    </td>
+                    <td class="il-td">
+                        <div class="il-inline-field"><span class="il-lbl font-bold">Port of entry / Border crossing to ISRAEL:</span><input pInputText formControlName="portOfEntry" class="il-inp-inline font-bold" /></div>
+                    </td>
+                </tr>
+
+                <!-- Row 5: Dates | Transport | Container identification -->
+                <tr>
+                    <td class="il-td il-w25 p-0">
+                        <div class="p-2 border-b border-black">
+                            <div class="il-lbl font-bold">Date of containerization /</div>
+                            <div class="il-lbl font-bold flex items-baseline gap-1 mt-1">
+                                <span class="whitespace-nowrap">stuffing :</span>
+                                <p-datepicker formControlName="dateOfContainerization" [showIcon]="false" dateFormat="dd/mm/yy" appendTo="body" class="il-inline-datepicker flex-1"></p-datepicker>
+                            </div>
+                        </div>
+                        <div class="p-2">
+                            <div class="il-lbl font-bold flex items-baseline gap-1">
+                                <span class="whitespace-nowrap">Date of departure :</span>
+                                <p-datepicker formControlName="dateOfDeparture" [showIcon]="false" dateFormat="dd/mm/yy" appendTo="body" class="il-inline-datepicker flex-1"></p-datepicker>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="il-td il-w45">
+                        <div class="il-lbl font-bold underline mb-1">Means of transport:</div>
+                        <div class="il-transport-grid">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs">Ship</span>
+                                <p-checkbox formControlName="transportShip" binary="true"></p-checkbox>
+                            </div>
+                            <div class="flex items-center gap-1 mt-0.5 mb-1">
+                                <span class="il-lbl-sm">Bill of lading -</span>
+                                <input pInputText formControlName="billOfLading" class="il-inp-sm flex-1" />
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs">Airplane</span>
+                                <p-checkbox formControlName="transportAirplane" binary="true"></p-checkbox>
+                            </div>
+                            <div class="flex items-center gap-1 mt-0.5 mb-1">
+                                <span class="il-lbl-sm">AWB –</span>
+                                <input pInputText formControlName="awb" class="il-inp-sm flex-1" />
+                            </div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-xs">Land</span>
+                                <p-checkbox formControlName="transportLand" binary="true"></p-checkbox>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-xs">Other</span>
+                                <p-checkbox formControlName="transportOther" binary="true"></p-checkbox>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="il-td il-w30">
+                        <div class="il-lbl font-bold underline mb-1">Container identification:</div>
+                        <table class="il-container-tbl">
+                            <thead>
+                                <tr>
+                                    <th style="width: 28px;" class="text-center">No.</th>
+                                    <th>Container No.</th>
+                                    <th>Seal No.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center font-bold">1</td>
+                                    <td><input pInputText formControlName="containerNo1" class="il-tinput font-bold" /></td>
+                                    <td><input pInputText formControlName="sealNo1" class="il-tinput font-bold" /></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center font-bold">2</td>
+                                    <td><input pInputText formControlName="containerNo2" class="il-tinput" /></td>
+                                    <td><input pInputText formControlName="sealNo2" class="il-tinput" /></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center font-bold">3</td>
+                                    <td><input pInputText formControlName="containerNo3" class="il-tinput" /></td>
+                                    <td><input pInputText formControlName="sealNo3" class="il-tinput" /></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center font-bold">4</td>
+                                    <td><input pInputText formControlName="containerNo4" class="il-tinput" /></td>
+                                    <td><input pInputText formControlName="sealNo4" class="il-tinput" /></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="il-footer">
+            <span class="il-footer-brand"></span>
+            <span class="il-footer-page">1</span>
+        </div>
+    </div>
+
+    <!-- ════ PAGE 2 ════ -->
+    <div class="il-page">
+        <div class="il-content">
+            <div class="il-top-cert-row mb-1">
+                <span class="font-bold text-xs">Certification No. :</span>
+                <input pInputText formControlName="certificationNo" class="il-inp-inline font-bold" />
+            </div>
+
+            <div class="il-box-border">
+                <div class="font-bold text-xs text-center border-b border-black py-1">Identification of the commodities</div>
+                
+                <!-- Attachment Mode: Placeholder Table pointing to Attachment 1 & 2 -->
+                <div *ngIf="viewMode === 'attachment'">
+                    <table class="il-prod-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width: 16%;">Description of<br/>commodity</th>
+                                <th style="width: 13%;">Species<br/>(scientific name)</th>
+                                <th style="width: 8%;">Nature<br/>of commodity</th>
+                                <th style="width: 11%;">Treatment type<br/>/ Storage temp.</th>
+                                <th style="width: 10%;">Approval No. of<br/>Manufactur- -ing plant</th>
+                                <th style="width: 6%;">No. of<br/>pack</th>
+                                <th style="width: 7%;">Net<br/>weight (Kg.)</th>
+                                <th style="width: 9%;">Harvest-<br/>-ing date<br/>(dd/mm/yy)</th>
+                                <th style="width: 9%;">Product-<br/>-ion date<br/>(dd/mm/yy)</th>
+                                <th style="width: 6%;">Best before<br/>(dd/mm/yy)</th>
+                                <th style="width: 5%;">Lot No.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 2 empty rows -->
+                            <tr *ngFor="let r of [1, 2]" style="height: 24px;">
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <!-- Centered full-span row -->
+                            <tr>
+                                <td colspan="11" class="text-center font-bold py-3 tracking-widest text-xs">
+                                    SEE THE ATTACHMENT
+                                </td>
+                            </tr>
+                            <!-- 3 empty rows -->
+                            <tr *ngFor="let r of [1, 2, 3]" style="height: 24px;">
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="il-total-row">
+                                <td class="font-bold text-center" colspan="5">Total</td>
+                                <td colspan="6"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Single Mode: Interactive Commodity Table -->
+                <div *ngIf="viewMode === 'single'">
+                    <table class="il-prod-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width: 16%;">Description of<br/>commodity</th>
+                                <th style="width: 13%;">Species<br/>(scientific name)</th>
+                                <th style="width: 8%;">Nature<br/>of commodity</th>
+                                <th style="width: 11%;">Treatment type<br/>/ Storage temp.</th>
+                                <th style="width: 10%;">Approval No. of<br/>Manufactur- -ing plant</th>
+                                <th style="width: 6%;">No. of<br/>pack</th>
+                                <th style="width: 7%;">Net<br/>weight (Kg.)</th>
+                                <th style="width: 9%;">Harvest-<br/>-ing date<br/>(dd/mm/yy)</th>
+                                <th style="width: 9%;">Product-<br/>-ion date<br/>(dd/mm/yy)</th>
+                                <th style="width: 6%;">Best before<br/>(dd/mm/yy)</th>
+                                <th style="width: 5%;">Lot No.</th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="commodities">
+                            <tr *ngFor="let item of commodities.controls; let i = index" [formGroupName]="i">
+                                <td><textarea pInputTextarea formControlName="descriptionOfCommodity" rows="2" [autoResize]="true" class="il-cinp font-bold uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="speciesScientificName" rows="2" [autoResize]="true" class="il-cinp italic"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="natureOfCommodity" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="treatmentType" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><input pInputText formControlName="approvalNo" class="il-cinp uppercase" /></td>
+                                <td><input pInputText type="number" formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="il-cinp font-bold" /></td>
+                                <td><input pInputText type="number" formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" step="0.01" class="il-cinp font-bold" /></td>
+                                <td><p-datepicker formControlName="harvestingDate" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td><p-datepicker formControlName="productionDate" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td><p-datepicker formControlName="bestBefore" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td class="relative">
+                                    <input pInputText formControlName="lotNo" class="il-cinp" />
+                                    <button *ngIf="!viewOnly && commodities.length > 1" pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text print-hide absolute right-0 top-1/2 -translate-y-1/2 p-0 h-4 w-4" (click)="removeCommodity(i)" title="Remove item"></button>
+                                </td>
+                            </tr>
+                            <!-- Filler rows to match PDF height -->
+                            <tr *ngFor="let filler of getFillerRows()" style="height: 32px;">
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="il-total-row">
+                                <td class="font-bold text-center" colspan="5">Total</td>
+                                <td class="font-bold text-right">{{ calculateTotalPackages() || '' }}</td>
+                                <td class="font-bold text-right">{{ calculateTotalNetWeight() ? (calculateTotalNetWeight() | number: '1.2-2') : '' }}</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="print-hide p-2 flex justify-end" *ngIf="!viewOnly">
+                        <p-button label="Add Commodity Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addCommodity()"></p-button>
+                    </div>
+                </div>
+
+                <!-- Bottom part of Page 2 -->
+                <div class="p-3 border-t border-black text-xs space-y-3">
+                    <div class="font-bold">The above mentioned commodities are certified forhuman consumption as :</div>
+                    <div class="flex items-center gap-8 pl-4">
+                        <label class="il-cbl font-bold"><p-checkbox formControlName="nonReadyToEat" binary="true"></p-checkbox><span class="ml-2">Non Ready to eat</span></label>
+                        <label class="il-cbl font-bold"><p-checkbox formControlName="readyToEat" binary="true"></p-checkbox><span class="ml-2">Ready to eat</span></label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold whitespace-nowrap">Shipment number/s (as indicated on the Hebrew labels) :</span>
+                        <input pInputText formControlName="shipmentNumber" class="il-inp flex-1 font-bold" />
+                    </div>
+                    <div>
+                        <span class="font-bold">Remarks / Other :</span>
+                        <textarea pInputTextarea formControlName="remarks" rows="2" [autoResize]="true" class="il-inp w-full mt-1"></textarea>
+                    </div>
+                    <div class="pt-2">
+                        <div class="font-bold mb-1">Official Stamp (English)</div>
+                        <div
+                            class="il-stamp-placeholder il-stamp-placeholder-p2"
+                            [class.il-drop-active]="isDraggingStamp"
+                            [class.has-content]="!!form.get('stamp')?.value"
+                            (click)="!viewOnly && stampInputPage2.click()"
+                            (dragover)="onStampDragOver($event)"
+                            (dragleave)="onStampDragLeave($event)"
+                            (drop)="onStampDrop($event)"
+                            (paste)="onStampPaste($event)"
+                            tabindex="0"
+                        >
+                            <input type="file" #stampInputPage2 (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                            <!-- Empty State -->
+                            <div *ngIf="!form.get('stamp')?.value" class="il-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
+                                <span class="print-show text-3xs text-slate-400 italic">_________________________________</span>
+                            </div>
+
+                            <!-- Uploaded Image -->
+                            <div *ngIf="form.get('stamp')?.value && !isPdf(form.get('stamp')?.value)" class="il-preview-container">
+                                <img [src]="form.get('stamp')?.value" alt="Official Stamp" class="il-stamp-img" />
+                                <div class="il-action-overlay print-hide" *ngIf="!viewOnly">
+                                    <button type="button" class="il-mini-btn" (click)="$event.stopPropagation(); stampInputPage2.click()" title="Change Stamp">
+                                        <i class="pi pi-pencil text-2xs"></i>
+                                    </button>
+                                    <button type="button" class="il-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                        <i class="pi pi-trash text-2xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Uploaded PDF -->
+                            <div *ngIf="form.get('stamp')?.value && isPdf(form.get('stamp')?.value)" class="il-preview-container">
+                                <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="il-pdf-preview"></object>
+                                <div class="il-action-overlay print-hide" *ngIf="!viewOnly">
+                                    <button type="button" class="il-mini-btn" (click)="$event.stopPropagation(); stampInputPage2.click()" title="Change Stamp">
+                                        <i class="pi pi-pencil text-2xs"></i>
+                                    </button>
+                                    <button type="button" class="il-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                        <i class="pi pi-trash text-2xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="il-footer">
+            <span class="il-footer-brand"></span>
+            <span class="il-footer-page">2</span>
+        </div>
+    </div>
+
+    <!-- ════ PAGE 3 (Attestation) ════ -->
+    <div class="il-page">
+        <div class="il-content">
+            <div class="il-top-cert-row mb-1">
+                <span class="font-bold text-xs">Certification No. :</span>
+                <input pInputText formControlName="certificationNo" class="il-inp-inline font-bold" />
+            </div>
+
+            <div class="il-box-border p-3 text-xs leading-relaxed">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="font-bold underline text-xs">PUBLIC AND ANIMALHEALTH ATTESTATION:</div>
+                    <div class="print-hide flex items-center gap-2 text-[11px]" *ngIf="!viewOnly">
+                        <button type="button" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-slate-700 font-medium cursor-pointer" (click)="unstrikeAllAttestation()">Unstrike All</button>
+                        <button type="button" class="px-2 py-0.5 bg-blue-100 hover:bg-blue-200 border border-blue-300 rounded text-blue-800 font-medium cursor-pointer" (click)="onToggleSection3({checked: true})">Strike Section 3 (Aquaculture)</button>
+                    </div>
+                </div>
+
+                <div class="space-y-2 text-justify">
+                    <!-- 1. Section 1 -->
+                    <div class="flex items-start gap-1.5" [ngClass]="{ 'text-slate-600': form.get('strikeSection1')?.value, 'text-black': !form.get('strikeSection1')?.value }">
+                        <p-checkbox *ngIf="!viewOnly" formControlName="strikeSection1" binary="true" class="print-hide mt-0.5 flex-shrink-0" title="Strike through Section 1"></p-checkbox>
+                        <div [class.line-through]="form.get('strikeSection1')?.value" class="flex-1">
+                            <strong>1.</strong> The lot. intended to be exported to Israel is from the same lot intended to export to the EU market and applying to the same standards
+                        </div>
+                    </div>
+
+                    <!-- 2. Section 2 -->
+                    <div [ngClass]="{ 'text-slate-600': form.get('strikeSection2')?.value, 'text-black': !form.get('strikeSection2')?.value }">
+                        <div class="flex items-start gap-1.5">
+                            <p-checkbox *ngIf="!viewOnly" formControlName="strikeSection2" binary="true" (onChange)="onToggleSection2($event)" class="print-hide mt-0.5 flex-shrink-0" title="Strike through entire Section 2"></p-checkbox>
+                            <div [class.line-through]="form.get('strikeSection2')?.value" class="flex-1">
+                                <strong>2.</strong> I, the undersigned official veterinarian, declare that I am aware of the relevant provisions of Regulations (EC) No 178/2002, (EC) No 852/2004, (EC) No 853/2004 and (EC) No625/2017 and certify that the fishery products described above were produced in accordance with those requirements, in particular that they:
+                            </div>
+                        </div>
+                        <ul class="pl-4 mt-1 space-y-1 list-none">
+                            <li class="flex items-start gap-1.5" [class.line-through]="form.get('strike2_1')?.value || form.get('strikeSection2')?.value">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike2_1" binary="true" (onChange)="onToggleSection2Bullet()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through this bullet"></p-checkbox>
+                                <span class="mr-1 font-bold">–</span>
+                                <div class="flex-1">Come from (an) establishment(s) implementing a programmed based on the <strong>HACCP principles</strong> in accordance with Regulation (EC) No 852/2004</div>
+                            </li>
+                            <li class="flex items-start gap-1.5" [class.line-through]="form.get('strike2_2')?.value || form.get('strikeSection2')?.value">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike2_2" binary="true" (onChange)="onToggleSection2Bullet()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through this bullet"></p-checkbox>
+                                <span class="mr-1 font-bold">–</span>
+                                <div class="flex-1">Have been caught and handled on board vessels, landed, handled and where appropriate prepared, processed, frozen and thawed hygienically in compliance with the requirements laid down in Section VIII, Chapters I to IV of Annex III to Regulation (EC) No 853/2004</div>
+                            </li>
+                            <li class="flex items-start gap-1.5" [class.line-through]="form.get('strike2_3')?.value || form.get('strikeSection2')?.value">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike2_3" binary="true" (onChange)="onToggleSection2Bullet()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through this bullet"></p-checkbox>
+                                <span class="mr-1 font-bold">–</span>
+                                <div class="flex-1">Satisfy the health standards laid down in Section VIII, Chapter V of Annex III to Regulation (EC) No 853/2004 and the criteria laid down in Regulation (EC) No 2073/2005 on microbiological criteria for foodstuffs</div>
+                            </li>
+                            <li class="flex items-start gap-1.5" [class.line-through]="form.get('strike2_4')?.value || form.get('strikeSection2')?.value">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike2_4" binary="true" (onChange)="onToggleSection2Bullet()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through this bullet"></p-checkbox>
+                                <span class="mr-1 font-bold">–</span>
+                                <div class="flex-1">Have been packaged, stored and transported in compliance with Section VIII, Chapters VI to VIII of Annex III to Regulation (EC) No 853/2004</div>
+                            </li>
+                            <li class="flex items-start gap-1.5" [class.line-through]="form.get('strike2_5')?.value || form.get('strikeSection2')?.value">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike2_5" binary="true" (onChange)="onToggleSection2Bullet()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through this bullet"></p-checkbox>
+                                <span class="mr-1 font-bold">–</span>
+                                <div class="flex-1">Have been marked in accordance with Section I of Annex II to Regulation (EC) No 853/2004</div>
+                            </li>
+                            <li class="flex items-start gap-1.5" [class.line-through]="form.get('strike2_6')?.value || form.get('strikeSection2')?.value">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike2_6" binary="true" (onChange)="onToggleSection2Bullet()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through this bullet"></p-checkbox>
+                                <span class="mr-1 font-bold">–</span>
+                                <div class="flex-1">The guarantees covering live animals and products thereof, if from aquaculture origin, provided by the residue plans submitted in accordance with Regulation (EU) 2022/1644, and regulation (EU)2022/1646 are fullfied.</div>
+                            </li>
+                            <li class="flex items-start gap-1.5" [class.line-through]="form.get('strike2_7')?.value || form.get('strikeSection2')?.value">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike2_7" binary="true" (onChange)="onToggleSection2Bullet()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through this bullet"></p-checkbox>
+                                <span class="mr-1 font-bold">–</span>
+                                <div class="flex-1">Have satisfactorily undergone the official controls laid down in Regulation (EC) No 2019/627and in particular in Titles V and VI of this regulation.</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 3. Strikethrough Section for Israel -->
+                    <div class="pt-1">
+                        <div [ngClass]="{ 'text-slate-600': form.get('strikeSection3')?.value, 'text-black': !form.get('strikeSection3')?.value }">
+                            <div class="flex items-start gap-1.5">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strikeSection3" binary="true" (onChange)="onToggleSection3($event)" class="print-hide mt-0.5 flex-shrink-0" title="Strike through entire Section 3"></p-checkbox>
+                                <div class="flex-1">
+                                    <div class="font-bold" [class.line-through]="form.get('strikeSection3')?.value">3. Animal health attestation for fish and crustaceans of aquaculture origin (2) (4)</div>
+                                    <div [class.line-through]="form.get('strikeSection3')?.value">I, the undersigned official veterinarian, hereby certify that the aquaculture animals or products thereof referred to in Part I of this certificate:</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-1.5 mt-1.5">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike3_1" binary="true" (onChange)="onToggleSubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through clause 3.1"></p-checkbox>
+                                <div class="flex-1">
+                                    <div class="font-bold" [class.line-through]="form.get('strike3_1')?.value || form.get('strikeSection3')?.value">3.1 Requirements for susceptible species to Epizootic ulcerative syndrome (EUS), Epizootic hematopoietic necrosis (EHN), Taura syndrome and Yellow head disease (3) (4)</div>
+                                    <div class="pl-2" [class.line-through]="form.get('strike3_1')?.value || form.get('strikeSection3')?.value">
+                                        (i) Originate from a country/territory, zone or compartment declared free from (4) [EUS] (4) [EHN] (4) [Taura syndrome] (4) [Yellowhead disease] in accordance with Chapter VII of Directive 2006/88/EC or the relevant WOAH Standard by the competent authority (5)<br/>
+                                        (ii) They originate from an establishment, which is not subject to national restriction measures for animal health reasons or because of the occurrence of abnormal mortalities with an undetermined cause, including the relevant listed diseases referred to in Annex I to Commission Delegated Regulation (EU) 2020/692 and emerging diseases .<br/>
+                                        (iii) They have been obtained from animals which were not intended to be killed] under a national programme for the eradication of diseases, including the relevant listed diseases referred to in Annex I to Delegated Regulation (EU) 2020/692 and emerging diseases.<br/>
+                                        (iv) All introduction of species susceptible to the relevant diseases come from an area or compartment declared free of the diseases.<br/>
+                                        (v) Species susceptible to the relevant diseases are not vaccinated against the relevant diseases
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-1.5 mt-1.5">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike3_2" binary="true" (onChange)="onToggleSubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through clause 3.2"></p-checkbox>
+                                <div class="flex-1">
+                                    <div class="font-bold" [class.line-through]="form.get('strike3_2')?.value || form.get('strikeSection3')?.value">3.2 Requirements for species susceptible to Viral hemorrhagic septicemia (VHS), Infectious hematopoietic necrosis (IHN), Infectious salmon anemia (ISA), Koi herpes virus (KHV) and White spot disease (3) (4)</div>
+                                    <div class="pl-2" [class.line-through]="form.get('strike3_2')?.value || form.get('strikeSection3')?.value">
+                                        Originate from a country/territory, zone or compartment declared free from (4)[VHS] (4)[IHN] (4) [ISA] (4)[KHV] (4)[White spot disease] in accordance with Chapter VII of Directive 2006/88/EC or the relevant WOAH Standard by the competent authority (6)<br/>
+                                        (i) They originate from an establishment which is not subject to national restriction measures for animal health reasons or because of the occurrence of abnormal mortalities with an undetermined cause, including the relevant listed diseases referred to in Annex I to Commission Delegated Regulation (EU) 2020/692 and emerging diseases;<br/>
+                                        (ii) They have been obtained from animals which were not intended to be killed] under a national program for the eradication of diseases, including the relevant listed diseases referred to in Annex I to Delegated Regulation (EU) 2020/692 and emerging diseases.<br/>
+                                        (iii) all introduction of species susceptible to the relevant diseases come from an area or compartment declared free of the diseases<br/>
+                                        (iv) species susceptible to the relevant diseases are not vaccinated against the relevant diseases
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-1.5 mt-1.5">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike3_3" binary="true" (onChange)="onToggleSubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through clause 3.3"></p-checkbox>
+                                <div class="flex-1">
+                                    <div class="font-bold" [class.line-through]="form.get('strike3_3')?.value || form.get('strikeSection3')?.value">3.3 Requirements for species susceptible to with Spring viremia of carp (SVC), Bacterial Kidney disease (BKD), infection with Infectious pancreatic necrosis virus (IPN), infection with Gyrodactylussalaris (GS), infection with Salmonid alphavirus (SAV) and (3) species susceptible to Koi herpes virus disease (KHV)</div>
+                                    <div class="pl-2" [class.line-through]="form.get('strike3_3')?.value || form.get('strikeSection3')?.value">
+                                        (i) Originate from a country/territory, zone or compartment declared free from (SVC), (BKD), (IPN), (GS), (SAV) and (KHV) in accordance with relevant WOAH Standard by the competent authority<br/>
+                                        (ii) They originate from an establishment which is not subject to national restriction measures for animal health reasons or because of the occurrence of abnormal mortalities with an undetermined cause, including the relevant listed diseases referred to in Annex I to Commission Delegated Regulation (EU) 2020/692 and emerging diseases;<br/>
+                                        (iii) They have been obtained from animals which were not intended to be killed] under a national program for the eradication of diseases, including the relevant listed diseases referred to in Annex I to Delegated Regulation (EU) 2020/692 and emerging diseases.<br/>
+                                        (iv) All introduction of species susceptible to the relevant diseases come from an area or compartment declared free of the diseases.<br/>
+                                        (v) species susceptible to the relevant diseases are not vaccinated against the relevant diseases
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-1.5 mt-1.5">
+                                <p-checkbox *ngIf="!viewOnly" formControlName="strike3_4" binary="true" (onChange)="onToggleSubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Strike through clause 3.4"></p-checkbox>
+                                <div class="flex-1">
+                                    <div class="font-bold" [class.line-through]="form.get('strike3_4')?.value || form.get('strikeSection3')?.value">3.4Transport and labeling requirements:</div>
+                                    <div class="pl-2" [class.line-through]="form.get('strike3_4')?.value || form.get('strikeSection3')?.value">
+                                        (i) The aquaculture animals referred to above are placed under conditions, including the water quality, that do not alter their health status.<br/>
+                                        (ii) The transport container or well boat prior to loading is clean and disinfected or previously unused.<br/>
+                                        (iii) The consignment is identified by a legible label on the exterior of the container, or when transported by well boat, in the ship's manifest, with the relevant information referred to in Part I of this certificate, and the following statement:"(4)[Fish] (4)[Crustaceans] (4)[Molluscs] intended for human consumption in Israel".
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="il-footer">
+            <span class="il-footer-brand"></span>
+            <span class="il-footer-page">3</span>
+        </div>
+    </div>
+
+    <!-- ════ PAGE 4 (Notes + Signatory) ════ -->
+    <div class="il-page">
+        <div class="il-content">
+            <div class="il-top-cert-row mb-1">
+                <span class="font-bold text-xs">Certification No. :</span>
+                <input pInputText formControlName="certificationNo" class="il-inp-inline font-bold" />
+            </div>
+
+            <div class="il-box-border p-3 text-xs leading-relaxed">
+                <div class="font-bold underline mb-1">NOTES:</div>
+                <div class="text-justify space-y-1">
+                    <div><strong>– To clarify :</strong></div>
+                    <div class="pl-4">
+                        o This document is valid only when <strong>issued and signed</strong> by the official competent authority of the exporting country.<br/>
+                        o This document is addressed to the Israeli Ministry of Health and when presented, during the consignment inspection process and thereafter , this document will be considered as the property of the Ministry of Health.
+                    </div>
+                    <div class="font-bold mt-1">Part I:</div>
+                    <ul class="list-disc pl-5 space-y-0.5">
+                        <li><strong>Box: Place of origin:</strong> name and address of the dispatch establishment.</li>
+                        <li><strong>Box: Identification of container:</strong> Where there is a serial number of the seal it has to be indicated.</li>
+                        <li><strong>Box Date of departure:</strong> Will be no sooner than the date of issuing the Health certificate.</li>
+                        <li><strong>Box Identification of commodities:</strong></li>
+                        <li class="pl-4"><u>Description of commodity:</u>Specify the appearance and main Characteristics of commodity (ex: head on / head off / fillet / smoked / dried / salted/coatedetc., as indicated on the invoice )</li>
+                        <li class="pl-4"><u>Nature of commodity:</u> Specify whether aquaculture or wild origin</li>
+                        <li class="pl-4"><u>Treatment type:</u> Specify whether live, chilled, frozen or processed.</li>
+                        <li class="pl-4"><u>Manufacturing plant:</u> includes factory vessel, freezer vessel, cold store, processing plant.</li>
+                        <li class="pl-4"><u>Harvesting date:</u> Specify the original date of harvesting: specific date in chilled fish and at least, month and year in the case of non-chilled fish.</li>
+                        <li class="pl-4"><u>Production date:</u> Specify the original date of production (freezing , packaging, processing ).</li>
+                        <li class="pl-4"><u>Best before:</u> Specify the date which is printed on the Hebrew label (optional).</li>
+                        <li class="pl-4"><u>Shipment No.:</u> Specify the shipment number which is printed on the Hebrew labels.</li>
+                    </ul>
+
+                    <div class="font-bold mt-1">Part II:</div>
+                    <div><strong>(1)</strong> Part II.1 of this certificate does not apply to countries with special public health certification requirements laid down in equivalence agreements or other European Union legislation.</div>
+                    <div>
+                        <strong>(2)</strong> Part II.2 of this certificate does not apply to:<br/>
+                        non-viable crustaceans, which means crustaceans no longer able to survive as living animals if returned to<br/>
+                        (a) the environment from which they were obtained<br/>
+                        (b) fish which are slaughtered and eviscerated before dispatch<br/>
+                        (c) aquaculture animals and products thereof, which are placed on the market for human consumption without further processing, provided that they are packed in retail-sale packages which comply with the provisions for such packages in Regulation (EC) No 853/2004,<br/>
+                        (d) crustaceans destined for processing establishments authorised in accordance with Annex to commission Implementing Regulation (EU) 1882/2018, or for dispatch centers, purification centers or similar businesses which are equipped with an effluent treatment system inactivating the pathogens in question, or where the effluent is subject to other types of treatment reducing the risk of transmitting diseases to the natural waters to an acceptable level,<br/>
+                        (e) crustaceans which are intended for further processing before human consumption without temporary storage at the place of processing and packed and labelled for that purpose in accordance with Regulation (EC) No 853/2004.
+                    </div>
+                    <div><strong>(3)</strong> Parts II.2.1 and II.2.2 of this certificate only apply to species susceptible to one or more of the diseases referred to in the title. Susceptible species are listed in Annex to commission implementing Regulation (EU) 1882/2018.</div>
+                    <div><strong>(4)</strong> Keep as appropriate.</div>
+                    <div>− The colour of the stamp and signature must be different from that of the other particulars in the certificate.</div>
+                </div>
+
+                <!-- Done at and Signature block -->
+                <div class="border-t border-black mt-3 pt-3">
+                    <div class="flex items-baseline justify-between">
+                        <div class="flex items-baseline flex-1 mr-6">
+                            <span class="font-bold whitespace-nowrap mr-1">Done at:</span>
+                            <input pInputText formControlName="placeOfIssue" class="il-inp flex-1 font-bold text-xs" />
+                        </div>
+                        <div class="flex items-baseline" style="width: 140px;">
+                            <span class="font-bold whitespace-nowrap mr-1">,on:</span>
+                            <p-datepicker formControlName="signatureDate" [showIcon]="false" dateFormat="dd/mm/yy" appendTo="body" class="il-inline-datepicker flex-1"></p-datepicker>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[7.5pt] text-slate-700 mt-1 mb-6">
+                        <div class="flex-1 text-center" style="margin-left: 55px; margin-right: 150px;">
+                            <span>( Place)</span>
+                        </div>
+                        <div style="width: 140px;" class="text-center">
+                            <span>(Date)</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-start mt-4">
+                        <div style="width: 42%;">
+                            <div class="font-bold mb-1">Official Stamp (English)</div>
+                            <div
+                                class="il-stamp-placeholder"
+                                [class.il-drop-active]="isDraggingStamp"
+                                [class.has-content]="!!form.get('stamp')?.value"
+                                (click)="!viewOnly && stampInputPage4.click()"
+                                (dragover)="onStampDragOver($event)"
+                                (dragleave)="onStampDragLeave($event)"
+                                (drop)="onStampDrop($event)"
+                                (paste)="onStampPaste($event)"
+                                tabindex="0"
+                            >
+                                <input type="file" #stampInputPage4 (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                <!-- Empty State -->
+                                <div *ngIf="!form.get('stamp')?.value" class="il-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                    <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
+                                    <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                                </div>
+
+                                <!-- Uploaded Image -->
+                                <div *ngIf="form.get('stamp')?.value && !isPdf(form.get('stamp')?.value)" class="il-preview-container">
+                                    <img [src]="form.get('stamp')?.value" alt="Official Stamp" class="il-stamp-img" />
+                                    <div class="il-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="il-mini-btn" (click)="$event.stopPropagation(); stampInputPage4.click()" title="Change Stamp">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="il-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Uploaded PDF -->
+                                <div *ngIf="form.get('stamp')?.value && isPdf(form.get('stamp')?.value)" class="il-preview-container">
+                                    <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="il-pdf-preview"></object>
+                                    <div class="il-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="il-mini-btn" (click)="$event.stopPropagation(); stampInputPage4.click()" title="Change Stamp">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="il-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="width: 55%;" class="text-right">
+                            <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2 text-left">
+                                <p-select
+                                    [options]="userOptions"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select Authorized Officer"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                    styleClass="w-full text-xs"
+                                    appendTo="body"
+                                ></p-select>
+                            </div>
+                            <div class="font-bold text-xs">Name: {{ form.get('signatoryName')?.value }}</div>
+                            <div class="font-bold text-xs">Designation:{{ getDesignationLine1() }}</div>
+                            <div class="font-bold text-xs" *ngIf="getDesignationLine2()">{{ getDesignationLine2() }}</div>
+
+                            <!-- Signature Area -->
+                            <div
+                                class="il-sig-placeholder"
+                                [class.il-drop-active]="isDraggingSignature"
+                                [class.has-content]="!!form.get('signature')?.value"
+                                (click)="!viewOnly && sigInputPage4.click()"
+                                (dragover)="onSignatureDragOver($event)"
+                                (dragleave)="onSignatureDragLeave($event)"
+                                (drop)="onSignatureDrop($event)"
+                                (paste)="onSignaturePaste($event)"
+                                tabindex="0"
+                            >
+                                <input type="file" #sigInputPage4 (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                <!-- Empty State -->
+                                <div *ngIf="!form.get('signature')?.value" class="il-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                    <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste signature screenshot / PDF</span>
+                                    <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                </div>
+
+                                <!-- Uploaded Image -->
+                                <div *ngIf="form.get('signature')?.value && !isPdf(form.get('signature')?.value)" class="il-preview-container">
+                                    <img [src]="form.get('signature')?.value" alt="Official Signature" class="il-sig-img" />
+                                    <div class="il-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="il-mini-btn" (click)="$event.stopPropagation(); sigInputPage4.click()" title="Change Signature">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="il-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Uploaded PDF -->
+                                <div *ngIf="form.get('signature')?.value && isPdf(form.get('signature')?.value)" class="il-preview-container">
+                                    <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="il-pdf-preview"></object>
+                                    <div class="il-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="il-mini-btn" (click)="$event.stopPropagation(); sigInputPage4.click()" title="Change Signature">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="il-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="font-bold text-xs mt-1">Name, position and signature of the Official Veterinarian/ Inspector</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="il-footer">
+            <span class="il-footer-brand"></span>
+            <span class="il-footer-page">4</span>
+        </div>
+    </div>
+
+    <!-- ════ ATTACHMENT PAGES (Mode 1 only) ════ -->
+    <ng-container *ngIf="viewMode === 'attachment'">
+        <!-- ═══ ATTACHMENT 1 (Page 5) ═══ -->
+        <div class="il-page">
+            <div class="il-content">
+                <div class="text-center font-bold text-sm mb-1">Attachment 1</div>
+                <div class="il-box-border">
+                    <div class="flex justify-between items-center text-xs font-bold px-3 py-1 border-b border-black">
+                        <div>Certification No: {{ form.get('certificationNo')?.value }}</div>
+                        <div>Date:{{ form.get('signatureDate')?.value | date: 'yyyy.MM.dd' }}</div>
+                    </div>
+
+                    <div class="font-bold text-xs text-center border-b border-black py-1">Identification of the commodities</div>
+
+                    <table class="il-prod-tbl il-att-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width: 16%;">Description of<br/>commodity</th>
+                                <th style="width: 13%;">Species<br/>(scientific<br/>name)</th>
+                                <th style="width: 8%;">Nature<br/>of<br/>commodity</th>
+                                <th style="width: 11%;">Treatment type<br/>/ Storage temp.</th>
+                                <th style="width: 10%;">Approval<br/>No. of<br/>Manufactur<br/>-ing plant</th>
+                                <th style="width: 6%;">No. of<br/>pack</th>
+                                <th style="width: 7%;">Net<br/>weight<br/>(Kg.)</th>
+                                <th style="width: 9%;">Harvest-<br/>-ing date<br/>(dd/mm/yy)</th>
+                                <th style="width: 9%;">Product-<br/>-ion date<br/>(dd/mm/yy)</th>
+                                <th style="width: 6%;">Best before<br/>(dd/mm/yy)</th>
+                                <th style="width: 5%;">Lot No</th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="commodities">
+                            <tr *ngFor="let item of commodities.controls | slice: 0 : attachment1Limit; let i = index" [formGroupName]="i">
+                                <td><textarea pInputTextarea formControlName="descriptionOfCommodity" rows="2" [autoResize]="true" class="il-cinp font-bold uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="speciesScientificName" rows="2" [autoResize]="true" class="il-cinp italic"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="natureOfCommodity" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="treatmentType" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="approvalNo" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><input pInputText type="number" formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="il-cinp font-bold" /></td>
+                                <td><input pInputText type="number" formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" step="0.01" class="il-cinp font-bold" /></td>
+                                <td><p-datepicker formControlName="harvestingDate" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td><p-datepicker formControlName="productionDate" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td><p-datepicker formControlName="bestBefore" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td class="relative">
+                                    <input pInputText formControlName="lotNo" class="il-cinp" />
+                                    <button *ngIf="!viewOnly && commodities.length > 1" pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text print-hide absolute right-0 top-1/2 -translate-y-1/2 p-0 h-4 w-4" (click)="removeCommodity(i)" title="Remove item"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot *ngIf="!hasAttachment2">
+                            <tr class="il-total-row">
+                                <td class="font-bold text-center" colspan="5">TOTAL</td>
+                                <td class="font-bold text-right">{{ calculateTotalPackages() || '' }}</td>
+                                <td class="font-bold text-right">{{ calculateTotalNetWeight() ? (calculateTotalNetWeight() | number: '1.2-2') : '' }}</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="print-hide p-2 flex justify-end" *ngIf="!viewOnly">
+                        <p-button label="Add Commodity Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addCommodity()"></p-button>
+                    </div>
+                </div>
+            </div>
+            <div class="il-footer">
+                <span class="il-footer-brand"></span>
+                <span class="il-footer-page">5</span>
+            </div>
+        </div>
+
+        <!-- ═══ ATTACHMENT 2 (Page 6 - shown when items > 12) ═══ -->
+        <div class="il-page" *ngIf="hasAttachment2">
+            <div class="il-content">
+                <div class="text-center font-bold text-sm mb-1">Attachment 2</div>
+                <div class="il-box-border">
+                    <div class="flex justify-between items-center text-xs font-bold px-3 py-1 border-b border-black">
+                        <div>Certification No: {{ form.get('certificationNo')?.value }}</div>
+                        <div>Date:{{ form.get('signatureDate')?.value | date: 'yyyy.MM.dd' }}</div>
+                    </div>
+
+                    <div class="font-bold text-xs text-center border-b border-black py-1">Identification of the commodities</div>
+
+                    <table class="il-prod-tbl il-att-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width: 16%;">Description of<br/>commodity</th>
+                                <th style="width: 13%;">Species<br/>(scientific<br/>name)</th>
+                                <th style="width: 8%;">Nature<br/>of<br/>commodity</th>
+                                <th style="width: 11%;">Treatment type<br/>/ Storage temp.</th>
+                                <th style="width: 10%;">Approval<br/>No. of<br/>Manufactur<br/>-ing plant</th>
+                                <th style="width: 6%;">No. of<br/>pack</th>
+                                <th style="width: 7%;">Net<br/>weight<br/>(Kg.)</th>
+                                <th style="width: 9%;">Harvest-<br/>-ing date<br/>(dd/mm/yy)</th>
+                                <th style="width: 9%;">Product-<br/>-ion date<br/>(dd/mm/yy)</th>
+                                <th style="width: 6%;">Best before<br/>(dd/mm/yy)</th>
+                                <th style="width: 5%;">Lot No</th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="commodities">
+                            <tr *ngFor="let item of commodities.controls | slice: attachment1Limit; let i = index" [formGroupName]="attachment1Limit + i">
+                                <td><textarea pInputTextarea formControlName="descriptionOfCommodity" rows="2" [autoResize]="true" class="il-cinp font-bold uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="speciesScientificName" rows="2" [autoResize]="true" class="il-cinp italic"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="natureOfCommodity" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="treatmentType" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="approvalNo" rows="2" [autoResize]="true" class="il-cinp uppercase"></textarea></td>
+                                <td><input pInputText type="number" formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="il-cinp font-bold" /></td>
+                                <td><input pInputText type="number" formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" step="0.01" class="il-cinp font-bold" /></td>
+                                <td><p-datepicker formControlName="harvestingDate" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td><p-datepicker formControlName="productionDate" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td><p-datepicker formControlName="bestBefore" class="il-cinp" appendTo="body" [showIcon]="false" dateFormat="dd/mm/yy"></p-datepicker></td>
+                                <td class="relative">
+                                    <input pInputText formControlName="lotNo" class="il-cinp" />
+                                    <button *ngIf="!viewOnly" pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text print-hide absolute right-0 top-1/2 -translate-y-1/2 p-0 h-4 w-4" (click)="removeCommodity(attachment1Limit + i)" title="Remove item"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="il-total-row">
+                                <td class="font-bold text-center" colspan="5">TOTAL</td>
+                                <td class="font-bold text-right">{{ calculateTotalPackages() || '' }}</td>
+                                <td class="font-bold text-right">{{ calculateTotalNetWeight() ? (calculateTotalNetWeight() | number: '1.2-2') : '' }}</td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="print-hide p-2 flex justify-end" *ngIf="!viewOnly">
+                        <p-button label="Add Commodity Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addCommodity()"></p-button>
+                    </div>
+                </div>
+            </div>
+            <div class="il-footer">
+                <span class="il-footer-brand"></span>
+                <span class="il-footer-page">6</span>
+            </div>
+        </div>
+    </ng-container>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

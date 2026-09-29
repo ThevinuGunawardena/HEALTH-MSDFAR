@@ -1,0 +1,435 @@
+* {
+    box-sizing: border-box;
+}
+
+.form-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: none;
+}
+
+/* ══ A4 PAGE ══ */
+.a4-page {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+    padding: 10mm 15mm 8mm 15mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.page-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+}
+
+.page-footer {
+    flex: 0 0 6mm;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 10pt;
+    font-weight: 700;
+    color: #000;
+    background: white;
+}
+.page-number {
+    font-weight: 700;
+    color: #000;
+    font-size: 10pt;
+}
+
+.cert-header {
+    margin-bottom: 2px;
+    flex-shrink: 0;
+}
+
+.cert-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 2px;
+    font-size: 10.5pt;
+    border-bottom: 1.5px solid #000;
+    margin-bottom: 0;
+    font-weight: 700;
+}
+
+.part2-title-flex {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 2px;
+    font-size: 10.5pt;
+    border-bottom: 1.5px solid #000;
+    margin-bottom: 2px;
+    width: 100%;
+}
+.part2-title-left {
+    text-align: left;
+    font-size: 10.5pt;
+}
+.part2-title-right {
+    text-align: right;
+    font-size: 10.5pt;
+}
+
+.cert-grid-wrapper {
+    display: flex;
+    flex-direction: row;
+    border: 1px solid #000;
+    margin-top: 2px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.fill-page {
+    margin-top: 0;
+    flex: 1 1 auto;
+}
+
+.part-side-label {
+    width: 24px;
+    flex-shrink: 0;
+    border-right: 1px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 2px;
+    background: #fff;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    box-sizing: border-box;
+}
+.side-stacked-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.cert-grid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.grid-row {
+    display: flex;
+    flex-direction: row;
+    min-width: 0;
+}
+
+.grid-cell {
+    padding: 2.5px 5px;
+    font-size: 8pt;
+    min-width: 0;
+}
+
+.col-stack {
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+}
+.col-stack > .grid-cell {
+    padding: 2.5px 5px;
+}
+.row-split {
+    display: flex;
+    flex-direction: row;
+    padding: 0 !important;
+}
+.row-split > .grid-cell {
+    padding: 2.5px 5px;
+}
+
+.cell-label {
+    font-size: 7.5pt;
+    color: #111;
+    line-height: 1.2;
+    margin-bottom: 1px;
+}
+
+.cell-sub {
+    font-size: 8pt;
+    line-height: 1.2;
+}
+.sub-lbl {
+    font-size: 8pt;
+    margin-right: 3px;
+}
+
+.mt1 {
+    margin-top: 2px;
+}
+
+.br {
+    border-right: 1px solid #000;
+}
+.bt {
+    border-top: 1px solid #000;
+}
+.bb {
+    border-bottom: 1px solid #000;
+}
+
+.diag-cell {
+    background-color: #fff;
+    background-image: linear-gradient(to bottom right, transparent calc(50% - 0.5px), #000 50%, transparent calc(50% + 0.5px));
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.quad .grid-cell {
+    flex: 1;
+}
+
+.ci {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.25;
+}
+.ci:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.transport-left-cell {
+    flex: 1.3;
+}
+.entry-stack-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+}
+.entry-stack-cell > .grid-cell {
+    padding: 2.5px 5px;
+}
+.entry-bip-cell {
+    flex: 1;
+}
+.entry-diag-cell {
+    flex: 1;
+}
+
+.transport-cb-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+.transport-cb-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8pt;
+    cursor: pointer;
+}
+
+.cert-cb-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 2px;
+}
+.cert-cb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8pt;
+    cursor: pointer;
+}
+
+.for-import-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.for-import-framed-box {
+    border: 1px solid #000;
+    padding: 2px 4px;
+    margin-top: 2px;
+}
+
+/* ══ 1.28 Table ══ */
+.cert-product-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+    border: 1px solid #000;
+}
+.cert-product-table th {
+    border: 1px solid #000;
+    padding: 3px 4px;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-align: center;
+    vertical-align: top;
+    line-height: 1.2;
+    background: #fff;
+}
+.cert-product-table td {
+    border: 1px solid #000;
+    padding: 2px 3px;
+    vertical-align: top;
+    font-size: 8pt;
+}
+.cti {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.25;
+}
+.cti:focus {
+    background: #f0f7ff !important;
+}
+
+/* ══ Health Attestation ══ */
+.health-attestation-block {
+    display: block !important;
+    padding: 10px 14px;
+}
+.health-attestation-block .cert-stmt {
+    margin-bottom: 8px;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    text-align: justify;
+}
+
+.strikethrough-text {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+}
+
+@media print {
+    .print-hide {
+        display: none !important;
+    }
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .form-container {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .a4-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        padding: 10mm 15mm 8mm 15mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+    }
+
+    .a4-page.last-page,
+    .a4-page:last-of-type {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .ci,
+    .cti {
+        border-bottom: none !important;
+        background: transparent !important;
+    }
+
+    .strikethrough-text {
+        text-decoration: line-through !important;
+        text-decoration-line: line-through !important;
+        -webkit-text-decoration-line: line-through !important;
+    }
+
+    .part-side-label {
+        writing-mode: vertical-rl !important;
+        transform: rotate(180deg) !important;
+        white-space: nowrap !important;
+    }
+
+    .diag-cell {
+        background-color: #fff !important;
+        background-image: linear-gradient(to bottom right, transparent calc(50% - 0.5px), #000 50%, transparent calc(50% + 0.5px)) !important;
+        background-repeat: no-repeat !important;
+        background-size: 100% 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-box {
+        border: 1px solid #000 !important;
+        background: transparent !important;
+        width: 13px !important;
+        height: 13px !important;
+    }
+
+    :host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box {
+        background: #000 !important;
+        border-color: #000 !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-icon {
+        color: #fff !important;
+        font-size: 9px !important;
+    }
+}

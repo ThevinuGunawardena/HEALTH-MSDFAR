@@ -1,0 +1,575 @@
+* {
+    box-sizing: border-box;
+}
+
+.tw-wrap {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tw-page {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+    padding: 10mm 16mm 8mm 16mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.tw-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2mm;
+}
+
+.tw-footer {
+    flex: 0 0 5mm;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 8.5pt;
+    font-weight: 700;
+}
+.tw-footer-brand {
+    font-style: italic;
+    color: #aaa;
+}
+.tw-footer-page {
+    font-weight: 700;
+    color: #000;
+    font-size: 9pt;
+}
+
+.tw-hdr {
+    flex-shrink: 0;
+    margin-bottom: 4px;
+    text-align: center;
+}
+.tw-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+.tw-logo-img {
+    height: 56px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
+.tw-dept {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 1px;
+}
+.tw-addr {
+    font-size: 8pt;
+    line-height: 1.3;
+}
+.tw-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+}
+.tw-subtitle {
+    font-size: 8.5pt;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-top: 2px;
+    margin-bottom: 4px;
+}
+
+.tw-inline-ref {
+    display: inline-block;
+    width: 120px;
+    font-size: 8.5pt;
+    border: none !important;
+    border-bottom: 1px solid #888 !important;
+    background: transparent !important;
+    padding: 1px 2px !important;
+    outline: none;
+}
+
+.tw-tbl {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tw-sec-hdr th {
+    background-color: #d9d9d9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    border: 1px solid #000;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 2.5px 6px;
+}
+
+.tw-td-lbl {
+    border: 1px solid #000;
+    padding: 2px 6px;
+    font-size: 8pt;
+    font-weight: 400;
+    vertical-align: top;
+}
+
+.tw-td-val {
+    border: 1px solid #000;
+    padding: 2px 6px;
+    font-size: 8pt;
+    vertical-align: top;
+}
+
+.tw-inp {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none;
+    box-shadow: none !important;
+}
+
+.tw-cbl {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 8pt;
+}
+
+/* ════ ATTACHMENT PAGE STYLES (MATCHING TC 4361 PDF) ════ */
+.tw-att-title {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+.tw-att-ref-val {
+    font-weight: 700;
+    text-decoration: underline;
+    margin-left: 4px;
+}
+.tw-att-meta {
+    font-size: 8.5pt;
+    font-weight: 700;
+}
+
+.tw-att-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    table-layout: fixed;
+}
+.tw-att-tbl th {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    font-weight: 700;
+    font-size: 8.5pt;
+    background-color: #fff;
+    line-height: 1.25;
+}
+.tw-att-tbl td {
+    border: 1px solid #000;
+    padding: 2px 5px;
+    font-size: 8.5pt;
+    height: 27px;
+    vertical-align: middle;
+}
+.tw-att-row:nth-child(even) {
+    background-color: #fdfdfd;
+}
+
+.tw-cinp {
+    display: block;
+    width: 100%;
+    font-size: 8.5pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    line-height: 1.3;
+}
+.tw-cinp:focus {
+    background: #f0f7ff !important;
+}
+
+.tw-total-row td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    font-size: 8.5pt;
+    font-weight: 700;
+    height: 30px;
+}
+
+.vertical-top {
+    vertical-align: top !important;
+}
+
+/* ════ QUALITY CERTIFICATE STYLES ════ */
+.tw-q-hdr {
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom: 4px;
+}
+.tw-q-title {
+    font-size: 13pt;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+.tw-q-docref-row {
+    font-size: 9pt;
+    text-align: right;
+    padding-right: 15%;
+}
+
+.tw-q-statement {
+    font-size: 9pt;
+    line-height: 1.45;
+}
+.tw-q-p {
+    font-size: 9pt;
+    line-height: 1.45;
+    text-align: justify;
+}
+
+.tw-q-cb {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9pt;
+    cursor: pointer;
+}
+
+.tw-q-est-block {
+    font-size: 9pt;
+    line-height: 1.4;
+}
+
+.tw-q-meta-block {
+    font-size: 8.5pt;
+    line-height: 1.4;
+}
+
+.my-mt2 { margin-top: 2px; }
+.my-mt3 { margin-top: 3px; }
+.my-mt4 { margin-top: 4px; }
+.my-mt6 { margin-top: 6px; }
+
+.tw-q-inp {
+    display: block;
+    width: 100%;
+    font-size: 8.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.35;
+}
+.tw-q-inp:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.tw-q-inp-inline {
+    display: inline-block;
+    width: 140px;
+    font-size: 9pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+.tw-q-inp-inline:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.tw-q-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+    border: 1px solid #000;
+}
+.tw-q-table th {
+    border: 1px solid #000;
+    padding: 3px 3px;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.2;
+    background: #fff;
+}
+.tw-q-table td {
+    border: 1px solid #000;
+    padding: 1px 2px;
+    vertical-align: top;
+    font-size: 8pt;
+}
+.tw-q-tinp {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.3;
+}
+.tw-q-tinp:focus {
+    background: #f0f7ff !important;
+}
+
+.tw-q-total-row td {
+    border: 1px solid #000;
+    padding: 3px 4px;
+    font-size: 8.5pt;
+}
+
+/* ════ STAMP & SIGNATURE DROPZONE STYLES ════ */
+.tw-stamp-placeholder,
+.tw-sig-placeholder {
+    width: 100%;
+    min-height: 75px;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.tw-stamp-placeholder:hover,
+.tw-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.tw-stamp-placeholder.tw-drop-active,
+.tw-sig-placeholder.tw-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.tw-stamp-placeholder.has-content,
+.tw-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.tw-stamp-placeholder.has-content:hover,
+.tw-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.tw-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tw-stamp-img,
+.tw-sig-img {
+    max-height: 80px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.tw-pdf-preview {
+    width: 100%;
+    height: 80px;
+    border: none;
+    pointer-events: none;
+}
+
+.tw-action-overlay {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 4px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.tw-stamp-placeholder:hover .tw-action-overlay,
+.tw-sig-placeholder:hover .tw-action-overlay {
+    opacity: 1;
+}
+
+.tw-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.tw-mini-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.tw-mini-btn.danger:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+@media print {
+    .print-hide {
+        display: none !important;
+    }
+    .print-show {
+        display: block !important;
+    }
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .tw-wrap {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .tw-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        padding: 10mm 16mm 8mm 16mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+    }
+
+    .tw-page:last-of-type {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .tw-inp,
+    .tw-inline-ref,
+    .tw-cinp,
+    .tw-q-inp,
+    .tw-q-inp-inline,
+    .tw-q-tinp {
+        border-bottom: none !important;
+        background: transparent !important;
+    }
+
+    .tw-stamp-placeholder,
+    .tw-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 0 !important;
+    }
+
+    .tw-stamp-img,
+    .tw-sig-img {
+        max-height: 85px !important;
+    }
+
+    .tw-empty-upload {
+        display: none !important;
+    }
+
+    .tw-sec-hdr th {
+        background-color: #d9d9d9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-box {
+        border: 1px solid #000 !important;
+        background: transparent !important;
+        width: 13px !important;
+        height: 13px !important;
+    }
+
+    :host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box {
+        background: #000 !important;
+        border-color: #000 !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-icon {
+        color: #fff !important;
+        font-size: 9px !important;
+    }
+}

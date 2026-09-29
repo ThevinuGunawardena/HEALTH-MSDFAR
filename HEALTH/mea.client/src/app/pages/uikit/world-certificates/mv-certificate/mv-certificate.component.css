@@ -1,0 +1,615 @@
+* {
+    box-sizing: border-box;
+}
+
+.mv-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 20px 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f4f5f7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ── A4 PAGE CONTAINER ── */
+.mv-page {
+    width: 210mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    height: 297mm;
+    padding: 6mm 10mm 5mm 10mm;
+    margin: 0 auto 20px auto;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+    page-break-after: auto;
+    page-break-inside: avoid;
+}
+
+.mv-page.letter-page {
+    padding: 7mm 12mm 5mm 12mm;
+}
+
+.mv-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* FORMAT 1: BOXED GENERIC MODEL CERTIFICATE (TC 4683)              */
+/* ════════════════════════════════════════════════════════════════ */
+.mv-boxed-frame {
+    border: 1.2px solid #000;
+    padding: 4px 6px 3px 6px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mv-header {
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+.mv-logo-row {
+    margin-bottom: 1px;
+    display: flex;
+    justify-content: center;
+}
+
+.mv-logo {
+    height: 44px;
+    width: auto;
+}
+
+.mv-dept {
+    font-size: 10pt;
+    font-weight: 700;
+    margin-bottom: 1px;
+    letter-spacing: 0.2px;
+}
+
+.mv-addr {
+    font-size: 7pt;
+    line-height: 1.15;
+    color: #111;
+}
+
+.mv-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    border: 1px solid #000;
+    margin-top: 2px;
+}
+
+.mv-td {
+    border: 1px solid #000;
+    padding: 2px 3.5px;
+    vertical-align: top;
+    font-size: 7.2pt;
+    line-height: 1.15;
+}
+
+.mv-flbl {
+    font-size: 7.2pt;
+    font-weight: 700;
+    margin-bottom: 1px;
+    display: block;
+    color: #000;
+}
+
+.mv-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 7.2pt;
+    padding: 1px 0;
+    border-radius: 0;
+    font-family: inherit;
+}
+
+.mv-input:focus {
+    outline: none;
+    background: #f0f7ff;
+}
+
+.mv-sub-table {
+    border-collapse: collapse;
+    border: 1px solid #000;
+    font-size: 7pt;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.mv-sub-table th,
+.mv-sub-table td {
+    border: 1px solid #000;
+    padding: 1.5px 2.5px;
+    font-size: 7pt;
+    vertical-align: top;
+}
+
+.mv-sub-table th {
+    background-color: #f8f8f8;
+    font-weight: 700;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.mv-tinput {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 7pt;
+    padding: 1px 2px;
+    border-radius: 0;
+    font-family: inherit;
+}
+
+.mv-tinput:focus {
+    outline: none;
+    background: #f0f7ff;
+}
+
+.mv-attest-text {
+    font-size: 7pt;
+    line-height: 1.2;
+}
+
+.mv-boxed-footer-notes {
+    font-size: 6.5pt;
+    color: #222;
+    margin-top: 2px;
+    padding-top: 1px;
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* FORMAT 2: OFFICIAL LETTERHEAD HEALTH CERTIFICATE (TC 4522)       */
+/* ════════════════════════════════════════════════════════════════ */
+.mv-letter-header {
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+.mv-letter-logo {
+    height: 48px;
+    width: auto;
+}
+
+.mv-dept-si {
+    font-size: 11.5pt;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #111;
+}
+
+.mv-dept-ta {
+    font-size: 9.5pt;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #111;
+}
+
+.mv-dept-en {
+    font-size: 10.5pt;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #000;
+}
+
+.mv-contact-line {
+    font-size: 7.2pt;
+    line-height: 1.3;
+    color: #222;
+    margin: 2px 0 1px 0;
+}
+
+.mv-addr-line {
+    font-size: 6.8pt;
+    line-height: 1.25;
+    color: #333;
+}
+
+/* ── References Grid with Curly Braces ── */
+.mv-refs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 6px 0 4px 0;
+    padding-bottom: 2px;
+}
+
+.mv-ref-block {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mv-ref-labels {
+    display: flex;
+    flex-direction: column;
+    font-size: 7.2pt;
+    line-height: 1.25;
+    color: #111;
+    flex-shrink: 0;
+}
+
+.mv-ref-brace {
+    font-size: 26pt;
+    font-weight: 200;
+    color: #333;
+    line-height: 1;
+    margin-top: -3px;
+    user-select: none;
+}
+
+.mv-ref-input {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    font-size: 8.5pt !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    height: auto !important;
+    flex: 1;
+    color: #000 !important;
+}
+
+.mv-letter-title {
+    font-size: 12.5pt;
+    font-weight: 700;
+    text-decoration: underline;
+    text-align: center;
+    letter-spacing: 0.5px;
+    margin: 6px 0 4px 0;
+}
+
+.mv-letter-stmt {
+    font-size: 8.5pt;
+    line-height: 1.38;
+    text-align: justify;
+    color: #000;
+    margin-bottom: 6px;
+    font-family: inherit;
+}
+
+.mv-letter-subtitle {
+    font-size: 9.5pt;
+    font-weight: 700;
+    text-decoration: underline;
+    text-align: center;
+    letter-spacing: 0.3px;
+    margin: 3px 0 6px 0;
+}
+
+.mv-field-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 3.5px;
+    font-size: 8.5pt;
+}
+
+.mv-field-block {
+    margin-bottom: 3.5px;
+    font-size: 8.5pt;
+}
+
+.mv-dispatch-block {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    font-size: 8.5pt;
+}
+
+.mv-letter-lbl {
+    font-size: 8.5pt;
+    color: #000;
+    flex-shrink: 0;
+}
+
+.mv-letter-input {
+    border: none !important;
+    border-bottom: 1px dotted transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 8.5pt !important;
+    font-family: inherit;
+    padding: 0 2px !important;
+    height: auto !important;
+    color: #000 !important;
+}
+
+.mv-letter-input:focus {
+    background: #f0f7ff !important;
+    border-bottom: 1px solid #3b82f6 !important;
+    outline: none !important;
+}
+
+.mv-letter-textarea {
+    border: none !important;
+    border-bottom: 1px dotted transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 8.5pt !important;
+    font-family: inherit;
+    padding: 0 2px !important;
+    line-height: 1.25;
+    color: #000 !important;
+}
+
+.mv-letter-textarea:focus {
+    background: #f0f7ff !important;
+    outline: none !important;
+}
+
+/* ── Stamp & Signature Layout ── */
+.mv-stamp-sig-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 6px;
+}
+
+.mv-stamp-col,
+.mv-sig-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.mv-officer-info {
+    font-size: 8pt;
+    color: #000;
+}
+
+/* ── Bottom Tri-lingual Contact Bar ── */
+.mv-letter-bottom-bar {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 8px;
+    border-top: 1.5px solid #000;
+    padding-top: 3px;
+    margin-top: auto;
+}
+
+.mv-bottom-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mv-bottom-labels {
+    display: flex;
+    flex-direction: column;
+    font-size: 6.8pt;
+    line-height: 1.2;
+    color: #111;
+    flex-shrink: 0;
+}
+
+.mv-bottom-val {
+    font-size: 7.2pt;
+    font-weight: 700;
+    color: #000;
+}
+
+.mv-system-note {
+    font-size: 6.5pt;
+    text-align: center;
+    color: #222;
+    margin-top: 2px;
+}
+
+/* ════ STAMP & SIGNATURE DROPZONE PLACEHOLDERS ════ */
+.mv-stamp-placeholder,
+.mv-sig-placeholder {
+    min-height: 36px;
+    max-height: 55px;
+    height: auto;
+    border: 1.2px dashed #94a3b8;
+    border-radius: 3px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.mv-stamp-placeholder:hover,
+.mv-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.mv-stamp-placeholder.mv-drop-active,
+.mv-sig-placeholder.mv-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.mv-stamp-placeholder.has-content,
+.mv-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 1px;
+}
+
+.mv-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mv-stamp-img,
+.mv-sig-img {
+    max-height: 48px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.mv-pdf-preview {
+    width: 100%;
+    height: 48px;
+    border: none;
+    pointer-events: none;
+}
+
+.mv-action-overlay {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    display: flex;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 1px 2px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.mv-stamp-placeholder:hover .mv-action-overlay,
+.mv-sig-placeholder:hover .mv-action-overlay {
+    opacity: 1;
+}
+
+.mv-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.mv-mini-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.mv-mini-btn.danger {
+    color: #ef4444;
+}
+
+.mv-mini-btn.danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.text-2xs {
+    font-size: 0.65rem;
+}
+
+.text-3xs {
+    font-size: 0.55rem;
+}
+
+/* ════ PRINT MEDIA RULES ════ */
+@media print {
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .mv-container {
+        padding: 0 !important;
+        background: #fff !important;
+        display: block !important;
+    }
+
+    .print-hide,
+    .top-nav-bar,
+    .format-selection-bar,
+    .mv-actions {
+        display: none !important;
+    }
+
+    .mv-page {
+        margin: 0 !important;
+        padding: 6mm 10mm 5mm 10mm !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        page-break-after: auto !important;
+        break-after: auto !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .mv-page.letter-page {
+        padding: 7mm 12mm 5mm 12mm !important;
+    }
+
+    .mv-stamp-placeholder,
+    .mv-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .mv-preview-container {
+        min-height: 0 !important;
+    }
+
+    .mv-action-overlay {
+        display: none !important;
+    }
+
+    .mv-input,
+    .mv-tinput,
+    .mv-letter-input,
+    .mv-letter-textarea,
+    .mv-ref-input {
+        border-bottom: none !important;
+        background: transparent !important;
+    }
+
+    .print-show {
+        display: block !important;
+    }
+}
+

@@ -1,0 +1,514 @@
+<div class="form-container">
+<p-toast></p-toast>
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">China (CH Health)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ refNumber }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+        </div>
+    </div>
+    <!-- Page 1 -->
+    <div class="cert-page">
+        <!-- Header -->
+        <div class="cert-header mb-8">
+            <div class="cert-header-top-row">
+                <div class="cert-header-spacer"></div>
+                <div class="flex justify-center items-center mb-4">
+                    <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" style="height: 90px" />
+                </div>
+                <div class="cert-header-qr-slot">
+                    <app-certificate-qr
+                        [refNumber]="refNumber"
+                        [consignor]="form.get('consignorName')?.value"
+                        [consignee]="form.get('consigneeName')?.value"
+                        [item]="form.get('commodityName')?.value"
+                        [destination]="'CHINA'"
+                        [viewOnly]="viewOnly"
+                        [size]="54">
+                    </app-certificate-qr>
+                </div>
+            </div>
+            <div class="text-right text-sm font-bold mb-2">
+                证书号 Num.Ref: <span class="font-normal">{{ refNumber || 'Ref.CH/20260217' }}</span>
+            </div>
+            <h2 class="text-center font-bold mb-2 text-lg">斯里兰卡民主社会主义共和国向中华人民共和国出口水产品卫生证书</h2>
+            <h3 class="text-center font-bold mb-4 text-xl">Health Certificate</h3>
+            <p class="text-center font-bold text-sm leading-tight">
+                For fish and fishery products intended for export from the Democratic Socialist Republic of<br />
+                Sri Lanka to the People's Republic of China
+            </p>
+        </div>
+
+        <form [formGroup]="form">
+            <!-- Section I -->
+            <h3 class="section-header">I. 主管当局信息 Information of competent authority</h3>
+            <table class="form-table">
+                <tr>
+                    <td>输出国 Country of export :</td>
+                    <td><input pInputText formControlName="countryOfExport" type="text" readonly /></td>
+                </tr>
+                <tr>
+                    <td>生产国 Country of production :</td>
+                    <td><input pInputText formControlName="countryOfProduction" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>主管当局 Competent authority :</td>
+                    <td><input pInputText formControlName="competentAuthority" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>出证部门 Department of certificate insurance :</td>
+                    <td><input pInputText formControlName="departmentOfIssuance" type="text" /></td>
+                </tr>
+            </table>
+
+            <!-- Section II -->
+            <h3 class="section-header">II. 水产品信息 Information of the fishery products</h3>
+            <table class="form-table">
+                <tr>
+                    <td>商品名称 Commodity name :</td>
+                    <td><input pInputText formControlName="commodityName" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>学名 Scientific name :</td>
+                    <td><input pInputText formControlName="scientificName" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>包装数量 Number of packages :</td>
+                    <td><input pInputText formControlName="numberOfPackages" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>净重 Net Weight :</td>
+                    <td><input pInputText formControlName="netWeight" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>生产日期 Production Date :</td>
+                    <td><p-datepicker formControlName="productionDate" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                </tr>
+                <tr>
+                    <td>生产批号 Lot No. of products :</td>
+                    <td><input pInputText formControlName="lotNoOfProducts" type="text" /></td>
+                </tr>
+            </table>
+
+            <!-- Section III -->
+            <h3 class="section-header">III. 水产品来源 Origin of the fishery products</h3>
+            <table class="form-table">
+                <tr>
+                    <td>原料原产国 Country of origin of raw materials :</td>
+                    <td><input pInputText formControlName="countryOfOriginRawMaterials" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>加工方式 Processing Type :</td>
+                    <td><input pInputText formControlName="processingType" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>生产方式 Production Mode :</td>
+                    <td><input pInputText formControlName="productionMode" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>养殖 Artificial culture :</td>
+                    <td>
+                        <div class="flex gap-6">
+                            <label for="ac_yes" class="flex items-center cursor-pointer select-none">
+                                <p-radiobutton name="artificialCulture" formControlName="artificialCulture" value="yes" inputId="ac_yes"></p-radiobutton>
+                                <span class="leading-none ml-2 text-sm">是 Yes</span>
+                            </label>
+                            <label for="ac_no" class="flex items-center cursor-pointer select-none">
+                                <p-radiobutton name="artificialCulture" formControlName="artificialCulture" value="no" inputId="ac_no"></p-radiobutton>
+                                <span class="leading-none ml-2 text-sm">否 No</span>
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>野生捕捞 Wild Caught :</td>
+                    <td>
+                        <div class="flex gap-6">
+                            <label for="wc_yes" class="flex items-center cursor-pointer select-none">
+                                <p-radiobutton name="wildCaught" formControlName="wildCaught" value="yes" inputId="wc_yes"></p-radiobutton>
+                                <span class="leading-none ml-2 text-sm">是 Yes</span>
+                            </label>
+                            <label for="wc_no" class="flex items-center cursor-pointer select-none">
+                                <p-radiobutton name="wildCaught" formControlName="wildCaught" value="no" inputId="wc_no"></p-radiobutton>
+                                <span class="leading-none ml-2 text-sm">否 No</span>
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>生产水域性质 Character of productive water area :</td>
+                    <td>
+                        <div class="flex gap-6">
+                            <label for="cowa_fresh" class="flex items-center cursor-pointer select-none">
+                                <p-radiobutton name="characterOfProductiveWaterArea" formControlName="characterOfProductiveWaterArea" value="Fresh water" inputId="cowa_fresh"></p-radiobutton>
+                                <span class="leading-none ml-2 text-sm">淡水 Fresh water</span>
+                            </label>
+                            <label for="cowa_sea" class="flex items-center cursor-pointer select-none">
+                                <p-radiobutton name="characterOfProductiveWaterArea" formControlName="characterOfProductiveWaterArea" value="Sea water" inputId="cowa_sea"></p-radiobutton>
+                                <span class="leading-none ml-2 text-sm">海水 Sea water</span>
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>养殖区域 Aquaculture area :</td>
+                    <td><input pInputText formControlName="aquacultureArea" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>捕捞区域 Catch area :</td>
+                    <td><input pInputText formControlName="catchArea" type="text" /></td>
+                </tr>
+            </table>
+
+            <div class="page-break"></div>
+
+            <!-- Page 2 -->
+            <!-- Section IV -->
+            <h3 class="section-header">IV. 企业信息 Information of the establishments</h3>
+            <table class="form-table">
+                <tr>
+                    <td>养殖场名称和原料原产国官方批准的注册编号 Aquaculture farm name and registration number approved by Country of origin of raw materials :</td>
+                    <td><textarea pInputTextarea formControlName="aquacultureFarmDetails" rows="2" [autoResize]="true"></textarea></td>
+                </tr>
+                <tr>
+                    <td>捕捞渔船船名、注册编号和船籍 Name of Fishing Vessel, Registration number and Flag of the Vessel :</td>
+                    <td><textarea pInputTextarea formControlName="fishingVesselDetails" rows="2" [autoResize]="true"></textarea></td>
+                </tr>
+                <tr>
+                    <td>捕捞加工渔船船名、注册编号和船籍 Name of Fishing and Factory Vessel, Registration number and Flag of the Vessel :</td>
+                    <td><textarea pInputTextarea formControlName="fishingFactoryVesselDetails" rows="2" [autoResize]="true"></textarea></td>
+                </tr>
+                <tr>
+                    <td>运输渔船船名、注册编号和船籍 Name of Transport Fishing Vessel, Registration number and Flag of the Vessel :</td>
+                    <td><textarea pInputTextarea formControlName="transportFishingVesselDetails" rows="2" [autoResize]="true"></textarea></td>
+                </tr>
+                <tr>
+                    <td>加工工厂名称和注册编号 Name of Processing Plant & Registration number of the Plant :</td>
+                    <td><textarea pInputTextarea formControlName="processingPlantDetails" rows="2" [autoResize]="true"></textarea></td>
+                </tr>
+                <tr>
+                    <td>原料存放独立冷库名称、注册编号和所属国 Name of Independent cold storage for raw materials, Registration number and host country of the Storage :</td>
+                    <td><textarea pInputTextarea formControlName="coldStorageRawMaterialsDetails" rows="2" [autoResize]="true"></textarea></td>
+                </tr>
+                <tr>
+                    <td>成品存放独立冷库名称、注册编号和所属国 Name of Independent cold storage for products, Registration number and host country of the Storage :</td>
+                    <td><textarea pInputTextarea formControlName="coldStorageProductsDetails" rows="2" [autoResize]="true"></textarea></td>
+                </tr>
+            </table>
+
+            <!-- Section V -->
+            <h3 class="section-header">V. 运输信息 Information of Transport</h3>
+            <table class="form-table">
+                <tr>
+                    <td>托运人 / Consignor :</td>
+                    <td>
+                        <div>
+                            <label class="inline-block mb-1">姓名 / Name:</label>
+                            <input pInputText formControlName="consignorName" type="text" />
+                        </div>
+                        <div class="mt-4">
+                            <label class="inline-block mb-1">地址 / Address:</label>
+                            <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>进口商 / Consignee :</td>
+                    <td>
+                        <div>
+                            <label class="inline-block mb-1">姓名 / Name:</label>
+                            <input pInputText formControlName="consigneeName" type="text" />
+                        </div>
+                        <div class="mt-4">
+                            <label class="inline-block mb-1">地址 / Address:</label>
+                            <textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>发货地 Place of dispatch production :</td>
+                    <td><input pInputText formControlName="placeOfDispatchProduction" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>目的地 Place of destination :</td>
+                    <td><input pInputText formControlName="placeOfDestination" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>运输工具信息 Means of transport</td>
+                    <td>
+                        <div class="checkbox-grid">
+                            <p-checkbox formControlName="transportAeroPlane" binary="true"></p-checkbox>
+                            <label>Aero plane</label>
+                            <p-checkbox formControlName="transportShip" binary="true"></p-checkbox>
+                            <label>Ship</label>
+                            <p-checkbox formControlName="transportRailwayWagon" binary="true"></p-checkbox>
+                            <label>Railway wagon</label>
+                            <p-checkbox formControlName="transportRoadVehicle" binary="true"></p-checkbox>
+                            <label>Road vehicle</label>
+                            <p-checkbox formControlName="transportOther" binary="true"></p-checkbox>
+                            <label>Other</label>
+                        </div>
+                        <div>
+                            <label class="inline-block mb-1 mt-5">Identification - Document references</label>
+                            <textarea pInputTextarea formControlName="identificationDocumentReferences" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>船只名称 Name of Vessel :</td>
+                    <td><input pInputText formControlName="nameOfVessel" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>航班号 Flight Number :</td>
+                    <td><input pInputText formControlName="flightNumber" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>其他运输工具信息 Other transport means :</td>
+                    <td><input pInputText formControlName="otherTransportMeans" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>集装箱号 Container Number :</td>
+                    <td><input pInputText formControlName="containerNumber" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>封识号 Seal Number :</td>
+                    <td><input pInputText formControlName="sealNumber" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>启运日期 Date of departure :</td>
+                    <td><p-datepicker formControlName="dateOfDeparture" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                </tr>
+            </table>
+
+            <div class="page-break"></div>
+
+            <!-- Page 3 -->
+            <!-- Section VI -->
+            <h3 class="section-header">VI. 健康声明 Health Attestation</h3>
+            <div class="statement-box px-8 py-6 text-sm text-justify leading-relaxed">
+                <p class="font-bold mb-4">兹证明: This is to certify that:</p>
+                <ol class="list-decimal space-y-4">
+                    <li>
+                        该产品在主管当局推荐在华注册的捕捞渔船、运输渔船、捕捞加工渔船、独立冷库和加工企业捕捞、加工、包装、储存和运输。 The products are fished, processed, packaged, stored and transported in fishing vessels, transport fishing
+                        vessels, fishing and factory vessels, independent cold storages and processing plants, which are registered in China recommended by the Competent Authority.
+                    </li>
+                    <li>该产品在卫生条件下生产、包装、储藏和运输，并置于主管当局监督之下。 The products were produced, packed, stored, and transported under sanitary condition, which were under the supervision of competent authority.</li>
+                    <li>
+                        该产品经主管当局检验检疫，未发现中国规定的致病微生物、有毒有害物质和异物，及中国和世界动物卫生组织(OIE)所列的疫病。 The products were inspected and quarantined by competent authority and not found any diseases, pathogenic
+                        microorganism, harmful substances and foreign substances regulated in the P.R.China and the diseases listed by China and OIE.
+                    </li>
+                    <li>该产品符合兽医卫生要求，适合人类食用。 The products meet veterinary sanitary requirements and are fit for human consumption.</li>
+                    <li>
+                        证书中所载的养殖场、加工厂、捕捞渔船、捕捞加工渔船、运输船、独立冷库均能按照联合国粮农组织和世界卫生组织发布的《新冠肺炎和食品安全：对食品企业指南》，建立有效的食品安全管理体系，做好各项防控措施，确保输华产品未被新冠病毒污染。
+                        The aquaculture farm, processing plant, fish vessel, fish and factory vessel, transport vessel and independent cold storage in the certificate have established effective food safety management system according to the COVID-19
+                        and food safety: guidance for businesses announced by FAO/WHO, and enact all kinds of protective measures to ensure that the products are not polluted by the Covid-19 virus.
+                    </li>
+                </ol>
+            </div>
+
+            <table class="form-table mt-8">
+                <tr>
+                    <td class="w-1/2">
+                        <div class="mb-4">
+                            <label class="block font-bold mb-1">签发地点 Place of Issue :</label>
+                            <input pInputText formControlName="placeOfIssue" type="text" class="w-full" />
+                        </div>
+                    </td>
+                    <td class="w-1/2">
+                        <div class="mb-4">
+                            <label class="block font-bold mb-1">签发日期 Date of Issue :</label>
+                            <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="stamp-signature-container">
+                            <div class="stamp-box">
+                                <label class="block font-semibold mb-1">官方印章 Official Stamp</label>
+                                <div
+                                    class="ch-upload-placeholder"
+                                    [class.ch-drop-active]="isDraggingStamp"
+                                    [class.has-content]="!!form.get('officialStamp')?.value"
+                                    (click)="!viewOnly && stampInput.click()"
+                                    (dragover)="onStampDragOver($event)"
+                                    (dragleave)="onStampDragLeave($event)"
+                                    (drop)="onStampDrop($event)"
+                                    (paste)="onStampPaste($event)"
+                                    tabindex="0"
+                                >
+                                    <input type="file" #stampInput (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                    <!-- Empty State -->
+                                    <div *ngIf="!form.get('officialStamp')?.value" class="flex flex-col items-center justify-center p-3 text-center">
+                                        <i class="pi pi-shield text-slate-400 text-lg mb-1 print-hide"></i>
+                                        <span class="print-hide text-xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                        <span class="print-show text-xs text-slate-400 italic">Stamp Area</span>
+                                    </div>
+
+                                    <!-- Uploaded Image -->
+                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
+                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ch-preview-img" />
+                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInput.click()" title="Change Stamp">
+                                                <i class="pi pi-pencil text-xs"></i>
+                                            </button>
+                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                <i class="pi pi-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Uploaded PDF -->
+                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
+                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ch-pdf-preview"></object>
+                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInput.click()" title="Change Stamp">
+                                                <i class="pi pi-pencil text-xs"></i>
+                                            </button>
+                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                <i class="pi pi-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="signature-box">
+                                <label class="block font-semibold mb-1">官方兽医签字 Official Veterinary Signature</label>
+                                <div
+                                    class="ch-upload-placeholder"
+                                    [class.ch-drop-active]="isDraggingSignature"
+                                    [class.has-content]="!!form.get('officialSignature')?.value"
+                                    (click)="!viewOnly && sigInput.click()"
+                                    (dragover)="onSignatureDragOver($event)"
+                                    (dragleave)="onSignatureDragLeave($event)"
+                                    (drop)="onSignatureDrop($event)"
+                                    (paste)="onSignaturePaste($event)"
+                                    tabindex="0"
+                                >
+                                    <input type="file" #sigInput (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                    <!-- Empty State -->
+                                    <div *ngIf="!form.get('officialSignature')?.value" class="flex flex-col items-center justify-center p-3 text-center">
+                                        <i class="pi pi-pencil text-slate-400 text-lg mb-1 print-hide"></i>
+                                        <span class="print-hide text-xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                        <span class="print-show text-xs text-slate-400 italic">Signature Area</span>
+                                    </div>
+
+                                    <!-- Uploaded Image -->
+                                    <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="ch-preview-container">
+                                        <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="ch-preview-img" />
+                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); sigInput.click()" title="Change Signature">
+                                                <i class="pi pi-pencil text-xs"></i>
+                                            </button>
+                                            <button type="button" class="ch-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                <i class="pi pi-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Uploaded PDF -->
+                                    <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="ch-preview-container">
+                                        <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="ch-pdf-preview"></object>
+                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); sigInput.click()" title="Change Signature">
+                                                <i class="pi pi-pencil text-xs"></i>
+                                            </button>
+                                            <button type="button" class="ch-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                <i class="pi pi-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="page-break"></div>
+
+            <!-- Page 4 -->
+            <div class="attachment-section">
+                <h2 class="text-center font-bold text-lg mb-8">Attachment to the Veterinary certificate number: .............</h2>
+                <div class="flex flex-col md:flex-row justify-between mb-4 text-md font-bold uppercase">
+                    <div class="mb-4">
+                        <label class="block font-bold mb-1">Date :</label>
+                        <p-datepicker formControlName="dateOfAttachment" [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block font-bold mb-1">DFAR/FPE/98</label>
+                        <input pInputText formControlName="dfarFpe" type="text" class="w-full" />
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="form-table border border-black product-table">
+                        <thead>
+                            <tr class="bg-gray-100 text-sm font-bold">
+                                <th class="border border-black p-2 text-left">Product</th>
+                                <th class="border border-black p-2 text-left w-32">Net weight (kg)</th>
+                                <th class="border border-black p-2 text-left w-32">Number of boxes</th>
+                                <th class="border border-black p-2 text-center w-16 print-hide">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="attachments">
+                            <tr *ngFor="let item of attachments.controls; let i = index" [formGroupName]="i">
+                                <td class="border border-black p-0"><input pInputText formControlName="product" class="w-full border-none p-2" /></td>
+                                <td class="border border-black p-0"><input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" type="number" class="w-full border-none p-2" /></td>
+                                <td class="border border-black p-0"><input pInputText formControlName="numberOfBoxes" (keypress)="onlyDigits($event)" inputmode="numeric" type="number" class="w-full border-none p-2" /></td>
+                                <td class="border border-black p-2 text-center print-hide">
+                                    <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeAttachment(i)"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="font-bold">
+                                <td class="border border-black p-2 text-right">TOTAL</td>
+                                <td class="border border-black p-2">{{ calculateTotalNetWeight() }}</td>
+                                <td class="border border-black p-2">{{ calculateTotalNumberOfBoxes() }}</td>
+                                <td class="print-hide"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="mb-4 print-hide">
+                    <button pButton label="Add Product Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addAttachment()"></button>
+                </div>
+            </div>
+        </form>
+        <!-- Actions -->
+        <div class="ch-actions print-hide flex items-center justify-between gap-3 mt-4">
+            <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+            <div class="flex items-center gap-2">
+                <p-button
+                    label="Print"
+                    [outlined]="true"
+                    (onClick)="print()"
+                    icon="pi pi-print"
+                    [disabled]="isCompany && !isApproved"
+                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print Certificate'"
+                    tooltipPosition="top"
+                ></p-button>
+                <p-button label="Submit" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary"></p-button>
+            </div>
+        </div>
+    </div>
+</div>

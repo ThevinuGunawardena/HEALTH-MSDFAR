@@ -1,0 +1,138 @@
+<section class="admin-dashboard">
+    <p-toast></p-toast>
+
+    <header class="hero-card">
+        <div class="eyebrow">
+            <h1>Welcome back,</h1>
+            <p>{{ userName() }}.</p>
+        </div>
+
+        <div class="hero-actions">
+            <a pButton label="Open Requests" icon="pi pi-arrow-right" routerLink="/uikit/admin/certificate-requests"></a>
+        </div>
+    </header>
+
+    <div *ngIf="lastUpdated" class="meta-row">
+        Last updated
+        <p>{{ lastUpdated | date: 'MMM d, y, h:mm a' }}</p>
+    </div>
+
+    <section class="metrics-grid">
+        <article *ngFor="let metric of metrics" class="metric-card" [class]="'metric-card accent-' + metric.accent">
+            <div class="metric-top">
+                <span class="metric-icon">
+                    <i [class]="getMetricIcon(metric.accent)"></i>
+                </span>
+                <span class="metric-label">{{ metric.label }}</span>
+            </div>
+            <strong class="metric-value">{{ metric.value }}</strong>
+            <span class="metric-detail">{{ metric.detail }}</span>
+        </article>
+    </section>
+
+    <section class="content-grid">
+        <p-card styleClass="panel-card quick-actions-panel">
+            <ng-template pTemplate="content">
+                <div class="panel-header">
+                    <div>
+                        <h2>Quick actions</h2>
+                        <p>Jump into the pages that matter most for daily operations.</p>
+                    </div>
+                </div>
+
+                <div class="action-list">
+                    <p-card *ngFor="let action of quickActions" styleClass="quick-action-card" [routerLink]="action.route">
+                        <ng-template pTemplate="content">
+                            <div class="quick-action-row">
+                                <span class="action-icon"><i [class]="action.icon"></i></span>
+                                <span class="quick-action-text">
+                                    <strong>{{ action.title }}</strong>
+                                    <small>{{ action.description }}</small>
+                                </span>
+                                <a pButton [routerLink]="action.route" icon="pi pi-arrow-right" severity="secondary" [text]="true" ariaLabel="Open action" class="quick-action-go"></a>
+                            </div>
+                        </ng-template>
+                    </p-card>
+                </div>
+            </ng-template>
+        </p-card>
+
+        <p-card *ngIf="showCompanyPanel()" styleClass="panel-card companies-panel">
+            <ng-template pTemplate="content">
+                <div class="panel-header">
+                    <div>
+                        <h2>Registered companies</h2>
+                        <p>Latest companies available in the system.</p>
+                    </div>
+                    <a class="text-link" routerLink="/uikit/admin/company-list">View full list</a>
+                </div>
+
+                <div class="table-shell" *ngIf="registeredCompanies.length > 0; else noCompanies">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let company of registeredCompanies | slice: 0 : 5">
+                                <td class="reference" data-label="Company">{{ company.name }}</td>
+                                <td data-label="Email">{{ company.email }}</td>
+                                <td data-label="Phone">{{ company.phone }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <ng-template #noCompanies>
+                    <div class="empty-state">No registered companies found.</div>
+                </ng-template>
+            </ng-template>
+        </p-card>
+    </section>
+
+    <p-card styleClass="panel-card recent-panel">
+        <ng-template pTemplate="content">
+            <div class="panel-header">
+                <div>
+                    <h2>Recent certificate requests</h2>
+                    <p>The latest submissions across the platform.</p>
+                </div>
+                <a class="text-link" routerLink="/uikit/admin/certificate-requests">View full queue</a>
+            </div>
+
+            <div class="table-shell" *ngIf="recentRequests.length > 0; else emptyRequests">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Company</th>
+                            <th>Type</th>
+                            <th>Country</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let request of recentRequests">
+                            <td class="reference">{{ request.referenceNumber }}</td>
+                            <td>{{ request.company }}</td>
+                            <td>{{ request.type }}</td>
+                            <td>{{ request.country }}</td>
+                            <td>
+                                <p-tag [value]="request.status" [severity]="getStatusSeverity(request.status)"></p-tag>
+                            </td>
+                            <td>{{ request.createdAt | date: 'MMM d, y' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <ng-template #emptyRequests>
+                <div class="empty-state">No certificate requests are available yet.</div>
+            </ng-template>
+        </ng-template>
+    </p-card>
+</section>

@@ -1,0 +1,610 @@
+<div class="id-container">
+    <p-toast></p-toast>
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Indonesia (ID)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <span *ngIf="form.get('numberNomor')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold">Ref: {{ form.get('numberNomor')?.value || refNumber }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Sample (ID 8813)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleData()"
+                pTooltip="Load standard Indonesia Certificate Sample (ID 8813)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+    <form [formGroup]="form">
+        <!-- ════ PAGE 1 — PDF 1/3 ════ -->
+        <div class="id-page">
+            <div class="id-content">
+                <!-- Header -->
+                <div class="id-header">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="id-logo-row">
+                            <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="id-logo" />
+                        </div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('numberNomor')?.value || refNumber"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorName')?.value"
+                                [consignee]="form.get('consigneeName')?.value"
+                                [date]="form.get('dateOfIssue')?.value || form.get('certifiedDate')?.value"
+                                [officer]="form.get('signatoryName')?.value"
+                                [destination]="'Indonesia'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="id-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="id-addr">P.O. Box 531, Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                    <div class="id-addr">Telephone: +94-2449170, 2472186, 2472192</div>
+                    <div class="id-addr">Fax: +94-11-2424086, 2449170</div>
+                    <div class="id-addr">E-mail: dgdfar&#64;gmail.com</div>
+                </div>
+
+                <!-- Certificate title -->
+                <div class="id-cert-title">HEATH CERTIFICATE FOR FISH AND FISHERY PRODUCTS EXPORTED TO THE REPUBLIC OF INDONESIA</div>
+                <div class="id-cert-subtitle">SERTIFIKAT KESEHATAN IKAN DAN PRODUK PERIKANAN YANG DIEKSPOR KE NEGARA REPUBLIK INDONESIA</div>
+
+                <!-- Number / Nomor -->
+                <div class="id-number-row">
+                    <span class="id-number-label font-bold">Number/Nomor:</span>
+                    <input pInputText formControlName="numberNomor" class="id-input id-number-input font-bold" placeholder="ID 8813" />
+                </div>
+
+                <!-- Product table label -->
+                <div class="id-table-label font-bold">Description of fish and fishery products/Deskripsi ikan dan produk perikanan</div>
+
+                <!-- Product table -->
+                <table class="id-prod-table" *ngIf="!viewOnly">
+                    <thead>
+                        <tr>
+                            <th class="id-th-no">No</th>
+                            <th>Common name/Nama umun</th>
+                            <th>Scientific name/Nama ilmiah</th>
+                            <th class="id-th-md">HS Code/Kode HS</th>
+                            <th class="id-th-md">Quantity/Jumlah</th>
+                            <th class="id-th-sm">Unit</th>
+                            <th class="id-th-act print-hide"></th>
+                        </tr>
+                    </thead>
+                    <tbody formArrayName="products">
+                        <tr *ngFor="let product of products.controls; let i = index" [formGroupName]="i">
+                            <td><input pInputText formControlName="no" class="id-tinput text-center" /></td>
+                            <td><textarea pInputTextarea formControlName="commonName" rows="1" [autoResize]="true" class="id-tinput"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="scientificName" rows="1" [autoResize]="true" class="id-tinput italic"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="hsCode" rows="1" [autoResize]="true" class="id-tinput"></textarea></td>
+                            <td><input pInputText formControlName="quantity" (keypress)="onlyDecimals($event)" inputmode="decimal" type="number" class="id-tinput" /></td>
+                            <td><input pInputText formControlName="unit" class="id-tinput" /></td>
+                            <td class="id-act-td print-hide">
+                                <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeProduct(i)"></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="id-tfoot-label">Total:</td>
+                            <td class="id-tfoot-val"></td>
+                            <td class="id-tfoot-val">{{ calculateTotalQuantity() }}</td>
+                            <td></td>
+                            <td class="print-hide"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <table class="id-prod-table" *ngIf="viewOnly">
+                    <thead>
+                        <tr>
+                            <th class="id-th-no">No</th>
+                            <th>Common name/Nama umun</th>
+                            <th>Scientific name/Nama ilmiah</th>
+                            <th class="id-th-md">HS Code/Kode HS</th>
+                            <th class="id-th-md">Quantity/Jumlah</th>
+                            <th class="id-th-sm">Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let product of productRows; let i = index">
+                            <td class="text-center">{{ product.no || i + 1 }}</td>
+                            <td>{{ product.commonName }}</td>
+                            <td class="italic">{{ product.scientificName }}</td>
+                            <td>{{ product.hsCode }}</td>
+                            <td>{{ product.quantity }}</td>
+                            <td>{{ product.unit }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="id-tfoot-label">Total:</td>
+                            <td class="id-tfoot-val"></td>
+                            <td class="id-tfoot-val">{{ calculateTotalQuantity() }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="print-hide id-mt4" *ngIf="!viewOnly">
+                    <button pButton label="Add Product Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addProduct()"></button>
+                </div>
+
+                <!-- Fields 01 / 02 / 03 — two-column bordered table matching PDF -->
+                <table class="id-main-table id-mt6">
+                    <!-- 01 Consignor | 02 Competent authority -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">01. Consignor/Pengirim barang</div>
+                            <div class="id-sub">Name/Nana:</div>
+                            <input pInputText formControlName="consignorName" class="id-input" />
+                            <div class="id-sub id-mt6">Address/Alamat:</div>
+                            <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="id-input"></textarea>
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">02. Competent authority/Otoritas kompeten:</div>
+                            <div class="id-static-val">DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES</div>
+                        </td>
+                    </tr>
+
+                    <!-- 03 Consignee — full width -->
+                    <tr>
+                        <td class="id-td" colspan="2">
+                            <div class="id-flabel">03. Consignee/Penerima barang</div>
+                            <div class="id-sub">Name/Nana:</div>
+                            <input pInputText formControlName="consigneeName" class="id-input" />
+                            <div class="id-sub id-mt6">Address/Alamat:</div>
+                            <textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="id-input"></textarea>
+                        </td>
+                    </tr>
+
+                    <!-- 04 Establishment — full width -->
+                    <tr>
+                        <td class="id-td" colspan="2">
+                            <div class="id-sec4-title id-mt2 flex items-center gap-4 flex-wrap">
+                                <span class="id-sub font-bold">04.</span>
+                                <label class="id-cb"><p-checkbox formControlName="establishmentAquaculture" binary="true"></p-checkbox><span>Aquaculture establishment/Unit pembudidayaan Ikan</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="establishmentProcessing" binary="true"></p-checkbox><span>Fish processing establishment/Unit pengolahan Ikan</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="establishmentOther" binary="true"></p-checkbox><span>other/Lainnya</span></label>
+                            </div>
+
+                            <div class="id-est-two-col id-mt4">
+                                <div class="id-est-field">
+                                    <span class="id-sub id-est-label">Name/Nama:</span>
+                                    <input pInputText formControlName="establishmentName" class="id-input id-est-input" />
+                                </div>
+                                <div class="id-est-field">
+                                    <span class="id-sub id-est-label">Establishment ID Number/No Registrasi:</span>
+                                    <input pInputText formControlName="establishmentRegNo" class="id-input id-est-input" />
+                                </div>
+                            </div>
+
+                            <div class="id-mt4">
+                                <span class="id-sub">Address(detailed)/Alamat (lengkap):</span>
+                                <textarea pInputTextarea formControlName="establishmentAddress" rows="2" [autoResize]="true" class="id-input"></textarea>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- 5 Country | 6 Source — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">5. Country and region of origin/Negara dan daerah asal:</div>
+                            <input pInputText formControlName="countryRegionOrigin" class="id-input id-mt4" />
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">6. Source/Sumber:</div>
+                            <div class="id-cb-row id-mt4 flex gap-4">
+                                <label class="id-cb"><p-checkbox formControlName="sourceFarmRaised" binary="true"></p-checkbox><span>Farm-raised/budidaya</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="sourceWildCaught" binary="true"></p-checkbox><span>Wild-caught/tangkap</span></label>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="id-footer">
+                <span class="id-footer-brand">Veterinary Certificate — Indonesia</span>
+                <span class="id-footer-cert-no font-bold">CERTIFICATE NO: {{ form.get('numberNomor')?.value || refNumber || '' }}</span>
+                <span class="id-footer-page">1/3</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 2 — PDF 2/3 ════ -->
+        <div class="id-page">
+            <div class="id-content">
+                <table class="id-main-table">
+                    <!-- 7 Port of shipment | 8 Means of transport — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">7. Port of shipment/pelabuhan pengeluaran:</div>
+                            <input pInputText formControlName="portOfShipment" class="id-input id-mt4" />
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">8. Mean of transport/Alat transportasi:</div>
+                            <div class="id-cb-col id-mt4">
+                                <label class="id-cb"><p-checkbox formControlName="transportAir" binary="true"></p-checkbox><span>Aeroplane/Angkutan udara</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="transportSea" binary="true"></p-checkbox><span>Ship/Angkutan laut</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="transportRoad" binary="true"></p-checkbox><span>Road vehicle/Angkutan darat</span></label>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- 9 Description of commodity | 10 Temperature — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">9. Description of commodity/Deskripsi komoditas:</div>
+                            <textarea pInputTextarea formControlName="commodityDescription" rows="2" [autoResize]="true" class="id-input id-mt4"></textarea>
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">10. Temperature of the commodity/Temperatur komoditas:</div>
+                            <div class="id-cb-col id-mt4">
+                                <label class="id-cb"><p-checkbox formControlName="tempAmbient" binary="true"></p-checkbox><span>Ambient/suhu ruang</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="tempFrozen" binary="true"></p-checkbox><span>Frozen/beku</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="tempChilled" binary="true"></p-checkbox><span>Chilled/dingin</span></label>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- 11 Intended use | 12 Total number of package — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">11. Commodities intended for uses as/Komoditas diperuntukkan sebagai:</div>
+                            <div class="id-cb-col id-mt4">
+                                <label class="id-cb"><p-checkbox formControlName="intendedHumanConsumption" binary="true"></p-checkbox><span>Human consumption/Konsumsi manusia</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="intendedCultureBreeding" binary="true"></p-checkbox><span>Culture/breeding(broodstock, eggs, gametes)/Budidaya</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="intendedTrade" binary="true"></p-checkbox><span>Trade/diperdagangkan</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="intendedResearch" binary="true"></p-checkbox><span>Research &amp;investigation/Penelition dan pemeriksaan</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="intendedFishFeed" binary="true"></p-checkbox><span>Fish feed/baits/pakan/umpan pancing</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="intendedExhibition" binary="true"></p-checkbox><span>Exibition/pameran</span></label>
+                                <label class="id-cb"><p-checkbox formControlName="intendedOther" binary="true"></p-checkbox><span>Other/lainnya</span></label>
+                            </div>
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">12. total number of package, associated batch numbers and number of packages per batch/jumlah kemasan total terkait nomor batch dan kemasan per batch:</div>
+                            <textarea pInputTextarea formControlName="totalPackages" rows="2" [autoResize]="true" class="id-input id-mt4"></textarea>
+                            <div class="id-note mt-2">*(information on batch see attachment if insufficient/informasi tentang atch dapat dilihat pada lampiran jika kolom tidak cukup)</div>
+                        </td>
+                    </tr>
+
+                    <!-- 13 Packaging type | 14 Total quantity — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">13. type of packaging/jenis kemasan:</div>
+                            <input pInputText formControlName="packagingType" class="id-input id-mt4" />
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">14. Total quantity (Kg)/Jumlah total (Kg):</div>
+                            <input pInputText formControlName="totalQuantityKg" (keypress)="onlyDecimals($event)" inputmode="decimal" class="id-input id-mt4" />
+                        </td>
+                    </tr>
+
+                    <!-- 15 Container/seal | 16 Port of destination — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">15. Identification of container/seal number/Identifikasi container/nomor segel:</div>
+                            <input pInputText formControlName="containerSealNumber" class="id-input id-mt4" />
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">16. Port of destination/pelabuhan tujuan:</div>
+                            <input pInputText formControlName="portOfDestination" class="id-input id-mt4" />
+                        </td>
+                    </tr>
+
+                    <!-- 17 Transport identification — full width -->
+                    <tr>
+                        <td class="id-td" colspan="2">
+                            <div class="id-flabel">17. identification of transport/identitas alat transport:</div>
+                            <div class="id-inline-row id-mt4">
+                                <span class="id-inline-lbl">Name of vessel/nama kapal:</span>
+                                <input pInputText formControlName="transportVesselName" class="id-input id-flex1" />
+                            </div>
+                            <div class="id-inline-row id-mt4">
+                                <span class="id-inline-lbl">Voyage number/nomor penerbangan:</span>
+                                <input pInputText formControlName="transportVoyageNumber" class="id-input id-flex1" />
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- 18 Date of departure — full width -->
+                    <tr>
+                        <td class="id-td" colspan="2">
+                            <div class="id-flabel">18.Date of departure/tanggal pengiriman:</div>
+                            <p-datepicker formControlName="dateOfDeparture" [showIcon]="true" appendTo="body" class="id-mt4"></p-datepicker>
+                        </td>
+                    </tr>
+
+                    <!-- 19 Testing lab | 20 Address — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">19. testing laboratory/laboratorium penguji:</div>
+                            <textarea pInputTextarea formControlName="testingLaboratory" rows="2" [autoResize]="true" class="id-input id-mt4"></textarea>
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">20. Address/Alamat:</div>
+                            <textarea pInputTextarea formControlName="laboratoryAddress" rows="2" [autoResize]="true" class="id-input id-mt4"></textarea>
+                        </td>
+                    </tr>
+
+                    <!-- 21 Approving officer | 22 Test result number — two columns -->
+                    <tr>
+                        <td class="id-td id-col-l">
+                            <div class="id-flabel">21. Approving officer name/penanggungijanab laboratorium:</div>
+                            <input pInputText formControlName="approvingOfficerName" class="id-input id-mt4" />
+                        </td>
+                        <td class="id-td id-col-r">
+                            <div class="id-flabel">22. test result number/Nomor laporan hasil uji:</div>
+                            <input pInputText formControlName="testResultNumber" class="id-input id-mt4" />
+                        </td>
+                    </tr>
+
+                    <!-- Signature row -->
+                    <tr>
+                        <td class="id-td id-sig-cell" colspan="2">
+                            <div class="id-sig-wrap">
+                                <div class="id-sig-line"></div>
+                                <div class="id-sig-txt">Signature/tanda tangan:</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="id-footer">
+                <span class="id-footer-brand">Veterinary Certificate — Indonesia</span>
+                <span class="id-footer-cert-no font-bold">CERTIFICATE NO: {{ form.get('numberNomor')?.value || refNumber || '' }}</span>
+                <span class="id-footer-page">2/3</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 3 — PDF 3/3 ════ -->
+        <div class="id-page last-page">
+            <div class="id-content">
+                <!-- Ref number -->
+                <div class="id-ref-row">
+                    <span class="id-ref-lbl font-bold">Ref number:</span>
+                    <input pInputText formControlName="attestationRefNumber" class="id-input id-ref-input font-bold" placeholder="ID 8813" />
+                </div>
+
+                <!-- Attestation block -->
+                <div class="id-attest-block">
+                    <div class="id-attest-hdr">Attestation</div>
+                    <div class="id-attest-intro">The undersigned certifying official certifies that the product(s)/Pejabat penandatangan sertifikat di bawah ini menyatakan bahwa produck:</div>
+
+                    <div class="id-prod-type-row id-mt4 flex gap-4 flex-wrap">
+                        <label class="id-cb"><p-checkbox formControlName="attestFinfish" binary="true"></p-checkbox><span>Finfish/Ikan bersirip</span></label>
+                        <label class="id-cb"><p-checkbox formControlName="attestMollusca" binary="true"></p-checkbox><span>Mollusca/moluska</span></label>
+                        <label class="id-cb"><p-checkbox formControlName="attestCrustacea" binary="true"></p-checkbox><span>Crustacea/krustasea</span></label>
+                        <label class="id-cb"><p-checkbox formControlName="attestFisheryProducts" binary="true"></p-checkbox><span>Fishery products/produk perikanan</span></label>
+                        <label class="id-cb"><p-checkbox formControlName="attestOther" binary="true"></p-checkbox><span>Other/lainnya</span></label>
+                    </div>
+
+                    <div class="id-attest-satisfy id-mt4">Others described above satisfy(s) the following requirements/yang diuraikan di atas memenuhi persyaratan berikut:</div>
+
+                    <div class="id-attest-clauses id-mt4">
+                        <div class="id-clause-row flex items-start gap-2 mb-2">
+                            <p-checkbox formControlName="attestClauseA" binary="true" class="mt-1"></p-checkbox>
+                            <p class="id-clause flex-1">
+                                <span class="font-bold">a.</span> The product from each batch/Commodity from population (*) described above have been processed, inspected and graded in (an) establishment(s) that has been approved by and under control of the Competent Authority/Produk tersebut di atas telah diproses, diinspeksi dan dinilai dalam kondisi yang telah disetujui oleh dan di bawah kendali Otoritas Kompeten
+                            </p>
+                        </div>
+                        <div class="id-clause-row flex items-start gap-2 mb-2">
+                            <p-checkbox formControlName="attestClauseB" binary="true" class="mt-1"></p-checkbox>
+                            <p class="id-clause flex-1">
+                                <span class="font-bold">b.</span> Have been handled, prepared or processed, identified, stored and transported under a competent HACCP and sanitary programme consistently implemented and in accordance with the requirements laid down in Codex Code of practice for Fish and Fishery Products (CAC/RCP 52-2003)/telah ditangani, disiapkan atau diproses, diidentifikasi, disimpan dan ditransportasikan sesuai persyaratan sanitasi dan HACCP yang diterapkan secara konsisten dan sesuai dengan persyaratan yang ditetapkan Codex Code of Practice for Fish and Fishery Products (CAC/RCP 52-2003)
+                            </p>
+                        </div>
+                        <div class="id-clause-row flex items-start gap-2 mb-2">
+                            <p-checkbox formControlName="attestClauseC" binary="true" class="mt-1"></p-checkbox>
+                            <p class="id-clause flex-1">
+                                <span class="font-bold">c.</span> The product from each batch/Commodity from population (*) has been found to be free of disease based on sampling and testing method recognized by the World Organisation for Animal Health (OIE) for demonstrating absence of disease and inspected according to the appropriate procedures and subsequently found, at the time of inspection:/Produk/dari setiap batch pasca pengolahan babas dari penyakit berdasarkan pengambilan sampel dan metode pengujian yang diakui oleh World Organisation for Animal Health (OIE) dan pada saat pemeriksaan:
+                            </p>
+                        </div>
+                        <div class="id-subclause-list pl-6 space-y-2">
+                            <div class="id-subclause-row flex items-start gap-2">
+                                <p-checkbox formControlName="attestClauseCCrustacean" binary="true" class="mt-1"></p-checkbox>
+                                <span class="id-bullet-txt flex-1">- For crustacean declared free from AHPND, IHHNV, YHV, TSV, WSSV, WTD, IMNV, LNV and Crayfish plague.<br><span class="text-xs text-gray-600">(untuk jenis krusatasea bebas dari AHPND, IHHNV, YHD, TSV, WSSV, WTD, IMNV, LsNV and Crayfish plague.)</span></span>
+                            </div>
+                            <div class="id-subclause-row flex items-start gap-2">
+                                <p-checkbox formControlName="attestClauseCCyprinidae" binary="true" class="mt-1"></p-checkbox>
+                                <span class="id-bullet-txt flex-1">- For cyprinidae declared free from SVC, KHV, RSD and Furunculosis.<br><span class="text-xs text-gray-600">(untuk jenis Carp bebas dari SVC, KHV, RSD dan Furunculosis)</span></span>
+                            </div>
+                            <div class="id-subclause-row flex items-start gap-2">
+                                <p-checkbox formControlName="attestClauseCTilapia" binary="true" class="mt-1"></p-checkbox>
+                                <span class="id-bullet-txt flex-1">- For ilapia or oreochromis declared free from TiLV, IPNV, RSIVD, VNN, RSD, ESC and Furunculosis.<br><span class="text-xs text-gray-600">(untuk jenis Tilapia atau Oreochromis bebas dari TiLV, IPNV, RSIVD, VNN, RSD, ESC dan Furunculosis)</span></span>
+                            </div>
+                            <div class="id-subclause-row flex items-start gap-2">
+                                <p-checkbox formControlName="attestClauseCCatfish" binary="true" class="mt-1"></p-checkbox>
+                                <span class="id-bullet-txt flex-1">- For catfish declared free from CCVD, VHSV, RSD, Furunculosis, ESC and EUS.<br><span class="text-xs text-gray-600">(untuk jenis Catfish bebas dari CCVD, VHSV,RSD, Furunculosis, ESC dan EUS)</span></span>
+                            </div>
+                            <div class="id-subclause-row flex items-start gap-2">
+                                <p-checkbox formControlName="attestClauseCOtherFish" binary="true" class="mt-1"></p-checkbox>
+                                <span class="id-bullet-txt flex-1">- For other fish species, declared free in accordance with the list of fish diseases of OIE relevant to the susceptible species.<br><span class="text-xs text-gray-600">(untuk jenis ikan lainnya, mengikuti daftar penyakit hewan akuatik OIE yang relevan dengan spesies rentan tersebut)</span></span>
+                            </div>
+                            <div class="id-subclause-row flex items-start gap-2">
+                                <p-checkbox formControlName="attestClauseCVisibleSigns" binary="true" class="mt-1"></p-checkbox>
+                                <span class="id-bullet-txt flex-1">- To show on visible/clinical signs of diseases/<br><span class="text-xs text-gray-600">tidak menunjukkan gejala penyakit secara visual/klinis:</span></span>
+                            </div>
+                            <div class="id-subclause-row flex items-start gap-2">
+                                <p-checkbox formControlName="attestClauseCPackagedContainers" binary="true" class="mt-1"></p-checkbox>
+                                <span class="id-bullet-txt flex-1">- The fish must be packaged in shipping containers, holding units and/or conveyances that are either new or cleaned and disinfected. The shipping containers and/or holding units must prevent release of the shipping contents (eg. Water animal) while en route.<br><span class="text-xs text-gray-600">(ikan harus dikemas dalam container pengirimam, kemasan dan/atau alat angkut yang baru atau dibersihkan dan didesinfeksi. Wadah pengiriman dan/atau kemasan atau alat angkut harus mencegah pelepasan isi pengiriman (mis. Air atau Ikan) saat sedang dalam perjalanan.)</span></span>
+                            </div>
+                        </div>
+                        <div class="id-clause-row flex items-start gap-2 mb-2 mt-2">
+                            <p-checkbox formControlName="attestClauseD" binary="true" class="mt-1"></p-checkbox>
+                            <p class="id-clause flex-1">
+                                <span class="font-bold">d.</span> for non edible products have been handled, prepared or processed, stored, transported based on biosecurity principles./ produk non pangan telah ditangani, disiapkan atandiproses, disimpan, ditransportasikan berdasarkan prinsip biosekuriti
+                            </p>
+                        </div>
+                        <div class="id-clause-row flex items-start gap-2 mb-2 mt-2">
+                            <p-checkbox formControlName="attestClauseE" binary="true" class="mt-1"></p-checkbox>
+                            <p class="id-clause flex-1">
+                                <span class="font-bold">e.</span> ………………….
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional information -->
+                <table class="id-main-table id-mt4">
+                    <tr>
+                        <td class="id-td" colspan="2">
+                            <div class="id-flabel">Additional information/Informasi tambahan:</div>
+                            <textarea pInputTextarea formControlName="additionalInformation" rows="2" [autoResize]="true" class="id-input id-mt4"></textarea>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Certified details -->
+                <div class="id-cert-details-hdr font-bold mt-3">CERTIFIED DETAILS/DETAIL PENERBIT SERTIFIKAT</div>
+
+                <table class="id-main-table">
+                    <!-- Certified details block: left details | right issued/stamp/signature -->
+                    <tr>
+                        <td class="id-td" style="width: 50%">
+                            <div class="id-flabel">Name/Nama:</div>
+                            <input pInputText formControlName="certifiedName" class="id-input" />
+
+                            <div class="id-flabel id-mt4">Position/Jabatan:</div>
+                            <input pInputText formControlName="certifiedPosition" class="id-input" />
+
+                            <div class="id-flabel id-mt4">Issued at/Lokasi:</div>
+                            <input pInputText formControlName="certifiedIssuedAt" class="id-input" />
+
+                            <div class="id-flabel id-mt4">Phone/Telepon:</div>
+                            <input pInputText formControlName="certifiedPhone" class="id-input" />
+
+                            <div class="id-flabel id-mt4">Fax/Faksimili:</div>
+                            <input pInputText formControlName="certifiedFax" class="id-input" />
+
+                            <div class="id-flabel id-mt4">E-mail/Surat elektronilc:</div>
+                            <input pInputText formControlName="certifiedEmail" class="id-input" />
+
+                            <div class="id-flabel id-mt4">Address/Alamat:</div>
+                            <textarea pInputTextarea formControlName="certifiedAddress" rows="3" class="id-input"></textarea>
+                        </td>
+
+                        <td class="id-td id-sig2-cell" style="width: 50%">
+                            <div class="id-cert-right">
+                                <div class="id-cert-meta-row id-mt2">
+                                    <span class="id-cert-meta-lbl font-semibold">Issued at/Dikeluarkan:</span>
+                                    <input pInputText formControlName="certifiedIssuedAt" class="id-input id-flex1" />
+                                </div>
+
+                                <div class="id-cert-meta-row id-mt2">
+                                    <span class="id-cert-meta-lbl font-semibold">on:</span>
+                                    <p-datepicker formControlName="certifiedDate" [showIcon]="true" appendTo="body"></p-datepicker>
+                                </div>
+
+                                <div class="id-sig2-wrap id-mt4">
+                                    <div class="id-sig-stamp-row view-hide">
+                                        <div class="id-stamp-block">
+                                            <div class="id-sub">Stamp/Stempel:</div>
+                                            <div class="id-stamp-box">Stamp Area</div>
+                                        </div>
+                                        <div class="id-signature-block">
+                                            <div class="id-sub">Signature/Tanda tangan:</div>
+                                            <div class="id-signature-box">Signature Area</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="id-sub text-center mt-2 italic">(Name of official or inspector/Nama petugas atau inspektur)</div>
+
+                                    <div *ngIf="showReadonlySignatory" class="mt-3">
+                                        <div class="id-flabel">Signatory Name:</div>
+                                        <input pInputText formControlName="signatoryName" class="id-input" readonly />
+
+                                        <div class="id-flabel id-mt4">Position / Designation:</div>
+                                        <input pInputText formControlName="qualification" class="id-input" readonly />
+                                    </div>
+
+                                    <div class="print-hide mt-3" *ngIf="shouldShowSignatorySelect">
+                                        <div class="id-flabel font-bold">Authorized Signatory Officer:</div>
+                                        <p-select
+                                            [options]="userOptions"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            formControlName="signatoryUserId"
+                                            placeholder="Select Officer"
+                                            styleClass="signatory-select"
+                                            [style]="{ width: '100%', 'margin-top': '4px' }"
+                                            (onChange)="onSignatoryChange($event.value)"
+                                        ></p-select>
+
+                                        <div class="id-flabel id-mt4">Position / Title:</div>
+                                        <input pInputText formControlName="qualification" class="id-input" [readonly]="showReadonlySignatory" />
+                                    </div>
+
+                                    <div class="print-only mt-3" *ngIf="shouldShowSignatorySelect">
+                                        <div class="id-flabel">Position / Title:</div>
+                                        <div class="id-input id-readonly-text">{{ form.get('qualification')?.value }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="id-footer">
+                <span class="id-footer-brand">Veterinary Certificate — Indonesia</span>
+                <span class="id-footer-cert-no font-bold">CERTIFICATE NO: {{ form.get('numberNomor')?.value || refNumber || '' }}</span>
+                <span class="id-footer-page">3/3</span>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="id-actions print-hide flex items-center justify-between gap-3 mt-4">
+            <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+            <div class="flex items-center gap-2">
+                <p-button
+                    label="Print"
+                    [outlined]="true"
+                    (onClick)="print()"
+                    icon="pi pi-print"
+                    [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
+                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print Certificate'"
+                    tooltipPosition="top"
+                ></p-button>
+                <p-button label="Submit" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+            </div>
+        </div>
+    </form>
+    <app-confirm-password-dialog [(visible)]="showPasswordDialog" [userEmail]="pendingSignatoryUserEmail" [userId]="pendingSignatoryUserId || ''" (onConfirm)="onSignatoryConfirmed($event)" (onCancel)="onSignatoryCanceled()">
+    </app-confirm-password-dialog>
+</div>
+

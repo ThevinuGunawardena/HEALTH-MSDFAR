@@ -1,0 +1,915 @@
+<div class="hk-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Hong Kong (HK)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('identificationNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('identificationNumber')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- 2 Radio Buttons Selection (print-hide) -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Mode:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment" inputId="vm_hk_attachment" (onClick)="onViewModeChange('attachment')"></p-radiobutton>
+            <span>AQUATIC ANIMALS AND AQUATIC PRODUCTS (ATTACHMENT)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="single" inputId="vm_hk_single" (onClick)="onViewModeChange('single')"></p-radiobutton>
+            <span>AQUATIC ANIMALS AND AQUATIC PRODUCTS</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'single' ? 'AQUATIC ANIMALS AND AQUATIC PRODUCTS (SINGLE)' : 'AQUATIC ANIMALS AND AQUATIC PRODUCTS (ATTACHMENT)' }}
+        </span>
+    </div>
+
+    <!-- ========================================================================= -->
+        <!-- OPTION 1: AQUATIC ANIMALS AND AQUATIC PRODUCTS (ATTACHMENT) (3 PAGES)     -->
+        <!-- ========================================================================= -->
+        <ng-container *ngIf="viewMode === 'attachment'">
+            <!-- ═══ PAGE 1/2 (Main Cert Page 1) ═══ -->
+            <div class="hk-page">
+                <div class="hk-content">
+                    <!-- Header -->
+                    <div class="hk-header">
+                        <div class="cert-header-top-row mb-1">
+                            <div class="cert-header-spacer"></div>
+                            <div class="hk-logo-row">
+                                <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="hk-logo" />
+                            </div>
+                            <div class="cert-header-qr-slot">
+                                <app-certificate-qr
+                                    [refNumber]="form.get('identificationNumber')?.value"
+                                    [certificateRequestId]="certificateRequestId"
+                                    [consignor]="form.get('consignorName')?.value"
+                                    [consignee]="form.get('consigneeName')?.value"
+                                    [destination]="'Hong Kong'"
+                                    [viewOnly]="viewOnly"
+                                    [size]="68"
+                                ></app-certificate-qr>
+                            </div>
+                        </div>
+                        <div class="hk-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                        <div class="hk-addr">P. O. Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                        <div class="hk-addr">Telephone: +94-11-2449170, 2472186, 2472192</div>
+                        <div class="hk-addr">Fax: +94-11-2424086, 2449170</div>
+                        <div class="hk-addr">E-mail: depfish&#64;fisheries.gov.lk</div>
+                        <div class="hk-title-bar mt-3">
+                            <h1 class="hk-title">HEALTH CERTIFICATE COVERING AQUATIC ANIMALS AND AQUATIC PRODUCTS</h1>
+                        </div>
+                    </div>
+
+                    <!-- Identification number -->
+                    <div class="hk-id-row mt-2 mb-2">
+                        <span class="hk-field-lbl font-bold">Identification number:</span>
+                        <input pInputText formControlName="identificationNumber" class="hk-inline-input font-bold" />
+                    </div>
+
+                    <!-- Boxed Top Info -->
+                    <div class="hk-info-box">
+                        <div class="hk-info-row">
+                            <span class="hk-field-lbl">Country of Dispatch:</span>
+                            <input pInputText formControlName="countryOfDispatch" class="hk-inline-input font-bold" />
+                        </div>
+                        <div class="hk-info-row hk-mt4">
+                            <span class="hk-field-lbl">Competent Authority:</span>
+                            <input pInputText formControlName="competentAuthority" class="hk-inline-input font-bold" />
+                        </div>
+                        <div class="hk-info-row hk-mt4">
+                            <span class="hk-field-lbl">Certifying Body:</span>
+                            <input pInputText formControlName="certifyingBody" class="hk-inline-input font-bold" />
+                        </div>
+                    </div>
+
+                    <!-- Section I -->
+                    <div class="hk-section-hdr font-bold mt-3 mb-2">I. &nbsp;&nbsp; Details identifying the aquatic animals and aquatic products</div>
+
+                    <!-- Products Table (Attachment Mode: Official Page 1 layout) -->
+                    <div class="hk-table-wrap mb-2">
+                        <table class="hk-prod-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 22%;">Description of<br />animal/product</th>
+                                    <th style="width: 20%;">Species (scientific name)</th>
+                                    <th style="width: 15%;">State or type of<br />processing</th>
+                                    <th style="width: 11%;">Type of<br />packaging</th>
+                                    <th style="width: 12%;">Lot<br />Identifier/date code</th>
+                                    <th style="width: 10%;">Number of<br />packages</th>
+                                    <th style="width: 10%;">Net weight</th>
+                                    <th *ngIf="!viewOnly" class="print-hide" style="width: 30px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let product of products.controls; let i = index">
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput font-bold"
+                                            [value]="product.get('description')?.value || (i === 0 ? 'SEE THE ATTACHMENT' : '')"
+                                            (input)="updateProductField(i, 'description', $any($event.target).value)"
+                                            [placeholder]="i === 0 ? 'SEE THE ATTACHMENT' : ''"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput italic"
+                                            [value]="product.get('species')?.value || ''"
+                                            (input)="updateProductField(i, 'species', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput"
+                                            [value]="product.get('processingType')?.value || ''"
+                                            (input)="updateProductField(i, 'processingType', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            class="hk-tinput"
+                                            [value]="product.get('packagingType')?.value || ''"
+                                            (input)="updateProductField(i, 'packagingType', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            class="hk-tinput"
+                                            [value]="product.get('lotCode')?.value || ''"
+                                            (input)="updateProductField(i, 'lotCode', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            (keypress)="onlyDigits($event)"
+                                            inputmode="numeric"
+                                            type="number"
+                                            class="hk-tinput text-right"
+                                            [value]="product.get('numberOfPackages')?.value != null ? product.get('numberOfPackages')?.value : ''"
+                                            (input)="updateProductField(i, 'numberOfPackages', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            (keypress)="onlyDecimals($event)"
+                                            inputmode="decimal"
+                                            type="number"
+                                            class="hk-tinput text-right"
+                                            [value]="product.get('netWeight')?.value != null ? product.get('netWeight')?.value : ''"
+                                            (input)="updateProductField(i, 'netWeight', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td *ngIf="!viewOnly" class="print-hide text-center">
+                                        <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeProduct(i)" *ngIf="products.length > 1"></button>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="products.length === 0">
+                                    <td class="font-bold py-2 pl-2" style="height: 32px; vertical-align: top;">SEE THE ATTACHMENT</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td *ngIf="!viewOnly" class="print-hide"></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="hk-sum-row">
+                                    <td colspan="5" class="text-left font-bold" style="border-left: 1px solid transparent; border-bottom: 1px solid transparent; border-right: none; vertical-align: top; padding-top: 2px;">Sum:</td>
+                                    <td class="font-bold text-right">{{ calculateTotalPackages() || '' }}</td>
+                                    <td class="font-bold text-right">{{ calculateTotalNetWeight() ? (calculateTotalNetWeight() | number: '1.2-2') : '' }}</td>
+                                    <td *ngIf="!viewOnly" class="print-hide"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div class="print-hide p-2 flex justify-end" *ngIf="!viewOnly">
+                            <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProduct()"></p-button>
+                        </div>
+                    </div>
+
+                    <!-- Container and Seal lines -->
+                    <div class="hk-container-seal-block text-xs leading-relaxed mt-2 mb-2">
+                        <div class="flex justify-end mb-1">
+                            <input pInputText formControlName="containerNumber" class="hk-inline-input text-right font-bold w-1/2" placeholder="CONTAINER NO:" />
+                        </div>
+                        <div class="flex items-center mb-1">
+                            <span class="whitespace-nowrap">Identification number of the seal of container (if appropriate):</span>
+                            <input pInputText formControlName="sealNumber" class="hk-inline-input font-bold ml-2 flex-1" placeholder="SEAL NO:" />
+                        </div>
+                        <div class="flex items-center">
+                            <span class="whitespace-nowrap">Temperature required during storage and transport:</span>
+                            <input pInputText formControlName="storageTemperature" class="hk-inline-input ml-2 w-24 text-center font-bold" />
+                            <span class="ml-1">°C</span>
+                        </div>
+                    </div>
+
+                    <!-- Section II -->
+                    <div class="hk-section-hdr font-bold mt-3 mb-1">II. &nbsp;&nbsp; Provenance of the aquatic animals and aquatic products</div>
+                    <div class="text-xs leading-relaxed">
+                        <div class="mb-1">
+                            Address(es) and/or the Registration number(s) of aquaculture farm(s), production area(s) or production establishment(s) authorized for exports by competent authority &nbsp;
+                            <input pInputText formControlName="approvalNumber" class="hk-inline-input font-bold w-48 inline" />
+                        </div>
+                        <div class="mb-2">
+                            <textarea pInputTextarea formControlName="processingEstablishment" rows="2" [autoResize]="true" class="hk-textarea font-bold"></textarea>
+                        </div>
+                        <div class="mt-2">
+                            <span class="font-bold">Name and address of consignor:</span>
+                            <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="hk-textarea font-bold mt-1"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="hk-footer">
+                    <span class="hk-footer-brand"></span>
+                    <span class="hk-footer-page">1/2</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 2/2 (Main Cert Page 2) ═══ -->
+            <div class="hk-page">
+                <div class="hk-content">
+                    <!-- Section III -->
+                    <div class="hk-section-hdr font-bold mb-2">III. &nbsp;&nbsp; Destination of the aquatic animals and aquatic products</div>
+
+                    <div class="text-xs leading-relaxed mb-3">
+                        <div class="mb-1">
+                            <span>The aquatic animals/aquatic products are to be dispatched from: </span>
+                            <input pInputText formControlName="placeOfDispatch" class="hk-inline-input font-bold" />
+                            <div class="text-right text-slate-500 text-xxs mr-8">(Place of dispatch)</div>
+                        </div>
+                        <div class="mb-1">
+                            <span>To: </span>
+                            <input pInputText formControlName="destinationCountryPlace" class="hk-inline-input font-bold" />
+                            <div class="text-right text-slate-500 text-xxs mr-8">(Country and place of destination)</div>
+                        </div>
+                        <div class="mb-2">
+                            <span>By the following means of transport: </span>
+                            <input pInputText formControlName="meansOfTransport" class="hk-inline-input font-bold" />
+                        </div>
+                        <div class="mb-2">
+                            <div class="font-bold mb-1">Name of consignee and address at place of destination:</div>
+                            <textarea pInputTextarea formControlName="consigneeAddress" rows="3" [autoResize]="true" class="hk-textarea font-bold"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Attestation -->
+                    <div class="font-bold underline text-xs mt-3 mb-1">Attestation</div>
+                    <div class="text-xs leading-relaxed mb-3">
+                        <p class="mb-2">The undersigned certifying officer hereby certifies that:</p>
+                        <ol class="list-decimal pl-5 space-y-1 text-justify">
+                            <li>
+                                The aquatic animals or products described above originate from (an) approved farm(s) or establishment(s) that has been approved by, or otherwise determined to be in good regulatory standing with the competent authority in the exporting country ;
+                            </li>
+                            <li>
+                                The aquatic animals have been produced, packed, stored, and transported under sanitary condition, which were under the supervision of competent authority and in accordance with the requirements laid down in Codex Code of Practice for Fish and Fishery Products;
+                            </li>
+                            <li>
+                                The aquatic products have been handled, prepared or processed, identified, stored and transported under a competent sanitary programme consistently implemented and in accordance with the requirements laid down in Codex Code of Practice for Fish and Fishery Products;
+                            </li>
+                            <li>
+                                The aquatic animals or products have been inspected and quarantined by the competent authority and do not found harmful levels of microorganisms, harmful substances and foreign substances regulated in the exporting country and Hong Kong;
+                            </li>
+                            <li>The aquatic animals or products meet veterinary sanitary requirements and are fit for human consumption;</li>
+                        </ol>
+                    </div>
+
+                    <!-- Done at / on -->
+                    <div class="hk-done-row text-xs flex items-center mt-3 mb-4">
+                        <span>Done at &nbsp;</span>
+                        <input pInputText formControlName="placeOfIssue" class="hk-inline-input font-bold flex-1" />
+                        <span class="ml-4">on &nbsp;</span>
+                        <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body" styleClass="p-inputtext-sm"></p-datepicker>
+                    </div>
+
+                    <!-- Signatory -->
+                    <div class="hk-sig-block text-xs mt-4">
+                        <div class="flex justify-between items-start">
+                            <div style="width: 45%;">
+                                <div
+                                    class="hk-sig-placeholder"
+                                    [class.hk-drop-active]="isDraggingSignature"
+                                    [class.has-content]="!!form.get('officialSignature')?.value"
+                                    (click)="!viewOnly && sigInputAttachment.click()"
+                                    (dragover)="onSignatureDragOver($event)"
+                                    (dragleave)="onSignatureDragLeave($event)"
+                                    (drop)="onSignatureDrop($event)"
+                                    (paste)="onSignaturePaste($event)"
+                                    tabindex="0"
+                                >
+                                    <input type="file" #sigInputAttachment (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                    <!-- Empty State -->
+                                    <div *ngIf="!form.get('officialSignature')?.value" class="hk-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                        <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                        <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                    </div>
+
+                                    <!-- Uploaded Image -->
+                                    <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="hk-preview-container">
+                                        <img [src]="form.get('officialSignature')?.value" alt="Signature" class="hk-sig-img" />
+                                        <div class="hk-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="hk-mini-btn" (click)="$event.stopPropagation(); sigInputAttachment.click()" title="Change Signature">
+                                                <i class="pi pi-pencil text-2xs"></i>
+                                            </button>
+                                            <button type="button" class="hk-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                <i class="pi pi-trash text-2xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Uploaded PDF -->
+                                    <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="hk-preview-container">
+                                        <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="hk-pdf-preview"></object>
+                                        <div class="hk-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="hk-mini-btn" (click)="$event.stopPropagation(); sigInputAttachment.click()" title="Change Signature">
+                                                <i class="pi pi-pencil text-2xs"></i>
+                                            </button>
+                                            <button type="button" class="hk-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                <i class="pi pi-trash text-2xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hk-sig-line-bar"></div>
+                                <div class="text-center text-slate-600">(Signature of certifying officer)</div>
+                            </div>
+                            <div style="width: 50%;">
+                                <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2">
+                                    <p-select
+                                        [options]="userOptions"
+                                        formControlName="signatoryUserId"
+                                        placeholder="Select Authorized Officer"
+                                        (onChange)="onSignatoryChange($event.value)"
+                                        styleClass="w-full text-xs"
+                                        appendTo="body"
+                                    ></p-select>
+                                </div>
+                                <div class="hk-sig-line font-bold text-center">{{ form.get('signatoryName')?.value }}</div>
+                                <div class="text-center text-slate-600">(Name and official position)</div>
+                                <div class="text-center font-bold text-xs mt-1 whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-xs space-y-1">
+                            <div>Tel: <input pInputText formControlName="officerTel" class="hk-line-input inline w-64" /></div>
+                            <div>Fax: <input pInputText formControlName="officerFax" class="hk-line-input inline w-64" /></div>
+                            <div>E-mail: <input pInputText formControlName="officerEmail" class="hk-line-input inline w-64" /></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hk-footer">
+                    <span class="hk-footer-brand"></span>
+                    <span class="hk-footer-page">2/2</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 3 (Attachment Page) ═══ -->
+            <div class="hk-page">
+                <div class="hk-content">
+                    <div class="hk-att-header text-center mb-3">
+                        <div class="font-bold text-sm">
+                            Attachment to the Veterinary Certificate Number: <span class="underline">{{ form.get('identificationNumber')?.value }}</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-3 text-xs font-bold px-2">
+                            <div class="flex items-center">
+                                <span>DATE: - &nbsp;</span>
+                                <p-datepicker formControlName="dateOfAttachment" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" styleClass="p-inputtext-sm"></p-datepicker>
+                            </div>
+                            <div class="flex items-center">
+                                <input pInputText formControlName="attachmentRegNo" class="hk-inline-input font-bold text-right w-48" placeholder="DFAR/FPE/98/59" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Attachment Table -->
+                    <div class="hk-table-wrap mb-2">
+                        <table class="hk-att-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">DISCRIPTION OF<br />ANIMAL/ PRODUCT</th>
+                                    <th style="width: 20%;">SPECIES (SCIENTIFIC<br />NAME)</th>
+                                    <th style="width: 15%;">STATE OR TYPE<br />OF PROCESSING</th>
+                                    <th style="width: 12%;">TYPE OF<br />PACKING</th>
+                                    <th style="width: 13%;">LOT<br />IDENTIFIRE/DATE CODE</th>
+                                    <th style="width: 10%;">NUMBER OF<br />PACKAGERS</th>
+                                    <th style="width: 10%;">NET WEIGHT</th>
+                                    <th *ngIf="!viewOnly" class="print-hide" style="width: 30px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let product of products.controls; let i = index">
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput font-bold"
+                                            [value]="product.get('description')?.value || ''"
+                                            (input)="updateProductField(i, 'description', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput italic"
+                                            [value]="product.get('species')?.value || ''"
+                                            (input)="updateProductField(i, 'species', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput"
+                                            [value]="product.get('processingType')?.value || ''"
+                                            (input)="updateProductField(i, 'processingType', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            class="hk-tinput"
+                                            [value]="product.get('packagingType')?.value || ''"
+                                            (input)="updateProductField(i, 'packagingType', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            class="hk-tinput"
+                                            [value]="product.get('lotCode')?.value || ''"
+                                            (input)="updateProductField(i, 'lotCode', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            (keypress)="onlyDigits($event)"
+                                            inputmode="numeric"
+                                            type="number"
+                                            class="hk-tinput text-right"
+                                            [value]="product.get('numberOfPackages')?.value != null ? product.get('numberOfPackages')?.value : ''"
+                                            (input)="updateProductField(i, 'numberOfPackages', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            (keypress)="onlyDecimals($event)"
+                                            inputmode="decimal"
+                                            type="number"
+                                            class="hk-tinput text-right"
+                                            [value]="product.get('netWeight')?.value != null ? product.get('netWeight')?.value : ''"
+                                            (input)="updateProductField(i, 'netWeight', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td *ngIf="!viewOnly" class="print-hide text-center">
+                                        <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeProduct(i)" *ngIf="products.length > 1"></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="hk-sum-row">
+                                    <td colspan="5" class="font-bold text-left">TOTAL</td>
+                                    <td class="font-bold text-right">{{ calculateTotalPackages() || '' }}</td>
+                                    <td class="font-bold text-right">{{ calculateTotalNetWeight() ? (calculateTotalNetWeight() | number: '1.2-2') : '' }}</td>
+                                    <td *ngIf="!viewOnly" class="print-hide"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div class="print-hide p-2 flex flex-wrap items-center justify-between gap-2" *ngIf="!viewOnly">
+                            <p-button label="Load 11 Standard Species" icon="pi pi-refresh" severity="info" size="small" [outlined]="true" (onClick)="loadDefaultAttachmentProducts()"></p-button>
+                            <div class="flex items-center gap-2">
+                                <p-button label="Clear Quantities" icon="pi pi-times" severity="secondary" size="small" [text]="true" (onClick)="clearAttachmentQuantities()"></p-button>
+                                <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProduct()"></p-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hk-footer">
+                    <span class="hk-footer-brand"></span>
+                    <span class="hk-footer-page"></span>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- ========================================================================= -->
+        <!-- OPTION 2: AQUATIC ANIMALS AND AQUATIC PRODUCTS (SINGLE) (2 PAGES)         -->
+        <!-- ========================================================================= -->
+        <ng-container *ngIf="viewMode === 'single'">
+            <!-- ═══ PAGE 1/2 ═══ -->
+            <div class="hk-page">
+                <div class="hk-content">
+                    <!-- Header -->
+                    <div class="hk-header">
+                        <div class="cert-header-top-row mb-1">
+                            <div class="cert-header-spacer"></div>
+                            <div class="hk-logo-row">
+                                <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="hk-logo" />
+                            </div>
+                            <div class="cert-header-qr-slot">
+                                <app-certificate-qr
+                                    [refNumber]="form.get('identificationNumber')?.value"
+                                    [certificateRequestId]="certificateRequestId"
+                                    [consignor]="form.get('consignorName')?.value"
+                                    [consignee]="form.get('consigneeName')?.value"
+                                    [destination]="'Hong Kong'"
+                                    [viewOnly]="viewOnly"
+                                    [size]="68"
+                                ></app-certificate-qr>
+                            </div>
+                        </div>
+                        <div class="hk-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                        <div class="hk-addr">P. O. Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                        <div class="hk-addr">Telephone: +94-11-2449170, 2472186, 2472192</div>
+                        <div class="hk-addr">Fax: +94-11-2424086, 2449170</div>
+                        <div class="hk-addr">E-mail: depfish&#64;fisheries.gov.lk</div>
+                        <div class="hk-title-bar mt-3">
+                            <h1 class="hk-title">HEALTH CERTIFICATE COVERING AQUATIC ANIMALS AND AQUATIC PRODUCTS</h1>
+                        </div>
+                    </div>
+
+                    <!-- Identification number -->
+                    <div class="hk-id-row mt-2 mb-2">
+                        <span class="hk-field-lbl font-bold">Identification number:</span>
+                        <input pInputText formControlName="identificationNumber" class="hk-inline-input font-bold" />
+                    </div>
+
+                    <!-- Boxed Top Info -->
+                    <div class="hk-info-box">
+                        <div class="hk-info-row">
+                            <span class="hk-field-lbl">Country of Dispatch:</span>
+                            <input pInputText formControlName="countryOfDispatch" class="hk-inline-input font-bold" />
+                        </div>
+                        <div class="hk-info-row hk-mt4">
+                            <span class="hk-field-lbl">Competent Authority:</span>
+                            <input pInputText formControlName="competentAuthority" class="hk-inline-input font-bold" />
+                        </div>
+                        <div class="hk-info-row hk-mt4">
+                            <span class="hk-field-lbl">Certifying Body:</span>
+                            <input pInputText formControlName="certifyingBody" class="hk-inline-input font-bold" />
+                        </div>
+                    </div>
+
+                    <!-- Section I -->
+                    <div class="hk-section-hdr font-bold mt-3 mb-2">I. &nbsp;&nbsp; Details identifying the aquatic animals and aquatic products</div>
+
+                    <!-- Direct Products Table -->
+                    <div class="hk-table-wrap mb-2">
+                        <table class="hk-prod-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 22%;">Description of<br />animal/product</th>
+                                    <th style="width: 20%;">Species (scientific name)</th>
+                                    <th style="width: 15%;">State or type of<br />processing</th>
+                                    <th style="width: 11%;">Type of<br />packaging</th>
+                                    <th style="width: 12%;">Lot<br />Identifier/date<br />code</th>
+                                    <th style="width: 10%;">Number of<br />packages</th>
+                                    <th style="width: 10%;">Net weight</th>
+                                    <th *ngIf="!viewOnly" class="print-hide" style="width: 30px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let product of products.controls; let i = index">
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput font-bold"
+                                            [value]="product.get('description')?.value || ''"
+                                            (input)="updateProductField(i, 'description', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput italic"
+                                            [value]="product.get('species')?.value || ''"
+                                            (input)="updateProductField(i, 'species', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea
+                                            pInputTextarea
+                                            rows="1"
+                                            [autoResize]="true"
+                                            class="hk-tinput"
+                                            [value]="product.get('processingType')?.value || ''"
+                                            (input)="updateProductField(i, 'processingType', $any($event.target).value)"
+                                        ></textarea>
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            class="hk-tinput"
+                                            [value]="product.get('packagingType')?.value || ''"
+                                            (input)="updateProductField(i, 'packagingType', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            pInputText
+                                            class="hk-tinput"
+                                            [value]="product.get('lotCode')?.value || ''"
+                                            (input)="updateProductField(i, 'lotCode', $any($event.target).value)"
+                                        />
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center justify-end">
+                                            <input
+                                                pInputText
+                                                (keypress)="onlyDigits($event)"
+                                                inputmode="numeric"
+                                                type="number"
+                                                class="hk-tinput text-right"
+                                                [value]="product.get('numberOfPackages')?.value != null ? product.get('numberOfPackages')?.value : ''"
+                                                (input)="updateProductField(i, 'numberOfPackages', $any($event.target).value)"
+                                            />
+                                            <span class="text-xxs ml-1 font-bold">{{ product.get('packagesUnit')?.value || 'CTNS' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center justify-end">
+                                            <input
+                                                pInputText
+                                                (keypress)="onlyDecimals($event)"
+                                                inputmode="decimal"
+                                                type="number"
+                                                class="hk-tinput text-right"
+                                                [value]="product.get('netWeight')?.value != null ? product.get('netWeight')?.value : ''"
+                                                (input)="updateProductField(i, 'netWeight', $any($event.target).value)"
+                                            />
+                                            <span class="text-xxs ml-1 font-bold">{{ product.get('netWeightUnit')?.value || 'KGS' }}</span>
+                                        </div>
+                                    </td>
+                                    <td *ngIf="!viewOnly" class="print-hide text-center">
+                                        <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeProduct(i)" *ngIf="products.length > 1"></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="hk-sum-row">
+                                    <td class="font-bold text-left">Sum:</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="font-bold text-right">{{ calculateTotalPackages() }} CTNS</td>
+                                    <td class="font-bold text-right">{{ calculateTotalNetWeight() | number: '1.2-2' }} KGS</td>
+                                    <td *ngIf="!viewOnly" class="print-hide"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div class="print-hide p-2 flex justify-end" *ngIf="!viewOnly">
+                            <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProduct()"></p-button>
+                        </div>
+                    </div>
+
+                    <!-- Container and Seal lines -->
+                    <div class="hk-container-seal-block text-xs leading-relaxed mt-2 mb-2">
+                        <div class="flex justify-end mb-1">
+                            <input pInputText formControlName="containerNumber" class="hk-inline-input text-right font-bold w-1/2" placeholder="CONTAINER NO:" />
+                        </div>
+                        <div class="flex items-center mb-1">
+                            <span class="whitespace-nowrap">Identification number of the seal of container (if appropriate):</span>
+                            <input pInputText formControlName="sealNumber" class="hk-inline-input font-bold ml-2 flex-1" placeholder="SEAL NO:" />
+                        </div>
+                        <div class="flex items-center">
+                            <span class="whitespace-nowrap">Temperature required during storage and transport:</span>
+                            <input pInputText formControlName="storageTemperature" class="hk-inline-input ml-2 w-24 text-center font-bold" />
+                            <span class="ml-1">°C</span>
+                        </div>
+                    </div>
+
+                    <!-- Section II -->
+                    <div class="hk-section-hdr font-bold mt-3 mb-1">II. &nbsp;&nbsp; Provenance of the aquatic animals and aquatic products</div>
+                    <div class="text-xs leading-relaxed">
+                        <div class="mb-1">
+                            Address(es) and/or the Registration number(s) of aquaculture farm(s), production area(s) or production establishment(s) authorized for exports by competent authority &nbsp;
+                            <input pInputText formControlName="approvalNumber" class="hk-inline-input font-bold w-48 inline" />
+                        </div>
+                        <div class="mb-2">
+                            <textarea pInputTextarea formControlName="processingEstablishment" rows="2" [autoResize]="true" class="hk-textarea font-bold"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="hk-footer">
+                    <span class="hk-footer-brand"></span>
+                    <span class="hk-footer-page">1/2</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 2/2 ═══ -->
+            <div class="hk-page">
+                <div class="hk-content">
+                    <!-- Consignor -->
+                    <div class="text-xs mb-3">
+                        <div class="font-bold mb-1">Name and address of consignor:</div>
+                        <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="hk-textarea font-bold"></textarea>
+                    </div>
+
+                    <!-- Section III -->
+                    <div class="hk-section-hdr font-bold mb-2">III. &nbsp;&nbsp; Destination of the aquatic animals and aquatic products</div>
+
+                    <div class="text-xs leading-relaxed mb-3">
+                        <div class="mb-1">
+                            <span>The aquatic animals/aquatic products are to be dispatched from: </span>
+                            <input pInputText formControlName="placeOfDispatch" class="hk-inline-input font-bold" />
+                            <div class="text-right text-slate-500 text-xxs mr-8">(Place of dispatch)</div>
+                        </div>
+                        <div class="mb-1">
+                            <span>To: </span>
+                            <input pInputText formControlName="destinationCountryPlace" class="hk-inline-input font-bold" />
+                            <div class="text-right text-slate-500 text-xxs mr-8">(Country and place of destination)</div>
+                        </div>
+                        <div class="mb-2">
+                            <span>By the following means of transport: </span>
+                            <input pInputText formControlName="meansOfTransport" class="hk-inline-input font-bold" />
+                        </div>
+                        <div class="mb-2">
+                            <div class="font-bold mb-1">Name of consignee and address at place of destination:</div>
+                            <textarea pInputTextarea formControlName="consigneeAddress" rows="3" [autoResize]="true" class="hk-textarea font-bold"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Attestation -->
+                    <div class="font-bold underline text-xs mt-3 mb-1">Attestation</div>
+                    <div class="text-xs leading-relaxed mb-3">
+                        <p class="mb-2">The undersigned certifying officer hereby certifies that:</p>
+                        <ol class="list-decimal pl-5 space-y-1 text-justify">
+                            <li>
+                                The aquatic animals or products described above originate from (an) approved farm(s) or establishment(s) that has been approved by, or otherwise determined to be in good regulatory standing with the competent authority in the exporting country ;
+                            </li>
+                            <li>
+                                The aquatic animals have been produced, packed, stored, and transported under sanitary condition, which were under the supervision of competent authority and in accordance with the requirements laid down in Codex Code of Practice for Fish and Fishery Products;
+                            </li>
+                            <li>
+                                The aquatic products have been handled, prepared or processed, identified, stored and transported under a competent sanitary programme consistently implemented and in accordance with the requirements laid down in Codex Code of Practice for Fish and Fishery Products;
+                            </li>
+                            <li>
+                                The aquatic animals or products have been inspected and quarantined by the competent authority and do not found harmful levels of microorganisms, harmful substances and foreign substances regulated in the exporting country and Hong Kong;
+                            </li>
+                            <li>The aquatic animals or products meet veterinary sanitary requirements and are fit for human consumption;</li>
+                        </ol>
+                    </div>
+
+                    <!-- Done at / on -->
+                    <div class="hk-done-row text-xs flex items-center mt-3 mb-4">
+                        <span>Done at &nbsp;</span>
+                        <input pInputText formControlName="placeOfIssue" class="hk-inline-input font-bold flex-1" />
+                        <span class="ml-4">on &nbsp;</span>
+                        <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body" styleClass="p-inputtext-sm"></p-datepicker>
+                    </div>
+
+                    <!-- Signatory -->
+                    <div class="hk-sig-block text-xs mt-4">
+                        <div class="flex justify-between items-start">
+                            <div style="width: 45%;">
+                                <div
+                                    class="hk-sig-placeholder"
+                                    [class.hk-drop-active]="isDraggingSignature"
+                                    [class.has-content]="!!form.get('officialSignature')?.value"
+                                    (click)="!viewOnly && sigInputSingle.click()"
+                                    (dragover)="onSignatureDragOver($event)"
+                                    (dragleave)="onSignatureDragLeave($event)"
+                                    (drop)="onSignatureDrop($event)"
+                                    (paste)="onSignaturePaste($event)"
+                                    tabindex="0"
+                                >
+                                    <input type="file" #sigInputSingle (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                    <!-- Empty State -->
+                                    <div *ngIf="!form.get('officialSignature')?.value" class="hk-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                        <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                        <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                    </div>
+
+                                    <!-- Uploaded Image -->
+                                    <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="hk-preview-container">
+                                        <img [src]="form.get('officialSignature')?.value" alt="Signature" class="hk-sig-img" />
+                                        <div class="hk-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="hk-mini-btn" (click)="$event.stopPropagation(); sigInputSingle.click()" title="Change Signature">
+                                                <i class="pi pi-pencil text-2xs"></i>
+                                            </button>
+                                            <button type="button" class="hk-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                <i class="pi pi-trash text-2xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Uploaded PDF -->
+                                    <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="hk-preview-container">
+                                        <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="hk-pdf-preview"></object>
+                                        <div class="hk-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="hk-mini-btn" (click)="$event.stopPropagation(); sigInputSingle.click()" title="Change Signature">
+                                                <i class="pi pi-pencil text-2xs"></i>
+                                            </button>
+                                            <button type="button" class="hk-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                <i class="pi pi-trash text-2xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hk-sig-line-bar"></div>
+                                <div class="text-center text-slate-600">(Signature of certifying officer)</div>
+                            </div>
+                            <div style="width: 50%;">
+                                <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2">
+                                    <p-select
+                                        [options]="userOptions"
+                                        formControlName="signatoryUserId"
+                                        placeholder="Select Authorized Officer"
+                                        (onChange)="onSignatoryChange($event.value)"
+                                        styleClass="w-full text-xs"
+                                        appendTo="body"
+                                    ></p-select>
+                                </div>
+                                <div class="hk-sig-line font-bold text-center">{{ form.get('signatoryName')?.value }}</div>
+                                <div class="text-center text-slate-600">(Name and official position)</div>
+                                <div class="text-center font-bold text-xs mt-1 whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-xs space-y-1">
+                            <div>Tel: <input pInputText formControlName="officerTel" class="hk-line-input inline w-64" /></div>
+                            <div>Fax: <input pInputText formControlName="officerFax" class="hk-line-input inline w-64" /></div>
+                            <div>E-mail: <input pInputText formControlName="officerEmail" class="hk-line-input inline w-64" /></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hk-footer">
+                    <span class="hk-footer-brand"></span>
+                    <span class="hk-footer-page">2/2</span>
+                </div>
+            </div>
+        </ng-container>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

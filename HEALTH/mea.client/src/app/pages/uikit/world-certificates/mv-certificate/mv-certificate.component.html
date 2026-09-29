@@ -1,0 +1,813 @@
+<div class="mv-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Maldives (MV) — Official DFAR Certificate</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <span *ngIf="form.get('certificateNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateNumber')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Format Selector & Sample Loader Toolbar (Print-Hidden) -->
+    <div class="format-selection-bar print-hide mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-xs flex flex-wrap items-center justify-between gap-3" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-4">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Select Certificate Format:</span>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="viewMode" formControlName="viewMode" value="generic" inputId="vm_mv_generic" (onClick)="onViewModeChange('generic')"></p-radiobutton>
+                <span class="font-bold">1. Generic Model Certificate (Boxed - TC 4683)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="viewMode" formControlName="viewMode" value="letterhead" inputId="vm_mv_letterhead" (onClick)="onViewModeChange('letterhead')"></p-radiobutton>
+                <span class="font-bold">2. Official Letterhead Certificate (Letter - TC 4522)</span>
+            </label>
+        </div>
+        <div class="flex items-center gap-2" *ngIf="!viewOnly">
+            <p-button
+                label="Load Boxed Sample (TC 4683)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleBoxed()"
+                pTooltip="Load Generic Model Official Certificate sample (TC 4683 - Amagi Foods Supply / Vannamei Shrimps)"
+            ></p-button>
+            <p-button
+                label="Load Letterhead Sample (TC 4522)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleLetterhead()"
+                pTooltip="Load Official Letterhead Health Certificate sample (TC 4522 - Sadaharitha Agri / Sheraton)"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 1: GENERIC MODEL OFFICIAL CERTIFICATE (BOXED - TC 4683)  -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="mv-page boxed-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'generic'">
+        <div class="mv-content">
+            <!-- Boxed Outer Frame enclosing Header, Grid, and Footer Note -->
+            <div class="mv-boxed-frame">
+                <!-- Header inside Outer Box -->
+                <div class="mv-header">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="mv-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="mv-logo" /></div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateNumber')?.value || 'TC 4683'"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorExporter')?.value"
+                                [consignee]="form.get('consigneeImporter')?.value"
+                                [destination]="'Maldives'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="mv-dept font-bold uppercase">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="mv-addr">P.O. Box 531, Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                    <div class="mv-addr">Telephone: +94-2449170, 2472186, 2472192</div>
+                    <div class="mv-addr">Fax: +94-11-2424086,2449170</div>
+                    <div class="mv-addr">E-mail: dgdfar&#64;gmail.com</div>
+                </div>
+
+                <!-- Grid Boxes 1 to 18 -->
+                <table class="mv-grid">
+                    <colgroup>
+                        <col style="width: 50%" />
+                        <col style="width: 25%" />
+                        <col style="width: 25%" />
+                    </colgroup>
+
+                    <!-- Row 1: Boxes 1 to 4 -->
+                    <tr>
+                        <td class="mv-td" rowspan="3" style="width: 50%;">
+                            <span class="mv-flbl font-bold">1. Consignor/Exporter:</span>
+                            <textarea pInputTextarea formControlName="consignorExporter" rows="3" [autoResize]="true" class="mv-input font-bold"></textarea>
+                        </td>
+                        <td class="mv-td" colspan="2">
+                            <div>
+                                <span class="mv-flbl font-bold">2. Certificate number: <span class="font-normal">{{ form.get('certificateNumber')?.value || 'TC 4683' }}</span></span>
+                                <input pInputText formControlName="certificateNumber" class="mv-input font-bold print-hide mt-0.5" />
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="mv-td" colspan="2">
+                            <span class="mv-flbl font-bold">3. Competent authority:</span>
+                            <textarea pInputTextarea formControlName="competentAuthority" rows="1" [autoResize]="true" class="mv-input font-bold"></textarea>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="mv-td" colspan="2">
+                            <span class="mv-flbl font-bold">4. Certifying body:</span>
+                            <textarea pInputTextarea formControlName="certifyingBody" rows="1" [autoResize]="true" class="mv-input font-bold"></textarea>
+                        </td>
+                    </tr>
+
+                    <!-- Row 2: Box 5 Consignee -->
+                    <tr>
+                        <td class="mv-td" colspan="3">
+                            <span class="mv-flbl font-bold">5. Consignee/Importer:</span>
+                            <textarea pInputTextarea formControlName="consigneeImporter" rows="2" [autoResize]="true" class="mv-input font-bold"></textarea>
+                        </td>
+                    </tr>
+
+                    <!-- Row 3: Box 6 Country of origin -->
+                    <tr>
+                        <td class="mv-td">
+                            <span class="mv-flbl font-bold">6. Country of origin:</span>
+                            <input pInputText formControlName="countryOfOrigin" class="mv-input font-bold" />
+                        </td>
+                        <td class="mv-td" colspan="2">
+                            <span class="mv-flbl font-bold">ISO Code:</span>
+                            <input pInputText formControlName="countryOfOriginISO" class="mv-input font-bold" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 4: Box 7 Country of destination -->
+                    <tr>
+                        <td class="mv-td">
+                            <span class="mv-flbl font-bold">7. Country of destination:</span>
+                            <input pInputText formControlName="countryOfDestination" class="mv-input font-bold" />
+                        </td>
+                        <td class="mv-td" colspan="2">
+                            <span class="mv-flbl font-bold">ISO Code:</span>
+                            <input pInputText formControlName="countryOfDestinationISO" class="mv-input font-bold" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 5: Box 8 Place of loading -->
+                    <tr>
+                        <td class="mv-td" colspan="3">
+                            <span class="mv-flbl font-bold">8. Place of loading:</span>
+                            <input pInputText formControlName="placeOfLoading" class="mv-input font-bold" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 6: Box 9 & 10 Means of transport & Point of entry -->
+                    <tr>
+                        <td class="mv-td">
+                            <span class="mv-flbl font-bold">9. Means of transport:</span>
+                            <input pInputText formControlName="meansOfTransportText" class="mv-input font-bold" />
+                        </td>
+                        <td class="mv-td" colspan="2">
+                            <span class="mv-flbl font-bold">10. Declared point of entry:</span>
+                            <input pInputText formControlName="pointsOfEntry" class="mv-input font-bold" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 7: Box 11 & 12 Temperature & Total quantity -->
+                    <tr>
+                        <td class="mv-td">
+                            <span class="mv-flbl font-bold">11. Temperature information</span>
+                            <div class="text-3xs text-slate-700">Conditions for transport/storage</div>
+                            <input pInputText formControlName="conditionsOfStorage" class="mv-input font-bold mt-0.5" />
+                        </td>
+                        <td class="mv-td" colspan="2">
+                            <span class="mv-flbl font-bold">12. Total quantity</span>
+                            <input pInputText formControlName="totalQuantity" class="mv-input font-bold" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 8: Box 13 & 14 Container/Seal & Total packages -->
+                    <tr>
+                        <td class="mv-td">
+                            <span class="mv-flbl font-bold">13. Identification of container(s)/Seal number(s):</span>
+                            <input pInputText formControlName="sealNumber" class="mv-input font-bold" />
+                        </td>
+                        <td class="mv-td" colspan="2">
+                            <span class="mv-flbl font-bold">14. Total number of packages:</span>
+                            <input pInputText formControlName="totalNumberOfPackages" class="mv-input font-bold" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 9: Box 15 Name & Approval of establishment -->
+                    <tr>
+                        <td class="mv-td" colspan="3">
+                            <span class="mv-flbl font-bold">15. Name &amp; Approval number of establishments:</span>
+                            <textarea pInputTextarea formControlName="approvalNumberOfEstablishments" rows="2" [autoResize]="true" class="mv-input font-bold"></textarea>
+                        </td>
+                    </tr>
+
+                    <!-- Row 10: Box 16 Identification of food products -->
+                    <tr>
+                        <td class="mv-td" colspan="3" style="padding: 2px;">
+                            <div class="flex items-center justify-between mb-1 px-1">
+                                <span class="mv-flbl font-bold">16. Identification of food products</span>
+                                <div class="print-hide flex gap-1" *ngIf="!viewOnly">
+                                    <p-button label="Add Species" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProductRow()"></p-button>
+                                </div>
+                            </div>
+
+                            <!-- Sub-table 1: Species & Purpose -->
+                            <table class="mv-sub-table w-full mb-1">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%;">No.</th>
+                                        <th style="width: 45%;">Nature of the food, commodity code (HS code) where appropriate</th>
+                                        <th style="width: 25%;">Species*</th>
+                                        <th style="width: 25%;">Intended purpose</th>
+                                        <th class="print-hide" style="width: 24px;" *ngIf="!viewOnly"></th>
+                                    </tr>
+                                </thead>
+                                <tbody formArrayName="products">
+                                    <tr *ngFor="let p of products.controls; let i = index" [formGroupName]="i">
+                                        <td class="text-center font-bold">{{ i + 1 }}</td>
+                                        <td><input pInputText formControlName="natureOfCommodity" class="mv-tinput font-bold" /></td>
+                                        <td><input pInputText formControlName="species" class="mv-tinput italic" /></td>
+                                        <td><input pInputText formControlName="purposeOfUse" class="mv-tinput font-bold uppercase" /></td>
+                                        <td class="print-hide text-center" *ngIf="!viewOnly">
+                                            <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeProductRow(i)" *ngIf="products.length > 1"></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="flex items-center justify-between mt-1 mb-1 px-1 print-hide" *ngIf="!viewOnly">
+                                <span class="text-3xs font-bold text-slate-600">Product Packages Breakdown:</span>
+                                <p-button label="Add Product Item" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProductRowSecond()"></p-button>
+                            </div>
+
+                            <!-- Sub-table 2: Product Name, Lot, Packaging, Packages, Net weight -->
+                            <table class="mv-sub-table w-full">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%;">No.</th>
+                                        <th style="width: 30%;">Name of the product</th>
+                                        <th style="width: 15%;">Lot Identifier</th>
+                                        <th style="width: 30%;">Type of packaging</th>
+                                        <th style="width: 10%;">Number of packages</th>
+                                        <th style="width: 10%;">Net weight</th>
+                                        <th class="print-hide" style="width: 24px;" *ngIf="!viewOnly"></th>
+                                    </tr>
+                                </thead>
+                                <tbody formArrayName="productsSecond">
+                                    <tr *ngFor="let p of productsSecond.controls; let i = index" [formGroupName]="i">
+                                        <td class="text-center font-bold">{{ i + 1 }}</td>
+                                        <td><textarea pInputTextarea formControlName="nameOfTheProduct" rows="2" [autoResize]="true" class="mv-tinput font-bold"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="lotIdentifier" rows="2" [autoResize]="true" class="mv-tinput font-bold"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="typeOfPackaging" rows="2" [autoResize]="true" class="mv-tinput font-bold uppercase"></textarea></td>
+                                        <td><input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="mv-tinput text-center font-bold" /></td>
+                                        <td><input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="mv-tinput text-right font-bold" /></td>
+                                        <td class="print-hide text-center" *ngIf="!viewOnly">
+                                            <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeProductRowSecond(i)" *ngIf="productsSecond.length > 1"></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Row 11: Box 17 Attestations -->
+                    <tr>
+                        <td class="mv-td" colspan="3">
+                            <span class="mv-flbl font-bold">17. Attestations:</span>
+                            <p class="mv-attest-text text-justify mt-0.5">
+                                The undersigned official inspector hereby certifies that the following consignment of fishery product has been processed in an approved fish processing establishment under the relevant conditions laid down in Fish Products (Export) Regulations, 1998 required for the production of fishery products for human consumption and intended for export market.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Row 12: Box 18 Certifying officer -->
+                    <tr>
+                        <td class="mv-td" colspan="3">
+                            <span class="mv-flbl font-bold mb-1">18. Certifying officer:</span>
+                            
+                            <!-- Officer Name & Position Row -->
+                            <div class="grid grid-cols-2 gap-3 mb-1">
+                                <div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="font-bold text-xs">Name:</span>
+                                        <span class="font-bold text-xs uppercase">{{ form.get('signatoryName')?.value || 'H.M.U. BANDARA' }}</span>
+                                    </div>
+                                    <div *ngIf="!isCompany && !viewOnly" class="print-hide mt-1">
+                                        <p-select
+                                            [options]="userOptions"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            formControlName="signatoryUserId"
+                                            placeholder="Select Signatory Officer"
+                                            styleClass="signatory-select w-full text-xs"
+                                            appendTo="body"
+                                            (onChange)="onSignatoryChange($event.value)"
+                                        ></p-select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-start gap-1">
+                                        <span class="font-bold text-xs whitespace-nowrap">Official position:</span>
+                                        <div class="whitespace-pre-line text-3xs font-medium uppercase">{{ form.get('qualification')?.value || 'QUALITY CONTROL OFFICER (GRADE II)\nB.Sc.(BIOLOGY), M.Sc.(FOOD SCI & TEC)(SRI LANKA).' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Date & Signature Row -->
+                            <div class="grid grid-cols-2 gap-3 mb-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-xs">Date:</span>
+                                    <span class="font-bold text-xs">
+                                        {{ form.get('certifyingOfficerDate')?.value ? (form.get('certifyingOfficerDate')?.value | date: 'dd/MM/yyyy') : '25/08/2026' }}
+                                    </span>
+                                    <div class="print-hide ml-2">
+                                        <p-datepicker formControlName="certifyingOfficerDate" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" styleClass="text-xs"></p-datepicker>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1 mb-0.5">
+                                        <span class="font-bold text-xs">Signature:</span>
+                                    </div>
+                                    <!-- Signature Dropzone in Box 18 -->
+                                    <div
+                                        class="mv-sig-placeholder"
+                                        [class.mv-drop-active]="isDraggingSignature"
+                                        [class.has-content]="!!form.get('officialSignature')?.value"
+                                        (click)="!viewOnly && sigInputMvBox.click()"
+                                        (dragover)="onSignatureDragOver($event)"
+                                        (dragleave)="onSignatureDragLeave($event)"
+                                        (drop)="onSignatureDrop($event)"
+                                        (paste)="onSignaturePaste($event)"
+                                        tabindex="0"
+                                    >
+                                        <input type="file" #sigInputMvBox (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                        <div *ngIf="!form.get('officialSignature')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-1 text-center">
+                                            <i class="pi pi-pencil text-slate-400 text-xs mb-0.5 print-hide"></i>
+                                            <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste signature</span>
+                                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                        </div>
+
+                                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
+                                            <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="mv-sig-img" />
+                                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputMvBox.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
+                                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
+                                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputMvBox.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Official Stamp Row -->
+                            <div>
+                                <div class="font-bold text-xs mb-0.5">Official Stamp:</div>
+                                <div
+                                    class="mv-stamp-placeholder"
+                                    [class.mv-drop-active]="isDraggingStamp"
+                                    [class.has-content]="!!form.get('officialStamp')?.value"
+                                    (click)="!viewOnly && stampInputMvBox.click()"
+                                    (dragover)="onStampDragOver($event)"
+                                    (dragleave)="onStampDragLeave($event)"
+                                    (drop)="onStampDrop($event)"
+                                    (paste)="onStampPaste($event)"
+                                    tabindex="0"
+                                >
+                                    <input type="file" #stampInputMvBox (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                    <div *ngIf="!form.get('officialStamp')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-1 text-center">
+                                        <i class="pi pi-shield text-slate-400 text-xs mb-0.5 print-hide"></i>
+                                        <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste stamp</span>
+                                        <span class="print-show text-3xs text-slate-400 italic">[ Official Stamp ]</span>
+                                    </div>
+
+                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
+                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="mv-stamp-img" />
+                                        <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputMvBox.click()" title="Change Stamp">
+                                                <i class="pi pi-pencil text-2xs"></i>
+                                            </button>
+                                            <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                <i class="pi pi-trash text-2xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
+                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
+                                        <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                            <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputMvBox.click()" title="Change Stamp">
+                                                <i class="pi pi-pencil text-2xs"></i>
+                                            </button>
+                                            <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                <i class="pi pi-trash text-2xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Bottom Explanatory Notes inside Box Frame -->
+                <div class="mv-boxed-footer-notes flex justify-between">
+                    <span>Note :- The Generic Model Official Certificate should be read in conjunction with the explanatory notes</span>
+                    <span>*If required</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 2: OFFICIAL LETTERHEAD HEALTH CERTIFICATE (TC 4522)       -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="mv-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letterhead'">
+        <div class="mv-content">
+            <!-- ── Tri-lingual Official Header ── -->
+            <div class="mv-letter-header">
+                <div class="cert-header-top-row">
+                    <div class="cert-header-spacer"></div>
+                    <div class="mv-logo-row flex justify-center">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="mv-letter-logo" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || 'TC 4522'"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorExporter')?.value"
+                            [consignee]="form.get('consigneeImporter')?.value"
+                            [item]="form.get('itemName')?.value"
+                            [date]="form.get('certifyingOfficerDate')?.value"
+                            [officer]="form.get('signatoryName')?.value"
+                            [destination]="'Maldives'"
+                            [viewOnly]="viewOnly"
+                            [size]="68"
+                        ></app-certificate-qr>
+                    </div>
+                </div>
+                <div class="mv-dept-si">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="mv-dept-ta">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                <div class="mv-dept-en font-bold">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="mv-contact-line">
+                    <span>web site : http://www.fisheriesdept.gov.lk</span>
+                    <span class="mx-4">E - mail : info&#64;fisheriesdept.gov.lk</span>
+                </div>
+                <div class="mv-addr-line">
+                    <span>පුதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை</span>
+                    <span class="mx-1">නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                    <span class="mx-1">New Secretariat, Maligawaththa, Colombo 10</span>
+                </div>
+            </div>
+
+            <!-- ── Reference Number & Date Row with Curly Braces ── -->
+            <div class="mv-refs-grid">
+                <div class="mv-ref-block">
+                    <div class="mv-ref-labels">
+                        <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
+                    </div>
+                    <div class="mv-ref-brace">&#125;</div>
+                    <input pInputText formControlName="certificateNumber" class="mv-ref-input uppercase-text font-bold" placeholder="TC 4522" />
+                </div>
+                <div class="mv-ref-block">
+                    <div class="mv-ref-labels">
+                        <span>ඔබේ අංකය</span><span>உமது இல</span><span>Your Ref</span>
+                    </div>
+                    <div class="mv-ref-brace">&#125;</div>
+                    <input pInputText formControlName="yourRef" class="mv-ref-input font-bold" />
+                </div>
+                <div class="mv-ref-block">
+                    <div class="mv-ref-labels">
+                        <span>දිනය</span><span>திகதி</span><span>Date</span>
+                    </div>
+                    <div class="mv-ref-brace">&#125;</div>
+                    <div class="print-show font-bold text-xs">
+                        {{ form.get('certifyingOfficerDate')?.value ? (form.get('certifyingOfficerDate')?.value | date: 'dd/MM/yyyy') : '23/08/2026' }}
+                    </div>
+                    <div class="print-hide">
+                        <p-datepicker formControlName="certifyingOfficerDate" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" styleClass="text-xs"></p-datepicker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Title: HEALTH CERTIFICATE ── -->
+            <h2 class="mv-letter-title font-bold uppercase underline text-center my-2">HEALTH CERTIFICATE</h2>
+
+            <!-- ── Statement Paragraph ── -->
+            <p class="mv-letter-stmt text-justify text-xs leading-relaxed mb-2 font-serif">
+                The undersigned official inspector of the Fishery Products Quality Control Unit of the Department of Fisheries &amp; Aquatic Resources, Colombo, Sri Lanka hereby certifies that a sample from a consignment of fishery products described below was examined. At the time of examination, it was found that content of this samples were free of any objectionable odour, flavours &amp; colour and fit for human consumption.
+            </p>
+
+            <!-- ── Fish and Fishery Products Subtitle ── -->
+            <h3 class="mv-letter-subtitle text-center font-bold text-xs underline uppercase mb-2">Fish and Fishery Products</h3>
+
+            <!-- ── Item ── -->
+            <div class="mv-field-row">
+                <span class="mv-letter-lbl font-bold">Item:</span>
+                <input pInputText formControlName="itemName" class="mv-letter-input font-bold flex-1" placeholder="Frozen Fish Chinese Rolls (Xiphias Gladius)" />
+            </div>
+
+            <!-- ── No. of packages ── -->
+            <div class="mv-field-row">
+                <span class="mv-letter-lbl font-bold">No. of packages:</span>
+                <input pInputText formControlName="packagesCountDesc" class="mv-letter-input font-bold flex-1" placeholder="02 Styrofoam Box" />
+            </div>
+
+            <!-- ── Net weight & Storage Temperature ── -->
+            <div class="mv-field-row flex items-baseline justify-between gap-4">
+                <div class="flex items-baseline gap-2 flex-1">
+                    <span class="mv-letter-lbl font-bold whitespace-nowrap">Net weight:</span>
+                    <input pInputText formControlName="netWeightDesc" class="mv-letter-input font-bold flex-1" placeholder="15 kg" />
+                </div>
+                <div class="flex items-baseline gap-2 flex-1">
+                    <span class="mv-letter-lbl font-bold whitespace-nowrap">Storage Temperature :</span>
+                    <input pInputText formControlName="storageTempDesc" class="mv-letter-input font-bold flex-1" placeholder="(0°C)-(-18) °C" />
+                </div>
+            </div>
+
+            <!-- ── Name and address of consignor ── -->
+            <div class="mv-field-block">
+                <div class="mv-letter-lbl font-bold">Name and address of consignor:</div>
+                <div class="pl-4">
+                    <textarea pInputTextarea formControlName="consignorExporter" rows="2" [autoResize]="true" class="mv-letter-textarea font-bold w-full uppercase-text"></textarea>
+                </div>
+            </div>
+
+            <!-- ── Name and address of consignee ── -->
+            <div class="mv-field-block">
+                <div class="mv-letter-lbl font-bold">Name and address of consignee:</div>
+                <div class="pl-4">
+                    <textarea pInputTextarea formControlName="consigneeImporter" rows="4" [autoResize]="true" class="mv-letter-textarea font-bold w-full uppercase-text"></textarea>
+                </div>
+            </div>
+
+            <!-- ── Dispatch details ── -->
+            <div class="mv-dispatch-block">
+                <div class="mv-letter-lbl font-bold mb-0.5">The above fishery products are to be dispatched</div>
+                <div class="mv-field-row pl-4">
+                    <span class="mv-letter-lbl font-bold w-12">from:</span>
+                    <input pInputText formControlName="dispatchedFrom" class="mv-letter-input font-bold flex-1 uppercase-text" placeholder="COLOMBO – SRI LANKA" />
+                </div>
+                <div class="mv-field-row pl-4">
+                    <span class="mv-letter-lbl font-bold w-12">to:</span>
+                    <input pInputText formControlName="dispatchedTo" class="mv-letter-input font-bold flex-1" placeholder="Male Velana International Airport, Maldives" />
+                </div>
+                <div class="pl-4 mt-0.5">
+                    <input pInputText formControlName="dispatchTransport" class="mv-letter-input font-bold uppercase-text" placeholder="BY AIR FREIGHT" />
+                </div>
+            </div>
+
+            <!-- ── Stamp & Signature Section ── -->
+            <div class="mv-stamp-sig-grid mt-2 pt-1">
+                <!-- Left: Official Stamp -->
+                <div class="mv-stamp-col">
+                    <div class="mv-letter-lbl font-bold text-xs mb-1">Official stamp:</div>
+                    <div
+                        class="mv-stamp-placeholder"
+                        [class.mv-drop-active]="isDraggingStamp"
+                        [class.has-content]="!!form.get('officialStamp')?.value"
+                        (click)="!viewOnly && stampInputLetter.click()"
+                        (dragover)="onStampDragOver($event)"
+                        (dragleave)="onStampDragLeave($event)"
+                        (drop)="onStampDrop($event)"
+                        (paste)="onStampPaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #stampInputLetter (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <div *ngIf="!form.get('officialStamp')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-shield text-slate-400 text-xs mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste stamp</span>
+                            <span class="print-show text-3xs text-slate-400 italic">[ Official Stamp ]</span>
+                        </div>
+
+                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
+                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="mv-stamp-img" />
+                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
+                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
+                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Signature of Official Inspector -->
+                <div class="mv-sig-col">
+                    <div class="mv-letter-lbl font-bold text-xs mb-1">Signature of Official Inspector:</div>
+                    <div
+                        class="mv-sig-placeholder"
+                        [class.mv-drop-active]="isDraggingSignature"
+                        [class.has-content]="!!form.get('officialSignature')?.value"
+                        (click)="!viewOnly && sigInputLetter.click()"
+                        (dragover)="onSignatureDragOver($event)"
+                        (dragleave)="onSignatureDragLeave($event)"
+                        (drop)="onSignatureDrop($event)"
+                        (paste)="onSignaturePaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #sigInputLetter (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <div *ngIf="!form.get('officialSignature')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-pencil text-slate-400 text-xs mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste signature</span>
+                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                        </div>
+
+                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
+                            <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="mv-sig-img" />
+                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
+                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
+                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Officer Credentials -->
+                    <div class="mv-officer-info mt-1.5 space-y-0.5">
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-xs">Name:</span>
+                            <span class="font-bold text-xs uppercase">{{ form.get('signatoryName')?.value || 'H.M.U. BANDARA' }}</span>
+                        </div>
+                        <div class="flex items-start gap-1">
+                            <span class="font-bold text-xs whitespace-nowrap">Designation:</span>
+                            <span class="font-bold text-xs uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span>
+                        </div>
+                        <div class="text-3xs uppercase font-medium leading-tight">
+                            {{ form.get('qualification')?.value || 'B.Sc.(BIOLOGY), M.Sc.(FOOD SCI & TEC)(SRI LANKA).' }}
+                        </div>
+                    </div>
+
+                    <!-- Signatory Selector in Screen Mode -->
+                    <div class="signatory-selection-box print-hide mt-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                        <div class="flex items-center gap-2">
+                            <span class="text-3xs font-bold text-slate-700 whitespace-nowrap">Signatory:</span>
+                            <div class="flex-1">
+                                <p-select
+                                    [options]="userOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select Signatory Officer"
+                                    styleClass="signatory-select w-full text-xs"
+                                    appendTo="body"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                ></p-select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Bottom Footer with Tri-lingual Reference Bar ── -->
+            <div class="mv-letter-bottom-bar mt-auto">
+                <div class="mv-bottom-item">
+                    <div class="mv-bottom-labels">
+                        <span>තැ.පෙ.</span><span>த.பெ.எ</span><span>P.O.Box</span>
+                    </div>
+                    <div class="mv-ref-brace">&#125;</div>
+                    <span class="mv-bottom-val font-bold">531</span>
+                </div>
+                <div class="mv-bottom-item">
+                    <div class="mv-bottom-labels">
+                        <span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span>
+                    </div>
+                    <div class="mv-ref-brace">&#125;</div>
+                    <span class="mv-bottom-val font-bold">+94(0)112446183 (2 lines)</span>
+                </div>
+                <div class="mv-bottom-item">
+                    <div class="mv-bottom-labels">
+                        <span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span>
+                    </div>
+                    <div class="mv-ref-brace">&#125;</div>
+                    <span class="mv-bottom-val font-bold">+94(0) 112449170</span>
+                </div>
+            </div>
+
+            <!-- ── Footnote ── -->
+            <div class="mv-system-note text-center text-3xs text-slate-600 mt-1">
+                This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ BOTTOM ACTION BAR (PRINT HIDE) ════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="mv-actions print-hide flex items-center justify-between gap-3 w-full max-w-[210mm] mt-6 mb-12 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <p-button
+            *ngIf="!isEmbedded"
+            label="Back to Forms Queue"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="goBack()"
+        ></p-button>
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                [outlined]="true"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="top"
+                (onClick)="print()"
+            ></p-button>
+            <p-button
+                label="Save Certificate"
+                icon="pi pi-check"
+                severity="primary"
+                [loading]="isSaving"
+                [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"
+                (onClick)="onSubmit()"
+                *ngIf="!viewOnly"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Signatory PIN Security Confirmation Dialog -->
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

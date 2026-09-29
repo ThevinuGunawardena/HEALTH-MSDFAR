@@ -1,0 +1,515 @@
+* {
+    box-sizing: border-box;
+}
+
+.ru-wrap {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ru-page {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+    padding: 8mm 12mm 6mm 12mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.ru-boxed-frame {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 0;
+}
+
+.ru-att-frame {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 0;
+}
+
+/* ════ ORIGINAL WATERMARK (DIAGONAL) ════ */
+.ru-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 82pt;
+    font-weight: 800;
+    color: rgba(0, 0, 0, 0.08);
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    white-space: nowrap;
+    font-family: 'Arial', 'Helvetica', sans-serif;
+}
+
+.ru-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+.ru-footer {
+    flex: 0 0 5mm;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 8.5pt;
+    font-weight: 700;
+    position: relative;
+    margin-top: 2px;
+}
+.ru-footer-cert {
+    color: #000;
+    font-weight: 700;
+}
+.ru-footer-page {
+    color: #000;
+    font-weight: 700;
+    position: absolute;
+    right: 2mm;
+}
+
+.ru-hdr {
+    flex-shrink: 0;
+    margin-bottom: 2px;
+    text-align: center;
+}
+.ru-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+.ru-logo-img {
+    height: 52px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
+.ru-dept {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 1px;
+}
+.ru-addr {
+    font-size: 8pt;
+    line-height: 1.25;
+}
+
+.ru-tbl {
+    width: 100%;
+    border-collapse: collapse;
+}
+.ru-td {
+    border: 1px solid #000;
+    padding: 2px 4px;
+    vertical-align: top;
+    font-size: 7.2pt;
+}
+
+.ru-sub-sec {
+    border-top: 1px solid #000;
+    padding-top: 2px;
+}
+
+.ru-inp {
+    display: block;
+    width: 100%;
+    font-size: 7.2pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none;
+    box-shadow: none !important;
+}
+.ru-inp:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.ru-inline-inp {
+    display: inline-block;
+    width: auto;
+    min-width: 160px;
+    font-size: 7.2pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none;
+    box-shadow: none !important;
+    margin-left: 4px;
+}
+.ru-inline-inp:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.dotted-leader {
+    font-size: 6pt;
+    line-height: 1;
+    color: #444;
+    letter-spacing: 0.5px;
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.ru-eeu-banner {
+    font-size: 7pt;
+    line-height: 1.2;
+    color: #c00000;
+}
+
+.ru-pre-tbl th {
+    border: 1px solid #000;
+    padding: 1.5px;
+    font-size: 6.5pt;
+    line-height: 1.1;
+    text-align: center;
+    font-weight: 700;
+}
+.ru-pre-tbl td {
+    border: 1px solid #000;
+    padding: 1px 2px;
+    font-size: 6.8pt;
+}
+
+/* ════ ATTACHMENT PAGE STYLES (MATCHING OFFICIAL TC 4471 SCAN) ════ */
+.ru-att-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin-top: 2px;
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+.ru-att-ref-val {
+    font-weight: 700;
+    text-decoration: underline;
+    margin-left: 4px;
+}
+.ru-att-meta {
+    font-size: 8pt;
+    font-weight: 700;
+}
+
+.ru-att-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    table-layout: fixed;
+}
+.ru-att-tbl th {
+    border: 1px solid #000;
+    padding: 1.5px 4px;
+    font-weight: 700;
+    font-size: 7pt;
+    background-color: #fff;
+    line-height: 1.15;
+    height: 5.6mm;
+}
+.ru-att-tbl td {
+    border: 1px solid #000;
+    padding: 0 4px;
+    font-size: 6.8pt;
+    height: 5.4mm;
+    vertical-align: middle;
+    line-height: 1.1;
+}
+.ru-att-row:nth-child(even) {
+    background-color: #fcfcfc;
+}
+
+.ru-prod-text {
+    font-size: 6.8pt;
+    line-height: 1.1;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ru-cinp {
+    display: block;
+    width: 100%;
+    font-size: 6.8pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 0 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    line-height: 1.1;
+    height: 100%;
+}
+.ru-cinp:focus {
+    background: #f0f7ff !important;
+}
+
+/* ════ STAMP & SIGNATURE UPLOAD COMPONENT ════ */
+.print-show {
+    display: none;
+}
+
+.ru-stamp-placeholder,
+.ru-sig-placeholder {
+    min-height: 55px;
+    max-height: 85px;
+    height: auto;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.ru-stamp-placeholder:hover,
+.ru-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.ru-stamp-placeholder.ru-drop-active,
+.ru-sig-placeholder.ru-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.ru-stamp-placeholder.has-content,
+.ru-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.ru-stamp-placeholder.has-content:hover,
+.ru-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.ru-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ru-stamp-img,
+.ru-sig-img {
+    max-height: 75px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.ru-pdf-preview {
+    width: 100%;
+    height: 75px;
+    border: none;
+    pointer-events: none;
+}
+
+.ru-action-overlay {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.ru-stamp-placeholder:hover .ru-action-overlay,
+.ru-sig-placeholder:hover .ru-action-overlay {
+    opacity: 1;
+}
+
+.ru-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ru-mini-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.ru-mini-btn.danger {
+    color: #ef4444;
+}
+
+.ru-mini-btn.danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.text-2xs {
+    font-size: 0.65rem;
+}
+
+.text-3xs {
+    font-size: 0.55rem;
+}
+
+@media print {
+    .print-hide {
+        display: none !important;
+    }
+    .print-show {
+        display: inline-block !important;
+    }
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .ru-wrap {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .ru-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        padding: 8mm 12mm 6mm 12mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+    }
+
+    .ru-page:last-of-type {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .ru-inp,
+    .ru-inline-inp,
+    .ru-cinp {
+        border-bottom: none !important;
+        background: transparent !important;
+    }
+
+    .ru-stamp-placeholder,
+    .ru-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .ru-preview-container {
+        min-height: 0 !important;
+    }
+
+    .ru-action-overlay {
+        display: none !important;
+    }
+
+    .ru-watermark {
+        color: rgba(0, 0, 0, 0.08) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .ru-eeu-banner {
+        color: #c00000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-box {
+        border: 1px solid #000 !important;
+        background: transparent !important;
+        width: 12px !important;
+        height: 12px !important;
+    }
+
+    :host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box {
+        background: #000 !important;
+        border-color: #000 !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-icon {
+        color: #fff !important;
+        font-size: 8px !important;
+    }
+}

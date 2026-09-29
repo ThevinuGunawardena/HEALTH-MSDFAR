@@ -1,0 +1,152 @@
+<div class="card">
+    <p-toast></p-toast>
+    <div class="flex flex-column lg:flex-row justify-between items-end gap-3 mb-4">
+        <div class="font-semibold text-xl">Certificate Requests</div>
+        <div class="flex flex-column sm:flex-row items-end gap-2 w-full lg:w-auto">
+            <input
+                id="searchTerm"
+                type="text"
+                pInputText
+                [(ngModel)]="searchTerm"
+                (input)="applySearch()"
+                placeholder="Search by Reference Number or Company"
+                class="w-full lg:w-80"
+            />
+            <p-button label="Clear" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="clearSearch()"></p-button>
+        </div>
+    </div>
+
+    <p-dialog
+        header="Confirm Payment"
+        [(visible)]="confirmDialogVisible"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [closable]="!confirmingRequest"
+        [style]="{ width: '42rem' }"
+        [breakpoints]="{ '960px': '80vw', '640px': '96vw' }"
+        (onHide)="closeConfirmDialog()"
+    >
+        <ng-container *ngIf="selectedRequest as request">
+            <div class="confirm-dialog-content">
+                <div>
+                    <p class="confirm-dialog-text">Please verify that this user has paid successfully before confirming the certificate request.</p>
+                </div>
+
+                <div class="confirm-dialog-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Ref Number</span>
+                        <strong class="summary-refno">{{ request.refNumber }}</strong>
+                    </div>
+                </div>
+
+                <div class="payment-slip-panel">
+                    <div class="payment-slip-header">Uploaded Payment Slip</div>
+
+                    <ng-container *ngIf="request.paymentSlip as slip; else noPaymentSlip">
+                        <div *ngIf="slip.isImage" class="payment-slip-viewer">
+                            <div class="payment-slip-toolbar">
+                                <span class="payment-slip-zoom-label">Zoom {{ imageZoom * 100 | number: '1.0-0' }}%</span>
+                                <p-button icon="pi pi-search-minus" severity="secondary" [outlined]="true" size="small" [disabled]="imageZoom <= 1" (onClick)="zoomOutImage()"></p-button>
+                                <p-button icon="pi pi-refresh" severity="secondary" [outlined]="true" size="small" [disabled]="imageZoom === 1" (onClick)="resetImageZoom()"></p-button>
+                                <p-button icon="pi pi-search-plus" severity="secondary" [outlined]="true" size="small" [disabled]="imageZoom >= 4" (onClick)="zoomInImage()"></p-button>
+                            </div>
+
+                            <div class="payment-slip-image-frame">
+                                <img [src]="slip.imageSrc || undefined" alt="Uploaded payment slip" class="payment-slip-image" [style.width.%]="imageZoom * 100" />
+                            </div>
+                        </div>
+
+                        <iframe *ngIf="slip.isPdf && slip.pdfSrc" [src]="slip.pdfSrc" class="payment-slip-pdf" title="Uploaded payment slip"></iframe>
+                    </ng-container>
+
+                    <ng-template #noPaymentSlip>
+                        <div class="payment-slip-empty">No payment slip was uploaded for this request.</div>
+                    </ng-template>
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-template pTemplate="footer">
+            <div class="confirm-dialog-actions">
+                <p-button label="Cancel" severity="secondary" [text]="true" [disabled]="confirmingRequest" (onClick)="closeConfirmDialog()"></p-button>
+                <p-button label="Confirm Payment" icon="pi pi-check" severity="success" [disabled]="confirmingRequest" (onClick)="confirmSelectedRequest()"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <p-dialog
+        header="Confirm Reject"
+        [(visible)]="rejectDialogVisible"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [closable]="!rejectingRequest"
+        [style]="{ width: '32rem' }"
+        [breakpoints]="{ '960px': '80vw', '640px': '96vw' }"
+        (onHide)="closeRejectDialog()"
+    >
+        <ng-container *ngIf="selectedRejectRequest as request">
+            <div class="confirm-dialog-content">
+                <p class="confirm-dialog-text">Are you sure you want to reject this certificate request?</p>
+            </div>
+        </ng-container>
+
+        <ng-template pTemplate="footer">
+            <div class="confirm-dialog-actions">
+                <p-button label="Cancel" severity="secondary" [text]="true" [disabled]="rejectingRequest" (onClick)="closeRejectDialog()"></p-button>
+                <p-button label="Reject Request" icon="pi pi-times" severity="danger" [disabled]="rejectingRequest" (onClick)="confirmRejectSelectedRequest()"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <p-table [value]="filteredRequests" [rows]="10" [paginator]="false" [responsiveLayout]="'scroll'" styleClass="p-datatable-striped p-datatable-gridlines">
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="date">Date <p-sortIcon field="date"></p-sortIcon></th>
+                <th pSortableColumn="company">Company <p-sortIcon field="company"></p-sortIcon></th>
+                <th pSortableColumn="refNumber">Ref Number <p-sortIcon field="refNumber"></p-sortIcon></th>
+                <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+                <th pSortableColumn="country">Country <p-sortIcon field="country"></p-sortIcon></th>
+                <th pSortableColumn="amount">Amount <p-sortIcon field="amount"></p-sortIcon></th>
+                <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                <th>Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-request>
+            <tr>
+                <td>{{ request.date | date: 'yyyy-MM-dd' }}</td>
+                <td>{{ request.company }}</td>
+                <td>
+                    <span class="font-bold">{{ request.refNumber }}</span>
+                </td>
+                <td>
+                    <span [class]="'type-badge type-' + request.type.toLowerCase()">
+                        {{ request.type }}
+                    </span>
+                </td>
+                <td>{{ request.country || (request.type === 'EU' ? 'European Union' : 'N/A') }}</td>
+                <td>Rs. {{ request.amount }}</td>
+                <td>
+                    <span [class]="'status-badge status-' + request.status.toLowerCase()">
+                        {{ request.status }}
+                    </span>
+                </td>
+                <td>
+                    <div class="flex gap-2 flex-wrap items-center" *ngIf="request.status === 'Pending' && !isCompanyUser">
+                        <p-button label="Confirm" icon="pi pi-check" severity="success" [outlined]="true" size="small" (onClick)="onConfirm(request)"></p-button>
+                        <p-button label="Edit" icon="pi pi-pencil" severity="warn" [outlined]="true" size="small" (onClick)="onEdit(request)"></p-button>
+                        <p-button label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" size="small" (onClick)="onReject(request)"></p-button>
+                    </div>
+                    <div class="flex gap-2 flex-wrap items-center" *ngIf="request.status === 'Confirmed'">
+                        <p-button *ngIf="request.hasSubmittedCertificate === true" label="View" icon="pi pi-eye" severity="info" [outlined]="true" size="small" (onClick)="onView(request)"></p-button>
+                        <p-button *ngIf="!isCompanyUser" label="Edit" icon="pi pi-pencil" severity="warn" [outlined]="true" size="small" (onClick)="onEdit(request)"></p-button>
+                        <p-button *ngIf="request.hasSubmittedCertificate === false && !isCompanyUser" label="Continue" icon="pi pi-pencil" severity="secondary" [outlined]="true" size="small" (onClick)="onContinue(request)"></p-button>
+                        <p-button *ngIf="request.hasSubmittedCertificate === false && !isCompanyUser" label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" size="small" (onClick)="onReject(request)"></p-button>
+                    </div>
+                    <span *ngIf="request.status == 'Rejected'" class="text-sm italic text-gray-500"> Processed </span>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

@@ -1,0 +1,70 @@
+2026-09-07 10:05:53 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SHOW FULL COLUMNS FROM `user`
+2026-09-07 10:05:53 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SHOW CREATE TABLE `user`
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT
+    `kcu`.`CONSTRAINT_NAME` AS `constraint_name`,
+    `kcu`.`COLUMN_NAME` AS `column_name`,
+    `kcu`.`REFERENCED_TABLE_NAME` AS `referenced_table_name`,
+    `kcu`.`REFERENCED_COLUMN_NAME` AS `referenced_column_name`
+FROM `information_schema`.`REFERENTIAL_CONSTRAINTS` AS `rc`
+JOIN `information_schema`.`KEY_COLUMN_USAGE` AS `kcu` ON
+    (
+        `kcu`.`CONSTRAINT_CATALOG` = `rc`.`CONSTRAINT_CATALOG` OR
+        (`kcu`.`CONSTRAINT_CATALOG` IS NULL AND `rc`.`CONSTRAINT_CATALOG` IS NULL)
+    ) AND
+    `kcu`.`CONSTRAINT_SCHEMA` = `rc`.`CONSTRAINT_SCHEMA` AND
+    `kcu`.`CONSTRAINT_NAME` = `rc`.`CONSTRAINT_NAME`
+WHERE `rc`.`CONSTRAINT_SCHEMA` = database() AND `kcu`.`TABLE_SCHEMA` = database()
+AND `rc`.`TABLE_NAME` = 'user' AND `kcu`.`TABLE_NAME` = 'user'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `user` WHERE (`id`=198) AND (`status`=10)
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `profile_officer` WHERE `id`=82
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SHOW FULL COLUMNS FROM `profile_officer`
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SHOW CREATE TABLE `profile_officer`
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT
+    `kcu`.`CONSTRAINT_NAME` AS `constraint_name`,
+    `kcu`.`COLUMN_NAME` AS `column_name`,
+    `kcu`.`REFERENCED_TABLE_NAME` AS `referenced_table_name`,
+    `kcu`.`REFERENCED_COLUMN_NAME` AS `referenced_column_name`
+FROM `information_schema`.`REFERENTIAL_CONSTRAINTS` AS `rc`
+JOIN `information_schema`.`KEY_COLUMN_USAGE` AS `kcu` ON
+    (
+        `kcu`.`CONSTRAINT_CATALOG` = `rc`.`CONSTRAINT_CATALOG` OR
+        (`kcu`.`CONSTRAINT_CATALOG` IS NULL AND `rc`.`CONSTRAINT_CATALOG` IS NULL)
+    ) AND
+    `kcu`.`CONSTRAINT_SCHEMA` = `rc`.`CONSTRAINT_SCHEMA` AND
+    `kcu`.`CONSTRAINT_NAME` = `rc`.`CONSTRAINT_NAME`
+WHERE `rc`.`CONSTRAINT_SCHEMA` = database() AND `kcu`.`TABLE_SCHEMA` = database()
+AND `rc`.`TABLE_NAME` = 'profile_officer' AND `kcu`.`TABLE_NAME` = 'profile_officer'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `profile_officer` WHERE `id`=82
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `profile_officer` WHERE `id`=82
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT EXISTS(SELECT * FROM `fisherman_re_correction` WHERE (`main_id`=198) AND (`updated_at` >= '2026-09-06 10:05:54')) AS `result`
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT EXISTS(SELECT * FROM `correction_ignore` WHERE ((`main_id`=198) AND (`ignore_type`='Fisherman')) AND (`updated_at` >= '2026-09-06 10:05:54')) AS `result`
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `auth_assignment` WHERE `user_id`='198'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `auth_item` WHERE `name`='Export-license-controller'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT `parent` FROM `auth_item_child` WHERE `child`='Export-license-controller'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `auth_item` WHERE `name`='F.I.'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationexportbechedemer` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationtransportbechedemer` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationexportchank` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationtransportchank` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationexportlivefish` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationtransportlivefish` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationexportlobster` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationtransportlobster` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationexportnakla` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `applicationtransportnakla` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `auth_item` WHERE `name`='Reports-view'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT `parent` FROM `auth_item_child` WHERE `child`='Reports-view'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `auth_item` WHERE `name`='F.I.'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `profile_fisherman` WHERE (`status`=1) AND ((`division`=34) AND (`approval_stage`=2))
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `skipper` WHERE (`status`=1) AND ((`fisheries_district`=11) AND (`approval_stage`=2))
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `skipper_renew` WHERE (`status`=1) AND ((`fisheries_district`=11) AND (`approval_stage`=2))
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `boat_numbers` WHERE (`status`=1) AND ((`fisheries_district`=11) AND (`approval_stage`=2))
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `fisherman_registerd_boat_license` WHERE (`status`=1) AND ((`division`=34) AND (`approval_stage`=2))
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `boat_number_cancel_requests` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `boat_number_transfer_request` WHERE `status`=1
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `national_license` WHERE (`status`=1) AND ((`fisheries_district`=11) AND (`approval_stage`=2))
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT COUNT(*) FROM `highseas_license` WHERE (`status`=1) AND ((`division`=34) AND (`approval_stage`=2))
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `auth_item` WHERE `name`='DepartureController'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT `parent` FROM `auth_item_child` WHERE `child`='DepartureController'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT * FROM `auth_item` WHERE `name`='HARBOUR_OFFICER'
+2026-09-07 10:05:54 [::1][198][8v9cte8rm9smm9rgo94um7k3vk][info][yii\db\Command::query] SELECT `parent` FROM `auth_item_child` WHERE `child`='HARBOUR_OFFICER'

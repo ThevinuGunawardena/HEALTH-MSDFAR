@@ -1,0 +1,11 @@
+INSERT INTO fisherman_registerd_boat_license (id,	boat_number_id,	fisherman_id,	insurance_no,	call_sign_no,	district,	division,	landing_site,	witness_name,	witness_address,	witness_nic,	witness_singing_date,	how_propelled,	engine_make,	fuel_type,	engine_type,	engine_horsepower,	engine_serial_number,	communication_equipment,	fishing_equipment,	navigation_equipment,	date_of_construction,	date_of_first_registration,	mea_report,	status,	approval_stage,	created,	approved_time,	expire_date,	renew)
+SELECT *
+FROM fisherman_registerd_boat
+
+
+INSERT INTO `auth_item_child` (`parent`, `child`) VALUES ('PRINT', 'SkipperController-license-download'), ('PRINT', 'SkipperController-license-view'), ('PRINT', 'SkipperController-list'), ('PRINT', 'SkipperController-office-view')
+INSERT INTO `auth_item_child` (`parent`, `child`) VALUES ('PRINT', 'fisherman-license-download'), ('PRINT', 'fisherman-license-view'), ('PRINT', 'fisherman-list'), ('PRINT', 'fisherman-office'), ('PRINT', 'fisherman-profile-office-view')
+
+INSERT INTO `auth_item_child` (`parent`, `child`) VALUES ('PRINT', 'license-view');
+
+

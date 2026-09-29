@@ -1,0 +1,609 @@
+* {
+    box-sizing: border-box;
+}
+
+/* ════ CONTAINER ════ */
+.il-wrap {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ════ A4 PAGE ════ */
+.il-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm 15mm 8mm 15mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.il-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2mm;
+}
+
+.il-footer {
+    flex: 0 0 6mm;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 8.5pt;
+    font-family: 'Times New Roman', Times, serif;
+}
+.il-footer-brand {
+    font-style: italic;
+    color: #aaa;
+}
+.il-footer-page {
+    font-weight: 700;
+    color: #000;
+    font-size: 9pt;
+}
+
+/* ════ HEADER ════ */
+.il-hdr {
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom: 4px;
+}
+.il-logo-img {
+    height: 58px;
+    width: auto;
+    display: block;
+    margin: 0 auto 2px;
+}
+.il-dept {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 2px;
+    letter-spacing: 0.2px;
+}
+.il-addr {
+    font-size: 8.5pt;
+    line-height: 1.35;
+}
+.il-title {
+    font-size: 9pt;
+    font-weight: 700;
+    margin: 4px 0 6px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* ════ MAIN GRID & BOXES ════ */
+.il-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    flex-shrink: 0;
+}
+.il-td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    vertical-align: top;
+    font-size: 8pt;
+}
+.il-w25 { width: 25%; }
+.il-w30 { width: 30%; }
+.il-w45 { width: 45%; }
+
+.il-box-border {
+    border: 1px solid #000;
+    width: 100%;
+}
+
+.il-top-cert-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.il-lbl {
+    font-size: 8pt;
+    line-height: 1.25;
+}
+.il-lbl-sm {
+    font-size: 7.5pt;
+}
+.il-fixed-val {
+    font-size: 8pt;
+    line-height: 1.3;
+}
+.il-sub-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.il-rlbl {
+    font-size: 8pt;
+    min-width: 60px;
+}
+.il-inline-field {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8pt;
+}
+
+.il-inp {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none;
+    box-shadow: none !important;
+}
+.il-inp-inline {
+    flex: 1;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none;
+    box-shadow: none !important;
+}
+.il-inp-sm {
+    font-size: 7.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+}
+
+/* Inline datepickers for Page 1 and Page 4 */
+:host ::ng-deep .il-inline-datepicker,
+:host ::ng-deep .il-inline-datepicker .p-datepicker,
+:host ::ng-deep .il-inline-datepicker p-datepicker {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: inline-flex !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+:host ::ng-deep .il-inline-datepicker .p-datepicker .p-inputtext,
+:host ::ng-deep .il-inline-datepicker input {
+    width: 100% !important;
+    min-width: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 1px 2px !important;
+    font-size: 8pt !important;
+    font-family: inherit !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    box-shadow: none !important;
+    outline: none !important;
+    height: auto !important;
+    line-height: 1.2 !important;
+}
+
+:host ::ng-deep .il-inline-datepicker .p-datepicker-trigger,
+:host ::ng-deep .il-inline-datepicker .p-datepicker-button,
+:host ::ng-deep .il-inline-datepicker .pi-calendar {
+    display: none !important;
+}
+
+.il-transport-grid {
+    padding-right: 8px;
+}
+
+.il-container-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.5pt;
+}
+.il-container-tbl th {
+    border: 1px solid #000;
+    padding: 2px 4px;
+    font-weight: 700;
+    text-align: left;
+}
+.il-container-tbl td {
+    border: 1px solid #000;
+    padding: 1px 2px;
+    height: 18px;
+}
+.il-tinput {
+    width: 100%;
+    font-size: 7.5pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+}
+
+/* ════ PRODUCTS TABLE & ATTACHMENTS ════ */
+.il-prod-tbl,
+.il-att-tbl {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    font-size: 7pt;
+}
+
+.il-prod-tbl th,
+.il-att-tbl th {
+    border: 1px solid #000 !important;
+    padding: 2px 1px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    font-size: 6.8pt !important;
+    line-height: 1.1 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+}
+
+.il-prod-tbl td,
+.il-att-tbl td {
+    border: 1px solid #000 !important;
+    padding: 1px 2px !important;
+    vertical-align: middle !important;
+    height: 20px !important;
+    font-size: 6.8pt !important;
+    overflow: hidden !important;
+    position: relative;
+}
+
+/* Compact, transparent styling for PrimeNG elements inside tables */
+:host ::ng-deep .il-prod-tbl .p-datepicker,
+:host ::ng-deep .il-prod-tbl p-datepicker,
+:host ::ng-deep .il-att-tbl .p-datepicker,
+:host ::ng-deep .il-att-tbl p-datepicker {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: block !important;
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+:host ::ng-deep .il-prod-tbl .p-datepicker .p-inputtext,
+:host ::ng-deep .il-prod-tbl p-datepicker input,
+:host ::ng-deep .il-att-tbl .p-datepicker .p-inputtext,
+:host ::ng-deep .il-att-tbl p-datepicker input {
+    width: 100% !important;
+    min-width: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 1px 0 !important;
+    font-size: 6.8pt !important;
+    font-family: inherit !important;
+    text-align: center !important;
+    box-shadow: none !important;
+    height: auto !important;
+    line-height: 1.1 !important;
+    outline: none !important;
+}
+
+:host ::ng-deep .il-prod-tbl .p-datepicker-button,
+:host ::ng-deep .il-prod-tbl .p-datepicker-trigger,
+:host ::ng-deep .il-att-tbl .p-datepicker-button,
+:host ::ng-deep .il-att-tbl .p-datepicker-trigger {
+    display: none !important;
+}
+
+.il-cinp {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 6.8pt !important;
+    font-family: inherit !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 1px 0 !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.15 !important;
+}
+
+textarea.il-cinp {
+    resize: none !important;
+    overflow: hidden !important;
+}
+
+input[type="number"].il-cinp {
+    text-align: right !important;
+    -moz-appearance: textfield !important;
+}
+
+input[type="number"].il-cinp::-webkit-inner-spin-button,
+input[type="number"].il-cinp::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.il-total-row td {
+    border: 1px solid #000 !important;
+    font-size: 7.5pt !important;
+    padding: 2px 4px !important;
+    font-weight: 700 !important;
+}
+
+.il-mt2 { margin-top: 2px; }
+.il-mt4 { margin-top: 4px; }
+
+.line-through {
+    text-decoration: line-through !important;
+}
+
+/* ════ STAMP & SIGNATURE UPLOAD COMPONENT ════ */
+.print-show {
+    display: none;
+}
+
+.il-stamp-placeholder,
+.il-sig-placeholder {
+    min-height: 65px;
+    max-height: 95px;
+    height: auto;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.il-stamp-placeholder.il-stamp-placeholder-p2 {
+    min-height: 55px;
+    max-height: 80px;
+    max-width: 320px;
+}
+
+.il-stamp-placeholder:hover,
+.il-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.il-stamp-placeholder.il-drop-active,
+.il-sig-placeholder.il-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.il-stamp-placeholder.has-content,
+.il-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.il-stamp-placeholder.has-content:hover,
+.il-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.il-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.il-stamp-img,
+.il-sig-img {
+    max-height: 80px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.il-pdf-preview {
+    width: 100%;
+    height: 80px;
+    border: none;
+    pointer-events: none;
+}
+
+.il-action-overlay {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.il-stamp-placeholder:hover .il-action-overlay,
+.il-sig-placeholder:hover .il-action-overlay {
+    opacity: 1;
+}
+
+.il-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.il-mini-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.il-mini-btn.danger {
+    color: #ef4444;
+}
+
+.il-mini-btn.danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.text-2xs {
+    font-size: 0.65rem;
+}
+
+.text-3xs {
+    font-size: 0.55rem;
+}
+
+@media print {
+    .line-through {
+        text-decoration: line-through !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .print-hide {
+        display: none !important;
+    }
+    .print-show {
+        display: inline-block !important;
+    }
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .il-wrap {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .il-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        padding: 10mm 15mm 8mm 15mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+
+    .il-page:last-of-type {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .il-inp,
+    .il-inp-inline,
+    .il-inp-sm,
+    .il-tinput,
+    .il-cinp,
+    :host ::ng-deep .il-inline-datepicker input {
+        border-bottom: none !important;
+    }
+
+    .il-stamp-placeholder,
+    .il-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .il-preview-container {
+        min-height: 0 !important;
+    }
+
+    .il-action-overlay {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-datepicker-trigger,
+    :host ::ng-deep .p-calendar-button,
+    :host ::ng-deep .pi-calendar {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-datepicker,
+    :host ::ng-deep .p-calendar {
+        display: inline-block !important;
+        border: none !important;
+        padding: 0 !important;
+        width: auto !important;
+    }
+
+    :host ::ng-deep .p-datepicker .p-inputtext,
+    :host ::ng-deep .p-calendar .p-inputtext {
+        border: none !important;
+        padding: 0 !important;
+        font-size: 8pt !important;
+        background: transparent !important;
+    }
+}

@@ -1,0 +1,63 @@
+<section class="company-list-wrapper">
+    <p-toast></p-toast>
+    <p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+
+    <div class="header">
+        <h2>Company List</h2>
+        <button (click)="openAddModal()" class="btn-add">+ Add Company</button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Company Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Registration Number</th>
+                    <th>Product Certificate</th>
+                    <th>Status</th>
+                    <th>Listed Country</th>
+                    <th class="center">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let company of companies; let i = index">
+                    <td>{{ i + 1 }}</td>
+
+                    <td>{{ company.name }}</td>
+
+                    <td>{{ company.email }}</td>
+
+                    <td>{{ company.phone }}</td>
+
+                    <td>{{ company.address }}</td>
+
+                    <td>{{ company.registrationNo }}</td>
+
+                    <td>{{ company.productCertificate?.name }}</td>
+
+                    <td>{{ company.status?.name }}</td>
+
+                    <td>{{ company.listedCountry?.name }}</td>
+
+                    <td class="actions center">
+                        <button (click)="openEditModal(company)" class="btn edit">Edit</button>
+                        <button (click)="deleteCompany($event, company.id)" class="btn delete">Delete</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Company Modal with Reused Form Component -->
+    <p-dialog [(visible)]="showAddModal" [modal]="true" [style]="{ width: '60vw' }" [breakpoints]="{ '980px': '75vw', '640px': '90vw' }">
+        <app-company-add (companySaved)="onCompanySaved($event)" (companyCancelled)="closeAddModal()"></app-company-add>
+        <!-- <ng-template pTemplate="footer">
+            <button type="button" pButton label="Cancel" class="p-button-text" (click)="closeAddModal()"></button>
+        </ng-template> -->
+    </p-dialog>
+</section>

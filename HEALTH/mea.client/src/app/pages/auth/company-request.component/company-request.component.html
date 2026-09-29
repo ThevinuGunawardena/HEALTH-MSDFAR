@@ -1,0 +1,337 @@
+<div class="company-request-container">
+    <p-toast></p-toast>
+
+    <!-- Top Hero Card -->
+    <header class="hero-card">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="pi pi-file-check"></i>
+                <span>Company Certificate Portal</span>
+            </div>
+            <h1>Certificate Requests & Multi-Form Queue</h1>
+            <p>Request multiple certificate forms in a batch and fill them one by one anytime before midnight (12:00 AM).</p>
+        </div>
+
+        <div class="hero-actions">
+            <p-button
+                [label]="showDropdown ? 'Close Request Panel' : '+ Request Certificates'"
+                [icon]="showDropdown ? 'pi pi-times' : 'pi pi-plus-circle'"
+                (onClick)="toggleRequestDropdown()"
+                [severity]="showDropdown ? 'secondary' : 'primary'"
+                [raised]="true"
+                size="large"
+            >
+            </p-button>
+        </div>
+    </header>
+
+    <!-- Request / Purchase Panel (Dropdown) -->
+    <section *ngIf="showDropdown" class="purchase-panel">
+        <div class="panel-header">
+            <div class="panel-title">
+                <i class="pi pi-shopping-bag"></i>
+                <div>
+                    <h2>Request Certificate Forms</h2>
+                    <small>Select certificate type and quantity (Rs. 500 per form)</small>
+                </div>
+            </div>
+            <button type="button" class="close-btn" (click)="toggleRequestDropdown()" aria-label="Close">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+
+        <div class="selection-body">
+            <div class="grid-form">
+                <!-- Certificate Type -->
+                <div class="form-group">
+                    <label for="certificateType" class="form-label">Select Certificate Type <span class="required">*</span></label>
+                    <p-select
+                        [options]="certificateTypes"
+                        [(ngModel)]="selectedCertificateType"
+                        (onChange)="onCertificateTypeChange()"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Choose EU or NonEU"
+                        [style]="{ width: '100%' }"
+                        inputId="certificateType"
+                    >
+                    </p-select>
+                </div>
+
+                <!-- Country Selection (only for NonEU) -->
+                <div *ngIf="selectedCertificateType === 'NonEU'" class="form-group">
+                    <label for="country" class="form-label">Select Country <span class="required">*</span></label>
+                    <p-select
+                        [options]="countries"
+                        [(ngModel)]="selectedCountry"
+                        (onChange)="onCountryChange()"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Choose a destination country"
+                        [style]="{ width: '100%' }"
+                        inputId="country"
+                    >
+                    </p-select>
+                </div>
+            </div>
+
+            <!-- Error message if any -->
+            <div *ngIf="errorMessage" class="error-banner">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>{{ errorMessage }}</span>
+            </div>
+
+            <!-- Payment & Quantity Section -->
+            <div *ngIf="showPayment" class="payment-card">
+                <div class="quantity-row">
+                    <span class="quantity-label">Quantity (Number of Forms)</span>
+                    <div class="quantity-controls">
+                        <button
+                            type="button"
+                            class="qty-btn qty-btn-minus"
+                            (click)="decrementQuantity()"
+                            [disabled]="quantity <= 1 || isSubmitting"
+                            aria-label="Decrease quantity"
+                        >
+                            <i class="pi pi-minus"></i>
+                        </button>
+                        <span class="qty-value">{{ quantity }}</span>
+                        <button
+                            type="button"
+                            class="qty-btn qty-btn-plus"
+                            (click)="incrementQuantity()"
+                            [disabled]="quantity >= 50 || isSubmitting"
+                            aria-label="Increase quantity"
+                        >
+                            <i class="pi pi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="payment-summary">
+                    <div class="payment-row">
+                        <span class="label">Unit Price:</span>
+                        <span class="value">Rs. 500 / form</span>
+                    </div>
+                    <div class="payment-row total-row">
+                        <span class="label">Total Payment:</span>
+                        <span class="total-value">Rs. {{ totalAmount | number }}</span>
+                    </div>
+                    <div class="validity-hint">
+                        <i class="pi pi-info-circle"></i>
+                        <span>Generates <strong>{{ quantity }}</strong> individual forms side-by-side. Each form is valid until <strong>midnight (12:00 AM)</strong> to fill one by one.</span>
+                    </div>
+                </div>
+
+                <div class="pay-action-wrapper">
+                    <p-button
+                        [label]="'Confirm & Generate ' + quantity + ' Form(s)'"
+                        icon="pi pi-check-circle"
+                        (onClick)="onPay()"
+                        severity="success"
+                        [raised]="true"
+                        [loading]="isSubmitting"
+                        size="large"
+                    >
+                    </p-button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Midnight Expiration Information Alert -->
+    <!-- <aside class="validity-info-banner">
+        <div class="banner-icon">
+            <i class="pi pi-clock"></i>
+        </div>
+        <div class="banner-text">
+            <strong>Midnight Form Validity & Immutability Policy</strong>
+            <p>
+                Each requested form can be filled at any time until <strong>midnight (12:00 AM)</strong> on the day of request. Once a form is submitted, it is <strong>permanently locked</strong> and cannot be edited. Remaining forms stay available to fill throughout the day.
+            </p>
+        </div>
+    </aside>  -->
+
+    <!-- Form Batches Section -->
+    <main class="queue-section">
+        <div class="queue-header">
+            <div class="queue-title-wrapper">
+                <h2>Purchased Certificate Forms</h2>
+                <p>Request multiple certificate forms in a batch and complete them individually before midnight (12:00 AM).</p>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-pills">
+                <button
+                    type="button"
+                    class="tab-btn"
+                    [class.active]="activeTab === 'active'"
+                    (click)="setTab('active')"
+                >
+                    <i class="pi pi-bolt"></i>
+                    <span>Active Forms (Today)</span>
+                    <span class="tab-badge active-badge">{{ activeFormsCount }}</span>
+                </button>
+                <button
+                    type="button"
+                    class="tab-btn"
+                    [class.active]="activeTab === 'all'"
+                    (click)="setTab('all')"
+                >
+                    <i class="pi pi-list"></i>
+                    <span>All Requests</span>
+                    <span class="tab-badge">{{ totalFormsCount }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoadingForms" class="loading-state">
+            <i class="pi pi-spin pi-spinner"></i>
+            <p>Loading your certificate forms...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoadingForms && filteredBatches.length === 0" class="empty-queue-card">
+            <div class="empty-icon">
+                <i class="pi pi-inbox"></i>
+            </div>
+            <h3>{{ activeTab === 'active' ? 'No Active Unfilled Forms' : 'No Certificate Requests Found' }}</h3>
+            <p>
+                {{ activeTab === 'active'
+                    ? 'You have no unused forms waiting to be filled. Click "+ Request Certificates" to purchase and generate new forms.'
+                    : 'Your company has not requested any certificate forms yet.'
+                }}
+            </p>
+            <p-button
+                label="Request Certificates"
+                icon="pi pi-plus-circle"
+                (onClick)="onRequestCertificate()"
+                severity="primary"
+                [raised]="true"
+            >
+            </p-button>
+        </div>
+
+        <!-- Batches Container -->
+        <div *ngIf="!isLoadingForms && filteredBatches.length > 0" class="batches-container">
+            <section *ngFor="let batch of filteredBatches; let bIdx = index" class="batch-card">
+                <!-- Batch Header -->
+                <div class="batch-header">
+                    <div class="batch-title-group">
+                        <div class="batch-badge">
+                            <i class="pi pi-folder"></i>
+                            <span>Batch #{{ filteredBatches.length - bIdx }}</span>
+                        </div>
+                        <div class="batch-info">
+                            <h3>{{ batch.totalForms }} {{ batch.certificateType }} Form(s) Requested</h3>
+                            <small>
+                                Destination: <strong>{{ batch.certificateType === 'EU' ? 'European Union' : batch.countryName }}</strong>
+                                &bull; Generated: {{ batch.createdAt | date: 'MMM d, y, h:mm a' }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="batch-meta-group">
+                        <!-- Progress Pill -->
+                        <div class="batch-progress-pill">
+                            <span class="progress-label">Progress:</span>
+                            <span class="progress-count">{{ batch.completedForms }} of {{ batch.totalForms }} Completed</span>
+                            <div class="progress-bar-shell">
+                                <div class="progress-bar-fill" [style.width.%]="(batch.completedForms / batch.totalForms) * 100"></div>
+                            </div>
+                        </div>
+
+                        <!-- 12h Batch Countdown -->
+                        <div class="batch-timer-pill" [class.timer-expired]="batch.isExpired" [class.timer-done]="batch.completedForms === batch.totalForms">
+                            <i class="pi pi-clock"></i>
+                            <span>{{ batch.remainingTimeText }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side-by-Side Forms Grid for this Batch -->
+                <div class="batch-forms-grid">
+                    <article
+                        *ngFor="let form of batch.forms; let fIdx = index"
+                        class="slot-card"
+                        [class.slot-submitted]="form.hasFormSubmitted"
+                        [class.slot-expired]="form.isExpired"
+                        [class.slot-ready]="!form.hasFormSubmitted && !form.isExpired"
+                    >
+                        <!-- Slot Card Header -->
+                        <div class="slot-header">
+                            <div class="slot-number-pill">
+                                <span>Form {{ form.slotIndex || (fIdx + 1) }} of {{ form.totalInBatch || batch.totalForms }}</span>
+                            </div>
+
+                            <div class="slot-ref-badge">
+                                <i class="pi pi-hashtag"></i>
+                                <span>{{ form.referenceNumber }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Slot Card Body -->
+                        <div class="slot-body">
+                            <div class="slot-detail-row">
+                                <span class="slot-label">Type:</span>
+                                <span class="slot-val">{{ form.certificateType === 'EU' ? 'EU Vet Certificate' : ('Non-EU (' + form.countryName + ')') }}</span>
+                            </div>
+
+                            <!-- Expiry Countdown for Form -->
+                            <div class="slot-countdown-box" [class.cd-submitted]="form.hasFormSubmitted" [class.cd-expired]="form.isExpired">
+                                <i *ngIf="form.hasFormSubmitted" class="pi pi-check-circle"></i>
+                                <i *ngIf="form.isExpired" class="pi pi-times-circle"></i>
+                                <i *ngIf="!form.hasFormSubmitted && !form.isExpired" class="pi pi-stopwatch"></i>
+                                <span class="cd-text">{{ form.remainingTimeText }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Slot Card Footer -->
+                        <div class="slot-footer">
+                            <!-- Ready to Fill -->
+                            <p-button
+                                *ngIf="!form.hasFormSubmitted && !form.isExpired"
+                                [label]="'Fill Form #' + (form.slotIndex || (fIdx + 1))"
+                                icon="pi pi-file-edit"
+                                severity="primary"
+                                [raised]="true"
+                                styleClass="w-full"
+                                (onClick)="onFillForm(form)"
+                            >
+                            </p-button>
+
+                            <!-- Submitted & Locked -->
+                            <div *ngIf="form.hasFormSubmitted" class="locked-btn-group">
+                                <p-button
+                                    label="View Form (Read-Only)"
+                                    icon="pi pi-eye"
+                                    severity="success"
+                                    [outlined]="true"
+                                    styleClass="w-full"
+                                    (onClick)="onViewForm(form)"
+                                >
+                                </p-button>
+                                <small class="locked-notice"><i class="pi pi-lock"></i> Submitted & Locked</small>
+                            </div>
+
+                            <!-- Expired -->
+                            <div *ngIf="form.isExpired" class="expired-btn-group">
+                                <p-button
+                                    label="Expired"
+                                    icon="pi pi-lock"
+                                    severity="danger"
+                                    [disabled]="true"
+                                    [outlined]="true"
+                                    styleClass="w-full"
+                                >
+                                </p-button>
+                                <small class="expired-notice">Midnight limit reached</small>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>

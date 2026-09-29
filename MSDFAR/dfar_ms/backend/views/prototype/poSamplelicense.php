@@ -1,0 +1,161 @@
+<?php
+
+/** @var yii\web\View $this */
+
+$this->title = 'Possession Registration Request';
+?>
+<div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+  <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+  <a href = "po-application" class="btn btn-outline-primary">Possession Application</a>
+
+
+  <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+  <a href = "po-assigninspector" class="btn btn-outline-primary">Assign Inspectors</a>
+
+  
+  <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+  <a href = "po-inspectionreport" class="btn btn-outline-primary">Inspection Report</a>
+
+  
+  <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+  <a href = "po-samplelicense" class="btn btn-outline-primary">Sample License</a>
+
+  
+  <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+  <a href = "po-dmrecommendation" class="btn btn-outline-primary">DM Reccomendation</a>
+
+  
+  <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+  <a href = "po-dgrecommendation" class="btn btn-outline-primary">DG Reccomendation</a>
+
+  <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+  <a href = "po-adrecommendation" class="btn btn-outline-primary">AD Reccomendation</a>
+
+</div>
+<br>
+<br>
+<h3 class="card-subtitle mb-2 text-muted">Sample License :</h3>
+<br>
+<br>
+<div style="width:800px; height:1600px; padding:20px;  border: 3px solid #787878">
+<div style="width:750px; height:1550px; padding:20px;  border: 1px solid #787878">
+       <img src="http://msdfar.com/images/Emblem_of_Sri_Lanka.png" alt="logo" width= "20%" style ="display: inherit; margin:auto;" > 
+       <br>
+       <span style="font-size:23px"><b><center>DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES</center></b></span><br>
+       <span style="font-size:15px"><i><center>P.O.Box 531,New Secretariat Maligawatta,Colombo 10 Sri Lanka,</center> </i></span>
+       <span style="font-size:15px"><i><center>Telephone:0094-11-2449170,2422980,2434075</center>  </i></span> 
+       <span style="font-size:15px"><i><center>Fax:0094-11-2449170,2422980,2434075</center>  </i></span> 
+       <span style="font-size:15px"><i><center>Email: dgfar@gmail.com </center>  </i></span> <br/><br/>
+       <span style="font-size:15px"><b><center>License for Possession, exhibit for Sale, selling or Transport <b> ( Beche-de-mer ) </b> </center></b></span> <br>
+       
+       <style>
+table, th, td {
+  border:1px solid black;
+}
+</style>
+<center>
+<table>
+  <tr>
+    <th  style="width:50%; height:10px;">Licence Number </th>
+    <td>DFAR/Mgt/LVF/E/2024/030 </td>
+  </tr>
+  <tr>
+    <th  style="width:50%; height:10px;">Name of the Licence holder</th>
+    <td>dilltest company33333333 </td>
+  </tr>
+  <tr>
+    <th  style="width:50%; height:10px;">Address of the Licence holder</th>
+    <td>500, negombo road,negombo </td>
+  </tr>
+</table>
+</center>
+<br>
+      <center>Above Permit /Licence holder is hereby authorised to Possession, Exhibit for Sale, Selling or Transport of <b> (Beche-de-mer)</b> </center>  <br>
+      
+      <style>
+table, th, td {
+  border:1px solid black;
+}
+</style>
+
+<table>
+  <tr>
+    <th  style="width:20%; height:10px;">Variety (Commercial Name) 	 </th>
+    <th  style="width:20%; height:10px;">Weight (Kg) 	 </th>
+    <th  style="width:20%; height:10px;">Collected Area </th>
+    <th  style="width:20%; height:10px;">Vehicle Number	 </th>
+    <th  style="width:50%; height:10px;">Intermediate Destination District  	 </th>
+    <th  style="width:20%; height:10px;">Final product Storing District 	 </th>
+    <th  style="width:20%; height:10px;">Address of final store </th>
+  </tr>
+  <tr>
+    <td>Live Fish </td>
+    <td>10</td>
+    <td>Mannar</td>
+    <td>M2000(1), CN8888, LB8888 </td>
+    <td>colombo, Puttalam (52/78C, St. Marys Lane, Mattakkuliya, Colombo 15.)(12, Anuradhapura Rd, Puttalam.) </td>
+    <td>Jaffna</td>
+    <td>45, sS. Stores, KKS West, jaffna.</td>
+  </tr>
+</table>
+
+<br>
+
+
+      <center>This Licence if not cancelled previously shall be valid for a period of 6 months from 2022-02-17 to 2022-08-16 </center>
+       <br>
+       This license shall be subjected to the following terms and condtion: 
+       <br>
+       <ol>
+        <br>
+  <li> 	This Permit /Licence shall be subjected to the provisions of Live fish export and import regulation 98  </li>
+  <li>You are not allowed to transport the fish species given in the schedule, part 01 of Import & Export of Live Fish Regulations 1998 and all invertebrates in schedule IVA of Fauna & Flora Protection (Amendment) Act No.49 of 1993.   </li>
+  <li>The Proprietor/ Manager or the Director Board of the company is responsible for violation of any of the above regulations using this letter.   </li>
+</ol> 
+<br>
+<br>
+<br>
+<div class="row">
+<div class="col-xl-4 col-xl-4 text-center text-center">
+                  <span class="pm-credits-text block sans">2024-01-22</span>
+                  <span class="pm-empty-space block underline"></span>
+                  <br>
+                  <br>
+                  <span class="bold block"><b>Issue Date</b></span>
+  </div>
+     <div class="col-xl-2">
+            <!-- LEAVE EMPTY -->
+       </div>
+       <div class="col-xl-6 pm-certified col-xl-6 text-center">
+                  <span class="pm-credits-text block sans">e-signature</span>
+                  <span class="pm-empty-space block underline"></span>
+                  <br>
+                  <br>
+                  <span class="bold block"><b>Director General</b> </span><br>
+                  <span class="bold block"><b>Department of Fisheries & Aquatic Resources</b> </span>
+        </div>
+</div>
+
+
+   
+</div>
+</div>
+      
+ 
+
+
+ 
+
+      
+       
+   
+            
+ 
+ 
+
+         
+   
+
+ 
+
+ 

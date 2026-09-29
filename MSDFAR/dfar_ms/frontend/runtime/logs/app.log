@@ -1,0 +1,40 @@
+2026-09-29 13:02:23 [127.0.0.1][-][vip5tftm3ugbmijgq4d5tpo8dl][error][yii\web\HttpException:401] yii\web\UnauthorizedHttpException: Invalid or expired session. Please log in again. in C:\Users\Administrator\Downloads\DFAR\dfar_ms\backend\components\Controller.php:77
+Stack trace:
+#0 C:\Users\Administrator\Downloads\DFAR\dfar_ms\vendor\yiisoft\yii2\base\Controller.php(180): backend\components\Controller->beforeAction(Object(yii\base\InlineAction))
+#1 C:\Users\Administrator\Downloads\DFAR\dfar_ms\vendor\yiisoft\yii2\base\Module.php(547): yii\base\Controller->runAction('', Array)
+#2 C:\Users\Administrator\Downloads\DFAR\dfar_ms\vendor\yiisoft\yii2\web\Application.php(105): yii\base\Module->runAction('', Array)
+#3 C:\Users\Administrator\Downloads\DFAR\dfar_ms\vendor\yiisoft\yii2\base\Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#4 C:\Users\Administrator\Downloads\DFAR\dfar_ms\frontend\web\index.php(18): yii\base\Application->run()
+#5 C:\Users\Administrator\Downloads\DFAR\dfar_ms\frontend\web\router.php(10): require_once('C:\\Users\\Admini...')
+#6 {main}
+2026-09-29 13:02:23 [127.0.0.1][-][vip5tftm3ugbmijgq4d5tpo8dl][info][application] $_GET = []
+
+$_POST = []
+
+$_FILES = []
+
+$_COOKIE = []
+
+$_SESSION = [
+    '__flash' => []
+]
+
+$_SERVER = [
+    'DOCUMENT_ROOT' => 'C:\\Users\\Administrator\\Downloads\\DFAR\\dfar_ms\\frontend\\web'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'REMOTE_PORT' => '57371'
+    'SERVER_SOFTWARE' => 'PHP 8.2.33 Development Server'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'SERVER_NAME' => '127.0.0.1'
+    'SERVER_PORT' => '8081'
+    'REQUEST_URI' => '/'
+    'REQUEST_METHOD' => 'GET'
+    'SCRIPT_NAME' => '/index.php'
+    'SCRIPT_FILENAME' => 'C:\\Users\\Administrator\\Downloads\\DFAR\\dfar_ms\\frontend\\web\\index.php'
+    'PHP_SELF' => '/index.php'
+    'HTTP_HOST' => '127.0.0.1:8081'
+    'HTTP_USER_AGENT' => 'curl/8.21.0'
+    'HTTP_ACCEPT' => '*/*'
+    'REQUEST_TIME_FLOAT' => 1790667143.0761
+    'REQUEST_TIME' => 1790667143
+]

@@ -1,0 +1,186 @@
+/* Global print styles for all certificate PrimeNG tables */
+.cert-actions-top {
+    display: flex;
+    justify-content: start;
+    padding: 20px 0 20px 0;
+    width: 210mm;
+}
+
+.cert-actions-top button,
+.cert-actions-top p-button,
+.cert-actions-top .p-button {
+    min-width: 150px;
+    background-color: #f9f9f9;
+}
+:host ::ng-deep .cert-actions-top .p-button {
+    min-width: 150px !important;
+}
+
+.print-show {
+    display: none !important;
+}
+
+@media print {
+    /* Hide non-printable elements */
+    .print-hide,
+    .p-paginator,
+    p-toast,
+    app-confirm-password-dialog {
+        display: none !important;
+    }
+
+    .print-show {
+        display: block !important;
+    }
+
+    span.print-show {
+        display: inline-block !important;
+    }
+
+    /* PrimeNG View Products Table Print Styling */
+    :host ::ng-deep .view-products-table.p-datatable,
+    :host ::ng-deep .view-products-table .p-datatable-table-container,
+    :host ::ng-deep .view-products-table .p-datatable-wrapper {
+        width: 100% !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .view-products-table .p-datatable-table {
+        width: 100% !important;
+        table-layout: auto !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .view-products-table .p-datatable-thead > tr > th,
+    :host ::ng-deep .view-products-table .p-datatable-tbody > tr > td,
+    :host ::ng-deep .view-products-table .p-datatable-tfoot > tr > td {
+        word-break: break-word !important;
+        white-space: normal !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        border: 1px solid #ddd !important;
+        padding: 8px !important;
+    }
+
+    :host ::ng-deep .view-products-table .p-datatable-tfoot > tr > td {
+        font-weight: 700 !important;
+        background-color: #f5f5f5 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .view-products-table .p-datatable-thead > tr > th {
+        background-color: #e8e8e8 !important;
+        font-weight: 700 !important;
+        text-align: left !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .view-products-table .p-datatable-tbody > tr:nth-child(odd) {
+        background-color: #f9f9f9 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .view-products-table .p-datatable-tbody > tr:nth-child(even) {
+        background-color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .view-products-table .p-paginator {
+        display: none !important;
+    }
+
+    .cert-qr-container,
+    .usa-header-qr-slot,
+    .cert-header-qr-slot {
+        display: flex !important;
+    }
+
+    .usa-qr-card,
+    .cert-qr-card {
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+
+/* ── Universal QR Verification Badge Styles ── */
+.cert-qr-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.usa-qr-card,
+.cert-qr-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    background: #ffffff;
+    padding: 3px 4px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.usa-qr-card:hover,
+.cert-qr-card:hover {
+    transform: scale(1.04);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.usa-qr-img,
+.cert-qr-img {
+    display: block;
+}
+
+.usa-qr-lbl,
+.cert-qr-lbl {
+    font-size: 5.5pt;
+    font-weight: 800;
+    color: #047857;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.usa-qr-sub,
+.cert-qr-sub {
+    font-size: 4.8pt;
+    font-weight: 700;
+    color: #000;
+    letter-spacing: 0.2px;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+/* ── Symmetrical Header Top Row with QR slot for letterhead certificates ── */
+.cert-header-top-row {
+    display: grid;
+    grid-template-columns: 85px 1fr 85px;
+    align-items: start;
+    margin-bottom: 2px;
+    width: 100%;
+}
+
+.cert-header-spacer {
+    width: 85px;
+}
+
+.cert-header-qr-slot {
+    width: 85px;
+    display: flex;
+    justify-content: flex-end;
+}
+

@@ -1,0 +1,762 @@
+<div class="my-wrap" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Malaysia Export Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Malaysia (MY)</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+            <span *ngIf="form.get('certificateReferenceNo')?.value || form.get('documentReferenceNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">
+                Ref: {{ viewMode === 'quality' ? (form.get('documentReferenceNo')?.value || form.get('certificateReferenceNo')?.value) : form.get('certificateReferenceNo')?.value }}
+            </span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Sample 1 (Fresh / Air - SZ 4268)"
+                icon="pi pi-file"
+                severity="help"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSample1()"
+                pTooltip="Load Health Certificate (Fresh / Air Freight - SZ 4268) matching PDF 1"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Sample 2 (Quality - TA 9637)"
+                icon="pi pi-file"
+                severity="warn"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleQuality()"
+                pTooltip="Load Quality Certificate (TA 9637) matching PDF 2"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Sample 3 (Frozen / Sea - TA 9637)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSample3()"
+                pTooltip="Load Health Certificate (Frozen / Sea Freight - TA 9637) matching PDF 3"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ 3 FORMS MODE SELECTOR (RADIO BUTTONS) ═════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Form:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('fresh')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="fresh" inputId="vm_my_fresh" (onClick)="onViewModeChange('fresh')"></p-radiobutton>
+            <span class="font-bold">1. HEALTH CERTIFICATE (FRESH / AIR FREIGHT - 3 PAGES)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('quality')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="quality" inputId="vm_my_quality" (onClick)="onViewModeChange('quality')"></p-radiobutton>
+            <span class="font-bold">2. QUALITY CERTIFICATE (1 PAGE)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('frozen')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="frozen" inputId="vm_my_frozen" (onClick)="onViewModeChange('frozen')"></p-radiobutton>
+            <span class="font-bold">3. HEALTH CERTIFICATE (FROZEN / SEA FREIGHT - 3 PAGES)</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'quality' ? '2. QUALITY CERTIFICATE (1 PAGE)' : ((form.get('viewMode')?.value || viewMode) === 'frozen' ? '3. HEALTH CERTIFICATE (FROZEN / SEA FREIGHT - 3 PAGES)' : '1. HEALTH CERTIFICATE (FRESH / AIR FREIGHT - 3 PAGES)') }}
+        </span>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ FORM 1 & FORM 3: HEALTH CERTIFICATE (PAGES 1, 2, 3) ═══════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewMode !== 'quality'">
+        <!-- ════ PAGE 1 ════ -->
+        <div class="my-page">
+            <div class="my-content">
+                <!-- Header outside the bordered box -->
+                <div class="my-hdr">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="my-logo flex justify-center">
+                            <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="my-logo-img" />
+                        </div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateReferenceNo')?.value"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('exporterName')?.value"
+                                [consignee]="form.get('importerDetails')?.value"
+                                [destination]="'Malaysia'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="my-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="my-addr">P.O. Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka.</div>
+                    <div class="my-addr">Telephone: +94 -11- 2472187, 2472186, 2472192</div>
+                    <div class="my-addr">Fax: +94 -11- 2449170, 2424086,</div>
+                    <div class="my-addr">E-mail: <span class="text-blue-700 underline font-medium">dgdfar&#64;gmail.com</span></div>
+                    <div class="my-title">HEALTH CERTIFICATE</div>
+                </div>
+
+                <!-- Outer bordered box for Page 1 -->
+                <div class="my-box-outer">
+                    <!-- Row 1: Exporter (45%) | Ref + Quality + Competent + Local (55%) -->
+                    <div class="my-row">
+                        <div class="my-cell my-w45 my-border-r">
+                            <div class="my-lbl font-bold">1. Exporter:</div>
+                            <textarea pInputTextarea formControlName="exporterName" rows="4" [autoResize]="true" class="my-inp font-bold uppercase my-mt2"></textarea>
+                        </div>
+                        <div class="my-cell-col my-w55">
+                            <div class="my-subrow my-border-b">
+                                <div class="my-cell my-w55 my-border-r">
+                                    <div class="my-lbl font-bold">2. Certificate reference No :</div>
+                                    <input pInputText formControlName="certificateReferenceNo" class="my-inp font-bold my-mt2" />
+                                </div>
+                                <div class="my-cell my-w45">
+                                    <div class="my-lbl font-bold">3. Quality Certificate No :</div>
+                                    <input pInputText formControlName="qualityCertificateNo" class="my-inp font-bold my-mt2" />
+                                </div>
+                            </div>
+                            <div class="my-cell my-border-b">
+                                <div class="my-lbl font-bold">4. Competent Authority:</div>
+                                <input pInputText formControlName="competentAuthority" class="my-inp font-bold my-mt2" />
+                            </div>
+                            <div class="my-cell">
+                                <div class="my-lbl font-bold">5. Local Authority:</div>
+                                <input pInputText formControlName="localAuthority" class="my-inp font-bold my-mt2" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Importer (35%) | Country Origin (18%) | ISO (12%) | Country Dest (23%) | ISO (12%) -->
+                    <div class="my-row my-border-t">
+                        <div class="my-cell my-w35 my-border-r">
+                            <div class="my-lbl font-bold">6. Importer:</div>
+                            <textarea pInputTextarea formControlName="importerDetails" rows="4" [autoResize]="true" class="my-inp font-bold uppercase my-mt2"></textarea>
+                        </div>
+                        <div class="my-cell my-w18 my-border-r">
+                            <div class="my-lbl font-bold">7. Country of origin:</div>
+                            <input pInputText formControlName="countryOfOrigin" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                        <div class="my-cell my-w12 my-border-r">
+                            <div class="my-lbl font-bold">8. ISO Code:</div>
+                            <input pInputText formControlName="countryOfOriginIso" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                        <div class="my-cell my-w23 my-border-r">
+                            <div class="my-lbl font-bold">9. Country of destination:</div>
+                            <input pInputText formControlName="countryOfDestination" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                        <div class="my-cell my-w12">
+                            <div class="my-lbl font-bold">10. ISO Code:</div>
+                            <input pInputText formControlName="countryOfDestinationIso" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Processing establishment (60%) | Authorization No (40%) -->
+                    <div class="my-row my-border-t">
+                        <div class="my-cell my-w60 my-border-r">
+                            <div class="my-lbl font-bold">11. Processing establishment:</div>
+                            <textarea pInputTextarea formControlName="processingEstablishment" rows="3" [autoResize]="true" class="my-inp font-bold uppercase my-mt2"></textarea>
+                        </div>
+                        <div class="my-cell my-w40">
+                            <div class="my-lbl font-bold">Authorization N<sup>o</sup></div>
+                            <input pInputText formControlName="authorizationNo" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Place of loading (33%) | Mean of transport (37%) | Port of entry (30%) -->
+                    <div class="my-row my-border-t">
+                        <div class="my-cell my-w33 my-border-r">
+                            <div class="my-lbl font-bold">12. Place of loading:</div>
+                            <input pInputText formControlName="placeOfLoading" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                        <div class="my-cell my-w37 my-border-r">
+                            <div class="my-lbl font-bold">13. Mean of transport:</div>
+                            <div class="my-cb-col my-mt2">
+                                <label class="my-cb"><p-checkbox formControlName="transportAir" [binary]="true"></p-checkbox><span>Aero plane</span></label>
+                                <label class="my-cb flex items-center gap-1 flex-wrap">
+                                    <p-checkbox formControlName="transportShip" [binary]="true"></p-checkbox>
+                                    <span>Ship</span>
+                                    <input pInputText formControlName="transportShipDetails" class="my-inp-inline font-bold" placeholder=" - (Ship details)" />
+                                </label>
+                                <label class="my-cb"><p-checkbox formControlName="transportRail" [binary]="true"></p-checkbox><span>Railway wagon</span></label>
+                                <label class="my-cb"><p-checkbox formControlName="transportRoad" [binary]="true"></p-checkbox><span>Road vehicle</span></label>
+                                <label class="my-cb"><p-checkbox formControlName="transportOther" [binary]="true"></p-checkbox><span>Other</span></label>
+                            </div>
+                        </div>
+                        <div class="my-cell my-w30">
+                            <div class="my-lbl font-bold">14. Port of entry:</div>
+                            <input pInputText formControlName="portOfEntry" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Transport Company (50%) | Transport/storage condition (50%) -->
+                    <div class="my-row my-border-t">
+                        <div class="my-cell my-w50 my-border-r">
+                            <div class="my-lbl font-bold">15. Transport Company:</div>
+                            <input pInputText formControlName="transportCompany" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                        <div class="my-cell my-w50">
+                            <div class="my-lbl font-bold">16. Transport/storage condition:</div>
+                            <div class="my-cb-row my-mt2">
+                                <label class="my-cb"><p-checkbox formControlName="conditionAmbient" [binary]="true"></p-checkbox><span>Ambient</span></label>
+                                <label class="my-cb"><p-checkbox formControlName="conditionChilled" [binary]="true"></p-checkbox><span>Chilled</span></label>
+                                <label class="my-cb"><p-checkbox formControlName="conditionFrozen" [binary]="true"></p-checkbox><span>Frozen</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 6: Container and seal (100%) -->
+                    <div class="my-row my-border-t">
+                        <div class="my-cell my-w100">
+                            <div class="my-lbl font-bold">17. Container and seal Identification:</div>
+                            <textarea pInputTextarea formControlName="containerSealIdentification" rows="2" [autoResize]="true" class="my-inp font-bold uppercase my-mt2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Row 7: Invoice No (45%) | Transit Country (25%) | Departure date (30%) -->
+                    <div class="my-row my-border-t">
+                        <div class="my-cell my-w45 my-border-r">
+                            <div class="my-lbl font-bold">18. Invoice No:</div>
+                            <input pInputText formControlName="invoiceNo" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                        <div class="my-cell my-w25 my-border-r">
+                            <div class="my-lbl font-bold">19. Transit Country:</div>
+                            <input pInputText formControlName="transitCountry" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                        <div class="my-cell my-w30">
+                            <div class="my-lbl font-bold">20. Departure date:</div>
+                            <div class="print-show font-bold my-mt2">
+                                {{ form.get('departureDate')?.value ? (form.get('departureDate')?.value | date: 'dd/MM/yyyy') : '' }}
+                            </div>
+                            <div class="print-hide my-mt2">
+                                <p-datepicker formControlName="departureDate" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy"></p-datepicker>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="my-footer">
+                <span class="my-footer-page">1/{{ totalPages }}</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 2 ════ -->
+        <div class="my-page">
+            <div class="my-content">
+                <div class="my-box-outer my-page-box-flex">
+                    <!-- Top Bar: Certificate reference No -->
+                    <div class="my-row my-border-b">
+                        <div class="my-cell my-w100">
+                            <div class="my-lbl font-bold">Certificate reference No :</div>
+                            <div class="font-bold my-mt2 text-sm">{{ form.get('certificateReferenceNo')?.value || '' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- 21. Product brand -->
+                    <div class="my-row my-border-b">
+                        <div class="my-cell my-w100">
+                            <div class="my-lbl font-bold">21. Product brand:</div>
+                            <input pInputText formControlName="productBrand" class="my-inp font-bold my-mt2" />
+                        </div>
+                    </div>
+
+                    <!-- 22. Origin of product (50%) | 23. Certified product for (50%) -->
+                    <div class="my-row my-border-b">
+                        <div class="my-cell my-w50 my-border-r">
+                            <div class="my-lbl font-bold">22. Origin of product:</div>
+                            <div class="my-cb-row my-mt2">
+                                <label class="my-cb"><p-checkbox formControlName="originFisheries" [binary]="true"></p-checkbox><span>Fisheries</span></label>
+                                <label class="my-cb"><p-checkbox formControlName="originAquaculture" [binary]="true"></p-checkbox><span>Aquaculture</span></label>
+                            </div>
+                        </div>
+                        <div class="my-cell my-w50">
+                            <div class="my-lbl font-bold">23. Certified product for:</div>
+                            <div class="font-bold my-mt2 uppercase">{{ form.get('certifiedProductFor')?.value || 'HUMAN CONSUMPTION' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- 24. Treatment Type -->
+                    <div class="my-row my-border-b">
+                        <div class="my-cell my-w100">
+                            <div class="my-lbl font-bold">24. Treatment Type:</div>
+                            <input pInputText formControlName="treatmentType" class="my-inp font-bold my-mt2" />
+                        </div>
+                    </div>
+
+                    <!-- 25. Product Identification -->
+                    <div class="my-row my-prod-container">
+                        <div class="my-cell my-w100" style="padding: 4px 6px 8px;">
+                            <div class="my-lbl font-bold my-mb2">25. Product Identification:</div>
+
+                            <table class="my-prod-table">
+                                <colgroup>
+                                    <col style="width: 14%;" />
+                                    <col style="width: 27%;" />
+                                    <col style="width: 23%;" />
+                                    <col style="width: 14%;" />
+                                    <col style="width: 11%;" />
+                                    <col style="width: 11%;" />
+                                    <col class="print-hide" style="width: 32px;" *ngIf="!viewOnly" />
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>HS Code:</th>
+                                        <th>Description:</th>
+                                        <th>Scientific name:</th>
+                                        <th>Batch code:</th>
+                                        <th>Number of packages<br/>and total packing:</th>
+                                        <th>Net Weight (Kg):</th>
+                                        <th class="print-hide" *ngIf="!viewOnly"></th>
+                                    </tr>
+                                </thead>
+                                <tbody formArrayName="products">
+                                    <tr *ngFor="let p of products.controls; let i = index" [formGroupName]="i">
+                                        <td><textarea pInputTextarea formControlName="hsCode" rows="1" [autoResize]="true" class="my-tinp font-bold"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="description" rows="2" [autoResize]="true" class="my-tinp"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="scientificName" rows="2" [autoResize]="true" class="my-tinp italic"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="batchCode" rows="2" [autoResize]="true" class="my-tinp"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="numberOfPackages" rows="1" [autoResize]="true" class="my-tinp text-center"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="netWeight" rows="1" [autoResize]="true" class="my-tinp text-right"></textarea></td>
+                                        <td class="text-center print-hide" *ngIf="!viewOnly">
+                                            <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeProduct(i)"></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="my-total-row">
+                                        <td colspan="4" class="font-bold">Total</td>
+                                        <td class="font-bold text-center">{{ calculateTotalPackages() }}</td>
+                                        <td class="font-bold text-right">{{ calculateTotalNetWeight() }}</td>
+                                        <td class="print-hide" *ngIf="!viewOnly"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <div class="print-hide my-mt4" *ngIf="!viewOnly">
+                                <button pButton label="Add Product Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addProduct()"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="my-footer">
+                <span class="my-footer-page">2/{{ totalPages }}</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 3 ════ -->
+        <div class="my-page">
+            <div class="my-content">
+                <div class="my-box-outer my-page-box-flex">
+                    <!-- 26. Certificate reference No -->
+                    <div class="my-row my-border-b">
+                        <div class="my-cell my-w100">
+                            <div class="my-lbl font-bold">26. Certificate reference No:</div>
+                            <div class="font-bold my-mt2 text-sm">{{ form.get('certificateReferenceNo')?.value || '' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- 27. Additional Information -->
+                    <div class="my-row my-border-b">
+                        <div class="my-cell my-w100">
+                            <div class="my-lbl font-bold">27. Additional Information</div>
+                            <input pInputText formControlName="additionalInformation" class="my-inp font-bold uppercase my-mt2" />
+                        </div>
+                    </div>
+
+                    <!-- 28. Health certification -->
+                    <div class="my-row my-border-b">
+                        <div class="my-cell my-w100">
+                            <div class="my-lbl font-bold my-mb2">28. Health certification:</div>
+                            <p class="my-attest-intro">The official inspector certifies that:</p>
+                            <div class="my-attest-block">
+                                <p class="my-attest-p"><span class="my-alpha">a)</span> Fishery and aquaculture products have been caught and handled in accordance with health and hygiene requirements laid down in the Fish Products (Export) Regulation 1998 of Sri Lanka;</p>
+                                <p class="my-attest-p"><span class="my-alpha">b)</span> Fishery and/or aquaculture products were landed, handled, packaged, prepared, processed, frozen, stored and transported in a hygienic – sanitary way in establishments officially approved by the competent health authority, in compliance with the organoleptic, parasitological, chemical, virological or microbiological criteria of the exporting country and under conditions at least equivalent to the Standards and Codes of Practice established in the Codex Alimentarius ;</p>
+                                <p class="my-attest-p"><span class="my-alpha">c)</span> Fishery and / or aquaculture products were processed under sanitary conditions in approved establishments based on Good Manufacturing Practices (GMP), Sanitation Standard Operating Procedures (SOPs) and the Hazard Analysis and Critical Control Point(HACCP), with systematic verification by the Competent Authority;</p>
+                                <p class="my-attest-p"><span class="my-alpha">d)</span> This consignment of fish and fishery products meets all the quality and safety requirements stipulated by the Fish Products (Export) Regulation 1998 of Sri Lanka and are in compliance with organoleptic and microbiological criteria of the said regulations and where aquacultured products are concerned such products are subjected to a national aquaculture chemical residue monitoring programme in accordance with the Aquaculture (Monitoring of Residues) Regulation 2002 of Sri Lanka and therefore, fit for human consumption;</p>
+                                <p class="my-attest-p"><span class="my-alpha">e)</span> The material used for packaging meets the food safety requirements stipulated in the national fish products export regulations;</p>
+                                <p class="my-attest-p"><span class="my-alpha">f)</span> The cargo to be exported has a printed identification which certifies that these products come from the establishment stated in this certificate and is labeled correctly.</p>
+                                <p class="my-attest-p"><span class="my-alpha">g)</span> The means of transport, as well as loading conditions are in compliance with the hygiene conditions as stipulated in the national fish products export regulations.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Certifying Official block -->
+                    <div class="my-row my-sig-container">
+                        <div class="my-cell my-w100 my-sig-cell">
+                            <div class="font-bold my-mb2">Certifying Official:</div>
+
+                            <div class="my-sig-grid">
+                                <div class="my-sig-col">
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="font-bold">Name:</span>
+                                        <span class="font-bold text-sm">{{ form.get('signatoryName')?.value || ' ' }}</span>
+                                    </div>
+                                    <div *ngIf="!isCompany && !viewOnly" class="print-hide my-mt2">
+                                        <p-select
+                                            [options]="userOptions"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            formControlName="signatoryUserId"
+                                            placeholder="Select Signatory Officer"
+                                            styleClass="signatory-select"
+                                            [style]="{ width: '100%' }"
+                                            (onChange)="onSignatoryChange($event.value)"
+                                        ></p-select>
+                                    </div>
+                                </div>
+
+                                <div class="my-sig-col">
+                                    <div class="flex items-start gap-2">
+                                        <span class="font-bold whitespace-nowrap">Qualification and title:</span>
+                                        <span class="font-bold whitespace-pre-line text-xs uppercase">{{ form.get('qualification')?.value || 'QUALITY CONTROL OFFICER (GRADE II)\nB.Sc.(BIOLOGY), M.Sc.(FOOD SCI & TEC)(SRI LANKA).' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="my-sig-grid my-mt4">
+                                <div class="my-sig-col">
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="font-bold">Date:</span>
+                                        <span class="print-show font-bold">{{ form.get('certifyingOfficialDate')?.value ? (form.get('certifyingOfficialDate')?.value | date: 'dd/MM/yyyy') : '' }}</span>
+                                    </div>
+                                    <div class="print-hide my-mt2">
+                                        <p-datepicker formControlName="certifyingOfficialDate" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy"></p-datepicker>
+                                    </div>
+                                </div>
+                                <div class="my-sig-col"></div>
+                            </div>
+
+                            <div class="my-sig-grid my-mt6 pt-4">
+                                <div class="my-sig-col">
+                                    <div class="text-xs text-slate-700 mb-1">Seal of the official body</div>
+                                    <!-- Stamp Placeholder / Preview -->
+                                    <div
+                                        class="my-stamp-placeholder"
+                                        [class.my-drop-active]="isDraggingStamp"
+                                        [class.has-content]="!!form.get('officialStamp')?.value"
+                                        (click)="!viewOnly && stampInputMy.click()"
+                                        (dragover)="onStampDragOver($event)"
+                                        (dragleave)="onStampDragLeave($event)"
+                                        (drop)="onStampDrop($event)"
+                                        (paste)="onStampPaste($event)"
+                                        tabindex="0"
+                                    >
+                                        <input type="file" #stampInputMy (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                        <!-- Empty State -->
+                                        <div *ngIf="!form.get('officialStamp')?.value" class="my-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
+                                            <span class="print-show text-3xs text-slate-400 italic">Seal of the official body</span>
+                                        </div>
+
+                                        <!-- Uploaded Image -->
+                                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="my-preview-container">
+                                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="my-stamp-img" />
+                                            <div class="my-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="my-mini-btn" (click)="$event.stopPropagation(); stampInputMy.click()" title="Change Stamp">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="my-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Uploaded PDF -->
+                                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="my-preview-container">
+                                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="my-pdf-preview"></object>
+                                            <div class="my-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="my-mini-btn" (click)="$event.stopPropagation(); stampInputMy.click()" title="Change Stamp">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="my-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="my-sig-col">
+                                    <div class="text-xs text-slate-700 mb-1 text-right">stamp and signature of certifying official</div>
+                                    <!-- Signature Placeholder / Preview -->
+                                    <div
+                                        class="my-sig-placeholder"
+                                        [class.my-drop-active]="isDraggingSignature"
+                                        [class.has-content]="!!form.get('officialSignature')?.value"
+                                        (click)="!viewOnly && sigInputMy.click()"
+                                        (dragover)="onSignatureDragOver($event)"
+                                        (dragleave)="onSignatureDragLeave($event)"
+                                        (drop)="onSignatureDrop($event)"
+                                        (paste)="onSignaturePaste($event)"
+                                        tabindex="0"
+                                    >
+                                        <input type="file" #sigInputMy (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                        <!-- Empty State -->
+                                        <div *ngIf="!form.get('officialSignature')?.value" class="my-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste signature screenshot / PDF</span>
+                                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                        </div>
+
+                                        <!-- Uploaded Image -->
+                                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="my-preview-container">
+                                            <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="my-sig-img" />
+                                            <div class="my-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="my-mini-btn" (click)="$event.stopPropagation(); sigInputMy.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="my-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Uploaded PDF -->
+                                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="my-preview-container">
+                                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="my-pdf-preview"></object>
+                                            <div class="my-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="my-mini-btn" (click)="$event.stopPropagation(); sigInputMy.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="my-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="my-footer">
+                <span class="my-footer-page">3/{{ totalPages }}</span>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ FORM 2: QUALITY CERTIFICATE (1 PAGE) ═══════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewMode === 'quality'">
+        <div class="my-q-page">
+            <div class="my-q-content">
+                <!-- Header -->
+                <div class="my-q-hdr">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="text-center flex-1">
+                            <div class="my-q-title font-bold">Quality Certificate</div>
+                            <div class="my-q-docref-row text-center my-mt2">
+                                <span class="font-bold">Document Reference No: </span>
+                                <input pInputText formControlName="documentReferenceNo" class="my-q-inp-inline font-bold" />
+                            </div>
+                        </div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('documentReferenceNo')?.value"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('processingEstablishmentName')?.value"
+                                [destination]="'Malaysia'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certification statement -->
+                <div class="my-q-statement my-mt4">
+                    <p class="my-q-p">
+                        The under secretariat of quality and food safety certified: that after carrying out the corresponding analysis of the aquaculture and/or fishing product (s) detailed below, it is (they are) fit for: Human Consumption
+                        <span class="inline-flex items-center gap-4 ml-3">
+                            <label class="my-q-cb"><p-checkbox formControlName="humanConsumptionYes" [binary]="true"></p-checkbox><span>Yes</span></label>
+                            <label class="my-q-cb"><p-checkbox formControlName="humanConsumptionNo" [binary]="true"></p-checkbox><span>No</span></label>
+                        </span>
+                    </p>
+                </div>
+
+                <!-- Establishment details -->
+                <div class="my-q-est-block my-mt3">
+                    <div class="flex items-baseline gap-2">
+                        <span class="font-bold whitespace-nowrap">Name of processing establishment:</span>
+                        <textarea pInputTextarea formControlName="processingEstablishmentName" rows="1" [autoResize]="true" class="my-q-inp font-bold uppercase"></textarea>
+                    </div>
+                    <div class="flex items-baseline gap-2 my-mt2">
+                        <span class="font-bold whitespace-nowrap">Processing establishment authorization number:</span>
+                        <input pInputText formControlName="processingEstablishmentAuthNumber" class="my-q-inp font-bold uppercase" />
+                    </div>
+                </div>
+
+                <!-- 7-Column Product Table -->
+                <div class="my-mt4">
+                    <table class="my-q-table">
+                        <colgroup>
+                            <col style="width: 12%;" />
+                            <col style="width: 14%;" />
+                            <col style="width: 32%;" />
+                            <col style="width: 12%;" />
+                            <col style="width: 12%;" />
+                            <col style="width: 9%;" />
+                            <col style="width: 11%;" />
+                            <col class="print-hide" style="width: 32px;" *ngIf="!viewOnly" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Product<br/>name</th>
+                                <th>Product type</th>
+                                <th>Test results</th>
+                                <th>Lot code</th>
+                                <th>Sampling<br/>date<br/>(beginning<br/>– end)</th>
+                                <th>Number of<br/>boxes</th>
+                                <th>Lot weight<br/>(Kg)</th>
+                                <th class="print-hide" *ngIf="!viewOnly"></th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="qualityProducts">
+                            <tr *ngFor="let p of qualityProducts.controls; let i = index" [formGroupName]="i">
+                                <td><textarea pInputTextarea formControlName="productName" rows="4" [autoResize]="true" class="my-q-tinp font-bold uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="productType" rows="4" [autoResize]="true" class="my-q-tinp font-bold uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="testResults" rows="8" [autoResize]="true" class="my-q-tinp uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="lotCode" rows="4" [autoResize]="true" class="my-q-tinp font-bold uppercase"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="samplingDate" rows="4" [autoResize]="true" class="my-q-tinp font-bold"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="numberOfBoxes" rows="2" [autoResize]="true" class="my-q-tinp font-bold uppercase text-center"></textarea></td>
+                                <td><textarea pInputTextarea formControlName="lotWeight" rows="2" [autoResize]="true" class="my-q-tinp font-bold uppercase text-right"></textarea></td>
+                                <td class="text-center print-hide" *ngIf="!viewOnly">
+                                    <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeQualityProduct(i)"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="my-q-total-row">
+                                <td colspan="5" class="text-right font-bold pr-4">Total</td>
+                                <td class="font-bold text-center uppercase">{{ calculateTotalNumberOfBoxes() }}</td>
+                                <td class="font-bold text-right uppercase">{{ calculateTotalLotWeight() }}</td>
+                                <td class="print-hide" *ngIf="!viewOnly"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="print-hide my-mt2" *ngIf="!viewOnly">
+                        <button pButton label="Add Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addQualityProduct()"></button>
+                    </div>
+                </div>
+
+                <!-- Footer Details -->
+                <div class="my-q-meta-block my-mt4">
+                    <div class="flex items-baseline gap-2">
+                        <span class="font-bold whitespace-nowrap">Tested by:</span>
+                        <input pInputText formControlName="testedBy" class="my-q-inp uppercase" />
+                    </div>
+                    <div class="flex items-baseline gap-2 my-mt2">
+                        <span class="font-bold whitespace-nowrap">Country of destination:</span>
+                        <input pInputText formControlName="countryOfDestination" class="my-q-inp font-bold uppercase" />
+                    </div>
+                    <div class="flex items-baseline gap-2 my-mt2">
+                        <span class="font-bold whitespace-nowrap">Commercial invoice:</span>
+                        <input pInputText formControlName="commercialInvoice" class="my-q-inp font-bold uppercase" />
+                    </div>
+                    <div class="flex items-baseline gap-2 my-mt2">
+                        <span class="font-bold whitespace-nowrap">Unique code:</span>
+                        <input pInputText formControlName="uniqueCode" class="my-q-inp" />
+                    </div>
+                    <div class="flex items-baseline gap-2 my-mt2">
+                        <span class="font-bold whitespace-nowrap">Observations:</span>
+                        <textarea pInputTextarea formControlName="observations" rows="1" [autoResize]="true" class="my-q-inp"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="my-q-footer">
+                <span class="my-q-footer-page">1/1</span>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ BOTTOM ACTION BAR (PRINT HIDE) ════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="my-actions print-hide flex items-center justify-between gap-3 w-full max-w-[210mm] mt-6 mb-12 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <p-button
+            *ngIf="!isEmbedded"
+            label="Back to Forms Queue"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="goBack()"
+        ></p-button>
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                [outlined]="true"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="top"
+                (onClick)="print()"
+            ></p-button>
+            <p-button
+                label="Save Certificate"
+                icon="pi pi-check"
+                severity="primary"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+                *ngIf="!viewOnly"
+            ></p-button>
+        </div>
+    </div>
+</div>
+
+<!-- Signatory Password Confirmation Dialog -->
+<app-confirm-password-dialog
+    class="print-hide"
+    [(visible)]="showPasswordDialog"
+    [userEmail]="pendingSignatoryUserEmail"
+    [userId]="pendingSignatoryUserId || ''"
+    (onConfirm)="onSignatoryConfirmed($event)"
+    (onCancel)="onSignatoryCanceled()"
+></app-confirm-password-dialog>

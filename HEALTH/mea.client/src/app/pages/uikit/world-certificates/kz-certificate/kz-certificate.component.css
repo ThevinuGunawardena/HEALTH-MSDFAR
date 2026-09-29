@@ -1,0 +1,590 @@
+* {
+    box-sizing: border-box;
+}
+
+.kz-wrap {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.kz-page {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+    padding: 10mm 15mm 8mm 15mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.kz-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2mm;
+}
+
+.kz-footer {
+    flex: 0 0 6mm;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 8.5pt;
+    font-weight: 700;
+    position: relative;
+}
+.kz-footer-cert {
+    color: #000;
+    font-weight: 700;
+}
+.kz-footer-page {
+    color: #000;
+    font-weight: 700;
+    position: absolute;
+    right: 2mm;
+}
+
+.kz-hdr {
+    flex-shrink: 0;
+    margin-bottom: 2px;
+    text-align: center;
+}
+.kz-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+.kz-logo-img {
+    height: 56px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
+.kz-dept {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 1px;
+}
+.kz-addr {
+    font-size: 8pt;
+    line-height: 1.25;
+}
+
+.kz-tbl {
+    width: 100%;
+    border-collapse: collapse;
+}
+.kz-td {
+    border: 1px solid #000;
+    padding: 3px 5px;
+    vertical-align: top;
+    font-size: 7.5pt;
+}
+
+.kz-sub-sec {
+    border-top: 1px solid #000;
+    padding-top: 2px;
+}
+
+.kz-inp {
+    display: block;
+    width: 100%;
+    font-size: 7.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none;
+    box-shadow: none !important;
+}
+.kz-inp:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.kz-inline-inp {
+    display: inline-block;
+    width: auto;
+    min-width: 160px;
+    font-size: 7.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none;
+    box-shadow: none !important;
+    margin-left: 4px;
+}
+.kz-inline-inp:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.kz-eeu-banner {
+    font-size: 7pt;
+    line-height: 1.2;
+}
+
+.kz-pre-tbl th {
+    border: 1px solid #000;
+    padding: 2px;
+    font-size: 6.8pt;
+    line-height: 1.15;
+    text-align: center;
+}
+.kz-pre-tbl td {
+    border: 1px solid #000;
+    padding: 1px 2px;
+    font-size: 7pt;
+}
+
+/* ════ ATTACHMENT PAGE STYLES (MATCHING OFFICIAL TC 4791 SCAN) ════ */
+.kz-attach-page {
+    padding: 8mm 12mm 6mm 12mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    position: relative;
+}
+
+.kz-attach-page .kz-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 0;
+    padding-bottom: 0;
+}
+
+.kz-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 82pt;
+    font-weight: 800;
+    color: rgba(0, 0, 0, 0.07);
+    text-transform: uppercase;
+    letter-spacing: 10px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    white-space: nowrap;
+    font-family: Arial, Helvetica, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.kz-att-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 2mm;
+    text-align: center;
+    letter-spacing: 0.2px;
+    color: #000;
+    flex-shrink: 0;
+}
+.kz-att-ref-val {
+    font-weight: 700;
+    margin-left: 3px;
+}
+.kz-att-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5pt;
+    margin-bottom: 2.5mm;
+    color: #000;
+    flex-shrink: 0;
+}
+.kz-att-meta {
+    font-size: 8.5pt;
+    line-height: 1.2;
+}
+
+.kz-att-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    table-layout: fixed;
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    flex-shrink: 0;
+}
+.kz-att-tbl th {
+    border: 1px solid #000;
+    padding: 1px 3px;
+    font-weight: 700;
+    font-size: 7.5pt;
+    background-color: transparent;
+    line-height: 1.1;
+    text-align: center;
+    vertical-align: middle;
+    color: #000;
+    height: 5.5mm;
+}
+.kz-att-tbl td {
+    border: 1px solid #000;
+    padding: 0 3px !important;
+    font-size: 7.2pt;
+    height: 6.8mm !important;
+    min-height: 6.8mm !important;
+    max-height: 6.8mm !important;
+    vertical-align: middle;
+    background: transparent;
+    line-height: 1;
+    box-sizing: border-box;
+}
+.kz-att-row {
+    height: 6.8mm !important;
+    min-height: 6.8mm !important;
+    max-height: 6.8mm !important;
+    box-sizing: border-box;
+}
+.kz-att-row:nth-child(even) {
+    background-color: transparent;
+}
+
+.kz-att-td-prod {
+    padding-left: 3px !important;
+    text-align: left;
+}
+.kz-att-td-kgs,
+.kz-att-td-boxes {
+    text-align: right;
+    padding-right: 3px !important;
+}
+.kz-att-prod-text {
+    display: block;
+    font-size: 7.2pt;
+    font-weight: 700;
+    line-height: 1.1;
+    font-family: 'Times New Roman', Times, serif;
+    color: #000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.kz-att-prod-text em {
+    font-style: italic;
+    font-weight: 700;
+}
+
+/* Action column: borderless outside the official table */
+.kz-att-th-act,
+.kz-att-td-act {
+    border: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    background: transparent !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    padding: 0 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+.kz-trash-btn {
+    width: 18px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+.kz-trash-btn:hover {
+    opacity: 1;
+}
+:host ::ng-deep .kz-trash-btn .p-button-icon {
+    font-size: 0.65rem !important;
+    color: #ef4444 !important;
+}
+
+.kz-cinp {
+    display: block;
+    width: 100%;
+    font-size: 7.2pt !important;
+    font-weight: 700 !important;
+    font-family: 'Times New Roman', Times, serif !important;
+    border: none !important;
+    padding: 0 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    line-height: 1 !important;
+    height: 6.2mm !important;
+    min-height: 6.2mm !important;
+    max-height: 6.2mm !important;
+    box-sizing: border-box !important;
+}
+.kz-cinp:focus {
+    background: #f0f7ff !important;
+}
+
+:host ::ng-deep .kz-att-tbl .p-inputtext,
+:host ::ng-deep .kz-att-tbl input.p-inputtext,
+:host ::ng-deep .kz-att-tbl input {
+    height: 6.2mm !important;
+    min-height: 6.2mm !important;
+    max-height: 6.2mm !important;
+    padding: 0 2px !important;
+    font-size: 7.2pt !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    font-family: 'Times New Roman', Times, serif !important;
+}
+:host ::ng-deep .kz-att-tbl .p-inputtext:focus {
+    background: #f0f7ff !important;
+    box-shadow: none !important;
+}
+
+/* ════ STAMP & SIGNATURE UPLOAD COMPONENT ════ */
+.print-show {
+    display: none;
+}
+
+.kz-stamp-placeholder,
+.kz-sig-placeholder {
+    min-height: 65px;
+    max-height: 95px;
+    height: auto;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.kz-stamp-placeholder:hover,
+.kz-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.kz-stamp-placeholder.kz-drop-active,
+.kz-sig-placeholder.kz-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.kz-stamp-placeholder.has-content,
+.kz-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.kz-stamp-placeholder.has-content:hover,
+.kz-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.kz-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kz-stamp-img,
+.kz-sig-img {
+    max-height: 80px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.kz-pdf-preview {
+    width: 100%;
+    height: 80px;
+    border: none;
+    pointer-events: none;
+}
+
+.kz-action-overlay {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.kz-stamp-placeholder:hover .kz-action-overlay,
+.kz-sig-placeholder:hover .kz-action-overlay {
+    opacity: 1;
+}
+
+.kz-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.kz-mini-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.kz-mini-btn.danger {
+    color: #ef4444;
+}
+
+.kz-mini-btn.danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.text-2xs {
+    font-size: 0.65rem;
+}
+
+.text-3xs {
+    font-size: 0.55rem;
+}
+
+@media print {
+    .print-hide {
+        display: none !important;
+    }
+    .print-show {
+        display: inline-block !important;
+    }
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .kz-wrap {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .kz-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        padding: 10mm 15mm 8mm 15mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+    }
+
+    .kz-page:last-of-type {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .kz-inp,
+    .kz-inline-inp,
+    .kz-cinp {
+        border-bottom: none !important;
+        background: transparent !important;
+    }
+
+    .kz-stamp-placeholder,
+    .kz-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .kz-preview-container {
+        min-height: 0 !important;
+    }
+
+    .kz-action-overlay {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-box {
+        border: 1px solid #000 !important;
+        background: transparent !important;
+        width: 12px !important;
+        height: 12px !important;
+    }
+
+    :host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box {
+        background: #000 !important;
+        border-color: #000 !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-icon {
+        color: #fff !important;
+        font-size: 8px !important;
+    }
+}

@@ -1,0 +1,862 @@
+<div class="uk-container">
+    <p-toast></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs w-full max-w-5xl" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">UNITED KINGDOM (UK)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('certificateReferenceNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateReferenceNo')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ TOP FORMAT SELECTOR (RADIO BUTTONS) ════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide w-full max-w-5xl" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Certificate Format:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('withoutAttachment')">
+            <p-radiobutton name="viewMode" [ngModel]="viewMode" value="withoutAttachment" inputId="vm_uk_without" (onClick)="onViewModeChange('withoutAttachment')" [ngModelOptions]="{standalone: true}"></p-radiobutton>
+            <span class="font-bold">WITHOUT ATTACHMENT (4 PAGES)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('withAttachment')">
+            <p-radiobutton name="viewMode" [ngModel]="viewMode" value="withAttachment" inputId="vm_uk_with" (onClick)="onViewModeChange('withAttachment')" [ngModelOptions]="{standalone: true}"></p-radiobutton>
+            <span class="font-bold">WITH ATTACHMENT BREAKDOWN TABLE (5 PAGES)</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs w-full max-w-5xl" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ viewMode === 'withAttachment' ? 'WITH ATTACHMENT BREAKDOWN TABLE (5 PAGES)' : 'WITHOUT ATTACHMENT (4 PAGES)' }}
+        </span>
+    </div>
+
+    <form [formGroup]="form">
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 1 — Part 1 Details ════════════════════════════════ -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="uk-page">
+            <div class="uk-content">
+                <!-- Header -->
+                <div class="uk-header">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="uk-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="uk-logo" /></div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateReferenceNo')?.value"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorName')?.value"
+                                [consignee]="form.get('consigneeName')?.value"
+                                [destination]="'UNITED KINGDOM'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="uk-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="uk-addr">P.O.Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka.</div>
+                    <div class="uk-addr">Telephone: +94 -11- 2449170, 2472186, 2472192</div>
+                    <div class="uk-addr">Fax: +94-11-2449170, 2424086</div>
+                    <div class="uk-addr">E-mail: dgdfar&#64;gmail.com</div>
+                    <div class="uk-title-bar">
+                        <span>COUNTRY: SRI LANKA</span>
+                        <span>Health certificate to Great Britain, Channel Islands and Isle of Man (GBHC401 v1.1 Aug - 23)</span>
+                    </div>
+                </div>
+
+                <!-- Part 1 side label + main grid -->
+                <div class="uk-part1-shell">
+                    <div class="uk-side-label">Part 1: Details of Dispatched Consignment</div>
+                    <div class="uk-part1-main">
+                        <table class="uk-grid">
+                            <!-- Row 1: I.1 Consignor (left, rowspan 2) | I.2 + I.3 -->
+                            <tr>
+                                <td class="uk-td uk-col-l uk-p1-col-a" rowspan="2" colspan="4">
+                                    <div class="uk-flbl uk-bold">I.1 Consignor/Exporter</div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Name:</span><input pInputText formControlName="consignorName" class="uk-uline" /></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Address:</span><textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="uk-uline"></textarea></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Tel.:</span><input pInputText formControlName="consignorTel" class="uk-uline" /></div>
+                                    <div class="uk-spacer-xl"></div>
+                                </td>
+                                <td class="uk-td uk-p1-col-b" colspan="2">
+                                    <div class="uk-flbl uk-bold">I.2 Certificate reference no:</div>
+                                    <input pInputText formControlName="certificateReferenceNo" class="uk-uline uk-mt4" />
+                                </td>
+                                <td class="uk-td uk-p1-col-c" colspan="2">
+                                    <div class="uk-flbl uk-bold">I.3 Central Competent Authority:</div>
+                                    <div class="uk-static-val uk-mt4">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                                </td>
+                            </tr>
+
+                            <!-- Row 2: I.2.a + I.4 -->
+                            <tr>
+                                <td class="uk-td uk-p1-col-b uk-td-diag" colspan="2">
+                                    <div class="uk-flbl uk-bold p-1">I.2.a</div>
+                                </td>
+                                <td class="uk-td uk-p1-col-c" colspan="2">
+                                    <div class="uk-flbl uk-bold">I.4 Local Competent Authority:</div>
+                                    <div class="uk-static-val uk-mt4">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                                </td>
+                            </tr>
+
+                            <!-- Row 3: I.5 Consignee | I.6 Operator responsible -->
+                            <tr>
+                                <td class="uk-td uk-col-l" colspan="4">
+                                    <div class="uk-flbl uk-bold">I.5 Consignee/Importer</div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Name:</span><input pInputText formControlName="consigneeName" class="uk-uline" /></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Address:</span><textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="uk-uline"></textarea></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Tel.:</span><input pInputText formControlName="consigneeTel" class="uk-uline" /></div>
+                                    <div class="uk-spacer-xl"></div>
+                                </td>
+                                <td class="uk-td uk-col-r" colspan="4">
+                                    <div class="uk-flbl uk-bold">I.6 Operator responsible for the consignment</div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Name:</span><input pInputText formControlName="operatorName" class="uk-uline" /></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Address:</span><textarea pInputTextarea formControlName="operatorAddress" rows="2" [autoResize]="true" class="uk-uline"></textarea></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Tel.:</span><input pInputText formControlName="operatorTel" class="uk-uline" /></div>
+                                    <div class="uk-spacer-xl"></div>
+                                </td>
+                            </tr>
+
+                            <!-- Row 4: I.7 Country of origin | ISO | I.8 Region | Code | I.9 Country dest | ISO | I.10 Region dest | Code -->
+                            <tr>
+                                <td class="uk-td uk-col-q2">
+                                    <div class="uk-flbl-xs uk-bold">I.7 Country of origin</div>
+                                    <input pInputText formControlName="countryOfOrigin" class="uk-uline uk-mt2" />
+                                </td>
+                                <td class="uk-td uk-col-q-sm">
+                                    <div class="uk-flbl-xs uk-bold">ISO code</div>
+                                    <input pInputText formControlName="countryOfOriginISO" class="uk-uline uk-mt2" />
+                                </td>
+                                <td class="uk-td uk-col-q2">
+                                    <div class="uk-flbl-xs uk-bold">I.8 Region of origin</div>
+                                    <input pInputText formControlName="regionOfOrigin" class="uk-uline uk-mt2" />
+                                </td>
+                                <td class="uk-td uk-col-q-sm">
+                                    <div class="uk-flbl-xs uk-bold">Code</div>
+                                    <input pInputText formControlName="regionOfOriginCode" class="uk-uline uk-mt2" />
+                                </td>
+                                <td class="uk-td uk-col-q2">
+                                    <div class="uk-flbl-xs uk-bold">I.9 Country of destination</div>
+                                    <input pInputText formControlName="countryOfDestination" class="uk-uline uk-mt2" />
+                                </td>
+                                <td class="uk-td uk-col-q-sm">
+                                    <div class="uk-flbl-xs uk-bold">ISO code</div>
+                                    <input pInputText formControlName="countryOfDestinationISO" class="uk-uline uk-mt2" />
+                                </td>
+                                <td class="uk-td uk-col-q2">
+                                    <div class="uk-flbl-xs uk-bold">I.10 Region of destination</div>
+                                    <input pInputText formControlName="regionOfDestination" class="uk-uline uk-mt2" />
+                                </td>
+                                <td class="uk-td uk-col-q-sm">
+                                    <div class="uk-flbl-xs uk-bold">Code</div>
+                                    <input pInputText formControlName="regionOfDestinationCode" class="uk-uline uk-mt2" />
+                                </td>
+                            </tr>
+
+                            <!-- Row 5: I.11 Place of dispatch | I.12 Place of destination -->
+                            <tr>
+                                <td class="uk-td" colspan="4">
+                                    <div class="uk-flbl uk-bold">I.11 Place of dispatch</div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Name:</span><input pInputText formControlName="placeOfDispatchName" class="uk-uline" /></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Approval Number:</span><input pInputText formControlName="placeOfDispatchApprovalNo" class="uk-uline" /></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Address:</span><textarea pInputTextarea formControlName="placeOfDispatchAddress" rows="2" [autoResize]="true" class="uk-uline"></textarea></div>
+                                </td>
+                                <td class="uk-td" colspan="4">
+                                    <div class="uk-flbl uk-bold">I.12 Place of destination</div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Name:</span><input pInputText formControlName="placeOfDestinationName" class="uk-uline" /></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Address:</span><textarea pInputTextarea formControlName="placeOfDestinationAddress" rows="2" [autoResize]="true" class="uk-uline"></textarea></div>
+                                    <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Tel:</span><input pInputText formControlName="consigneeTel" class="uk-uline" /></div>
+                                    <div class="uk-spacer-xl"></div>
+                                </td>
+                            </tr>
+
+                            <!-- Row 6: I.13 Place of loading | I.14 Date/Time of departure -->
+                            <tr>
+                                <td class="uk-td" colspan="4">
+                                    <div class="uk-flbl uk-bold">I.13 Place of loading:</div>
+                                    <input pInputText formControlName="placeOfLoading" class="uk-uline uk-mt4" />
+                                    <div class="uk-spacer-xl"></div>
+                                </td>
+                                <td class="uk-td" colspan="4">
+                                    <div class="uk-flbl uk-bold">I.14 Date of departure &nbsp;&nbsp;&nbsp;&nbsp; Time of departure</div>
+                                    <div class="uk-dep-row uk-mt4">
+                                        <p-datepicker formControlName="dateOfDeparture" [showIcon]="true" [showTime]="true" appendTo="body" styleClass="uk-date" inputStyleClass="uk-date-input"></p-datepicker>
+                                    </div>
+                                    <div class="uk-spacer-xl"></div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="uk-footer">
+                <span class="uk-footer-brand">Veterinary Certificate — Great Britain</span>
+                <span class="uk-footer-page">1/{{ totalPages }}</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 2 — I.15 onwards + Products ═══════════════════════ -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="uk-page">
+            <div class="uk-content">
+                <!-- Top bar -->
+                <div class="uk-title-bar">
+                    <span>(GBHC401 v1.1 Aug – 23)</span>
+                    <span>COUNTRY: SRI LANKA &nbsp;&nbsp;&nbsp;&nbsp; Fishery products</span>
+                </div>
+
+                <!-- Ref bar -->
+                <div class="uk-ref-topbar">
+                    <table class="uk-ref-table uk-ref-table-eq3">
+                        <tr>
+                            <td class="uk-ref-td uk-ref-left">
+                                <span class="uk-flbl-xs uk-bold">I.a. Certificate reference no:</span>
+                                <input pInputText formControlName="certificateReferenceNo" class="uk-uline uk-mt2" />
+                            </td>
+                            <td class="uk-ref-td uk-ref-diag">
+                                <span class="uk-diag-label-sm">I.b.</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <table class="uk-grid">
+                    <!-- I.15 (left) | I.16 + I.17 (right) -->
+                    <tr>
+                        <td class="uk-td uk-p2-col-l" colspan="6">
+                            <div class="uk-flbl uk-bold">I.15. Means of transport:</div>
+                            <div class="uk-cb-col uk-mt4 uk-transport-list">
+                                <label class="uk-cb-line"><p-checkbox formControlName="transportAeroplane" binary="true"></p-checkbox><span>Aeroplane</span></label>
+                                <label class="uk-cb-line"><p-checkbox formControlName="transportVessel" binary="true"></p-checkbox><span>Vessel</span></label>
+                                <label class="uk-cb-line"><p-checkbox formControlName="transportRailway" binary="true"></p-checkbox><span>Railway</span></label>
+                                <label class="uk-cb-line"><p-checkbox formControlName="transportRoadVehicle" binary="true"></p-checkbox><span>Road vehicle</span></label>
+                                <label class="uk-cb-line"><p-checkbox formControlName="transportOther" binary="true"></p-checkbox><span>Other</span></label>
+                            </div>
+                            <div class="uk-sub-row uk-mt4"><span class="uk-sub-lbl">Identification:</span><textarea pInputTextarea formControlName="transportIdentification" rows="2" [autoResize]="true" class="uk-uline"></textarea></div>
+                        </td>
+
+                        <td class="uk-td uk-p2-col-r" colspan="2">
+                            <div class="uk-flbl uk-bold">I.16 Entry BCP:</div>
+                            <input pInputText formControlName="entryBCP" class="uk-uline uk-mt4" />
+
+                            <div class="uk-flbl uk-bold uk-mt4">I.17 Accompanying documents:</div>
+                            <div class="uk-sub-row uk-mt2"><span class="uk-sub-lbl">Type:</span><textarea pInputTextarea formControlName="accompDocType" rows="2" [autoResize]="true" class="uk-uline"></textarea></div>
+                            <div class="uk-sub-row uk-mt2"><span class="uk-sub-lbl">No:</span><input pInputText formControlName="accompDocNo" class="uk-uline" /></div>
+                        </td>
+                    </tr>
+
+                    <!-- I.18 (left) | I.19 (right) -->
+                    <tr>
+                        <td class="uk-td uk-p2-col-l" colspan="6">
+                            <div class="uk-flbl uk-bold">I.18 Transport conditions:</div>
+                            <div class="uk-cb-row uk-mt4 uk-conditions-row">
+                                <label class="uk-cb-line uk-cb-inline"><p-checkbox formControlName="tempAmbient" binary="true"></p-checkbox><span>Ambient</span></label>
+                                <label class="uk-cb-line uk-cb-inline"><p-checkbox formControlName="tempChilled" binary="true"></p-checkbox><span>Chilled</span></label>
+                                <label class="uk-cb-line uk-cb-inline"><p-checkbox formControlName="tempFrozen" binary="true"></p-checkbox><span>Frozen</span></label>
+                            </div>
+                        </td>
+
+                        <td class="uk-td uk-p2-col-r" colspan="2">
+                            <div class="uk-flbl uk-bold">I.19 Container No/Seal No:</div>
+                            <input pInputText formControlName="containerSealNo" class="uk-uline uk-mt4" />
+                        </td>
+                    </tr>
+
+                    <!-- I.20 full width -->
+                    <tr>
+                        <td class="uk-td" colspan="8">
+                            <div class="uk-flbl uk-bold">I.20 Goods certified as</div>
+                            <div class="uk-cb-row uk-mt4 uk-cert-row">
+                                <label class="uk-cb-line uk-cb-inline"><p-checkbox formControlName="goodsCanningIndustry" binary="true"></p-checkbox><span>Canning industry</span></label>
+                                <label class="uk-cb-line uk-cb-inline"><p-checkbox formControlName="goodsHumanConsumption" binary="true"></p-checkbox><span>Human consumption</span></label>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- I.21 | I.22 -->
+                    <tr>
+                        <td class="uk-td uk-td-diag" colspan="4">
+                            <div class="uk-flbl uk-bold">I.21</div>
+                        </td>
+                        <td class="uk-td uk-td-diag" colspan="4">
+                            <div class="uk-flbl uk-bold">I.22</div>
+                        </td>
+                    </tr>
+
+                    <!-- I.23 | I.24 | weights -->
+                    <tr>
+                        <td class="uk-td" colspan="3">
+                            <div class="uk-flbl uk-bold">I.23 Total number of packages:</div>
+                            <input pInputText formControlName="totalNumberOfPackages" class="uk-uline uk-mt4" />
+                        </td>
+                        <td class="uk-td uk-td-diag" colspan="2">
+                            <div class="uk-flbl uk-bold">I.24 Quantity total number:</div>
+                        </td>
+                        <td class="uk-td" colspan="1">
+                            <div class="uk-flbl uk-bold">Total net weight (Kg):</div>
+                            <input pInputText formControlName="totalNetWeight" class="uk-uline uk-mt4" />
+                        </td>
+                        <td class="uk-td" colspan="2">
+                            <div class="uk-flbl uk-bold">Total gross weight (Kg):</div>
+                            <input pInputText formControlName="totalGrossWeight" class="uk-uline uk-mt4" />
+                        </td>
+                    </tr>
+
+                    <!-- I.25 Product table -->
+                    <tr>
+                        <td class="uk-td uk-product-cell" colspan="8">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 uk-mb4">
+                                <div class="uk-flbl uk-bold">I.25 Identification of the commodities:</div>
+                                <div class="flex items-center gap-3 text-xs">
+                                    <span class="font-semibold text-slate-800">No:</span>
+                                    <input pInputText formControlName="commodityNo" class="uk-uline" style="width: 140px;" />
+                                    <span class="font-semibold text-slate-800">Code and CN title:</span>
+                                    <input pInputText formControlName="codeCNTitle" class="uk-uline" style="min-width: 260px;" />
+                                </div>
+                            </div>
+
+                            <!-- ─── FORMAT 1: WITHOUT ATTACHMENT (Standard 4 Pages) ─── -->
+                            <ng-container *ngIf="viewMode === 'withoutAttachment'">
+                                <table class="uk-prod-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Species (Scientific name)</th>
+                                            <th>Nature of commodity</th>
+                                            <th>Treatment type</th>
+                                            <th>Vessel/manufacturing plant / Cold store</th>
+                                            <th>Number of packages</th>
+                                            <th>Net weight (KG)</th>
+                                            <th>Batch No</th>
+                                            <th>Type of packaging</th>
+                                            <th class="print-hide"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody formArrayName="products">
+                                        <tr *ngFor="let p of products.controls | slice: 0 : maxStandardProducts; let i = index" [formGroupName]="i">
+                                            <td><textarea pInputTextarea formControlName="species" rows="1" [autoResize]="true" class="uk-ti uk-ti-wrap"></textarea></td>
+                                            <td><textarea pInputTextarea formControlName="natureOfCommodity" rows="1" [autoResize]="true" class="uk-ti uk-ti-wrap"></textarea></td>
+                                            <td><textarea pInputTextarea formControlName="treatmentType" rows="1" [autoResize]="true" class="uk-ti uk-ti-wrap"></textarea></td>
+                                            <td><textarea pInputTextarea formControlName="vesselPlant" rows="1" [autoResize]="true" class="uk-ti uk-ti-wrap"></textarea></td>
+                                            <td><input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" type="number" class="uk-ti" /></td>
+                                            <td><input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" type="number" class="uk-ti" /></td>
+                                            <td><textarea pInputTextarea formControlName="batchNo" rows="1" [autoResize]="true" class="uk-ti uk-ti-wrap"></textarea></td>
+                                            <td><textarea pInputTextarea formControlName="typeOfPackaging" rows="1" [autoResize]="true" class="uk-ti uk-ti-wrap"></textarea></td>
+                                            <td class="uk-act-td print-hide">
+                                                <button pButton type="button" icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeProductRow(i)"></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4" class="text-right font-bold pr-2">TOTAL</td>
+                                            <td class="font-bold">{{ calculatedTotalPackages || form.get('totalNumberOfPackages')?.value || '' }}</td>
+                                            <td class="font-bold">{{ calculatedTotalNetWeight ? (calculatedTotalNetWeight | number:'1.3-3') : (form.get('totalNetWeight')?.value || '') }}</td>
+                                            <td colspan="2"></td>
+                                            <td class="print-hide"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                <div class="print-hide uk-mt4" *ngIf="!viewOnly">
+                                    <div class="uk-product-actions">
+                                        <button pButton type="button" label="Add Product Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addProductRow()"></button>
+                                    </div>
+                                </div>
+                            </ng-container>
+
+                            <!-- ─── FORMAT 2: WITH ATTACHMENT (Page 2 Placeholder) ─── -->
+                            <ng-container *ngIf="viewMode === 'withAttachment'">
+                                <table class="uk-prod-table uk-att-placeholder-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Species (Scientific name)</th>
+                                            <th>Nature of commodity</th>
+                                            <th>Treatment type</th>
+                                            <th>Vessel/manufacturing plant</th>
+                                            <th>Cold store</th>
+                                            <th>Number of packages</th>
+                                            <th>Net weight</th>
+                                            <th>Batch No</th>
+                                            <th>Type of packaging</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="9" class="uk-see-attachment-banner">
+                                                SEE THE ATTACHMENT
+                                            </td>
+                                        </tr>
+                                        <tr *ngFor="let row of [1,2,3,4,5]" class="uk-empty-preview-row">
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                            <td>&nbsp;</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="print-hide uk-mt4 flex items-center justify-between">
+                                    <span class="text-xs text-slate-500 font-medium"><i class="pi pi-info-circle mr-1"></i>Commodity items are listed in the official Attachment Table on Page 5.</span>
+                                    <button pButton type="button" label="Go to Attachment (Page 5)" icon="pi pi-arrow-down" class="p-button-primary p-button-sm" (click)="goToAttachmentPage()"></button>
+                                </div>
+                            </ng-container>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Final consumer checkbox -->
+                <div class="uk-final-consumer-bar">
+                    <label class="uk-cb"><p-checkbox formControlName="finalConsumer" binary="true"></p-checkbox><span>Final consumer</span></label>
+                </div>
+            </div>
+            <div class="uk-footer">
+                <span class="uk-footer-brand">Veterinary Certificate — Great Britain</span>
+                <span class="uk-footer-page">2/{{ totalPages }}</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 3 — Part II: Certification (Animal Health) ═════════ -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="uk-page">
+            <div class="uk-content">
+                <!-- Top bar -->
+                <div class="uk-title-bar">
+                    <span>(GBHC401 v1.1 Aug - 23)</span>
+                    <span>COUNTRY: SRI LANKA &nbsp;&nbsp;&nbsp;&nbsp; Fishery products &nbsp;&nbsp;&nbsp;&nbsp; Part II: Certification</span>
+                </div>
+
+                <!-- Ref bar -->
+                <div class="uk-ref-topbar">
+                    <table class="uk-ref-table uk-ref-table-eq3">
+                        <tr>
+                            <td class="uk-ref-td uk-ref-left">
+                                <span class="uk-flbl-xs uk-bold">II. Health information</span>
+                            </td>
+                            <td class="uk-ref-td uk-ref-left">
+                                <span class="uk-flbl-xs uk-bold">II.a Certificate reference no:</span>
+                                <input pInputText formControlName="certificateReferenceNo" class="uk-uline uk-mt2" />
+                            </td>
+                            <td class="uk-ref-td uk-ref-diag">
+                                <span class="uk-diag-label-sm">II.b</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Animal Health Section -->
+                <div class="uk-attest-block uk-animal-health-shell">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-1.5 mb-2 print-hide" *ngIf="!viewOnly">
+                        <div class="flex items-center gap-2">
+                            <p-checkbox formControlName="strikeAnimalHealthAll" [binary]="true" (onChange)="onToggleAnimalHealthAll($event)" inputId="chk_strike_all_ah"></p-checkbox>
+                            <label for="chk_strike_all_ah" class="text-xs font-bold text-slate-800 cursor-pointer select-none">
+                                Cross Out Entire Animal Health Section (Delete non-applicable aquaculture attestations)
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button pButton type="button" label="Cross Out All" icon="pi pi-times" class="p-button-xs p-button-outlined p-button-secondary py-0.5 px-1.5 text-xs" (click)="setAnimalHealthAll(true)"></button>
+                            <button pButton type="button" label="Keep All (Active)" icon="pi pi-check" class="p-button-xs p-button-outlined p-button-info py-0.5 px-1.5 text-xs" (click)="setAnimalHealthAll(false)"></button>
+                        </div>
+                    </div>
+
+                    <div class="uk-attest-bold">Animal Health</div>
+                    <div class="uk-attest-bold uk-mt2">(*)Animal health attestations for fish and crustaceans of aquaculture origin</div>
+                    <p class="uk-attest-intro uk-mt4">
+                        I, the undersigned official Certifying Officer, hereby certify that the aquaculture animals or products thereof referred to in Part I of this certificate:
+                    </p>
+
+                    <!-- Attestations with interactive cross-out / strikethrough selections -->
+                    <div class="uk-strike-block uk-mt4">
+                        <!-- Clause AH/T153 -->
+                        <div class="uk-clause-row uk-mt4 flex items-start gap-1.5">
+                            <p-checkbox *ngIf="!viewOnly" formControlName="strikeAhT153" [binary]="true" (onChange)="onToggleSubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Cross out AH/T153"></p-checkbox>
+                            <div class="flex-1" [ngClass]="{'uk-struck-item': form.get('strikeAhT153')?.value || form.get('strikeAnimalHealthAll')?.value}">
+                                <span class="uk-bold">(*)[AH/T153 Territory requirements</span><br />
+                                originate from a country, territory, zone or compartment declared free from (*)[Epizootic Haematopoietic Necrosis] (*)[Taura syndrome] (*)[Yellowhead disease] and comply with the relevant GB requirements;]
+                            </div>
+                        </div>
+
+                        <!-- Clause AH/T154 -->
+                        <div class="uk-clause-row uk-mt4 flex items-start gap-1.5">
+                            <p-checkbox *ngIf="!viewOnly" formControlName="strikeAhT154" [binary]="true" (onChange)="onToggleSubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Cross out AH/T154"></p-checkbox>
+                            <div class="flex-1" [ngClass]="{'uk-struck-item': form.get('strikeAhT154')?.value || form.get('strikeAnimalHealthAll')?.value}">
+                                <span class="uk-bold">(*)[AH/T154 Territory requirements</span><br />
+                                originate from a country, territory, zone or compartment declared free from (*)[Viral Haemorrhagic Septicaemia] (*)[Infectious Haematopoietic Necrosis] (*)[Infectious Salmon Anaemia (genotype HPRdeleted)] (*)[Koi Herpes Virus] (*)[White spot disease] and comply with the relevant GB requirements;]
+                            </div>
+                        </div>
+
+                        <!-- Clause AH/T155 -->
+                        <div class="uk-clause-row uk-mt4 flex items-start gap-1.5">
+                            <p-checkbox *ngIf="!viewOnly" formControlName="strikeAhT155" [binary]="true" (onChange)="onToggleT155($event)" class="print-hide mt-0.5 flex-shrink-0" title="Cross out entire AH/T155"></p-checkbox>
+                            <div class="flex-1">
+                                <div [ngClass]="{'uk-struck-item': form.get('strikeAhT155')?.value || form.get('strikeAnimalHealthAll')?.value}">
+                                    <span class="uk-bold">(*)[AH/T155 Territory requirements</span>
+                                </div>
+
+                                <!-- Sub-clause (EITHER block) -->
+                                <div class="flex items-start gap-1.5 mt-1">
+                                    <p-checkbox *ngIf="!viewOnly && !form.get('strikeAhT155')?.value" formControlName="strikeAhT155_Either" [binary]="true" (onChange)="onToggleT155SubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Cross out EITHER block"></p-checkbox>
+                                    <div class="flex-1" [ngClass]="{'uk-struck-item': form.get('strikeAhT155')?.value || form.get('strikeAnimalHealthAll')?.value || form.get('strikeAhT155_Either')?.value}">
+                                        (*)EITHER [come from a country, territory, zone or compartment:<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(a) where (*) [Spring Viraemia of Carp (SVC)] (*) [Gyrodactylus salaris (GS)] (*) [Bacterial Kidney Disease (BKD)] is (are) notifiable to the competent authority and reports of suspicion of infection of the relevant disease(s) must be immediately investigated by the competent authority;<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(b) where all aquaculture animals of species susceptible to the relevant disease(s) introduced into that country, territory, zone or compartment originate from a source free of the relevant diseases;<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(c) where species susceptible to the relevant disease(s) are not vaccinated against the relevant disease(s); and<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(d) (*)EITHER (*)[in the case of BKD, complies with requirements for disease freedom equivalent to those laid down in Decision 2009/177;]<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(*)AND/OR [in the case of (*)[SVC] (*)[GS], complies with requirements for disease freedom laid down in the relevant WOAH Standard;]<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;(*)AND/OR [in the case of (*)[SVC] (*)[BKD], comprises one individual farm which under the supervision of the competent authority:<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(i) has been emptied, cleansed and disinfected, and fallowed for at least 6 weeks;<br />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ii) has been restocked with animals from areas certified free from the relevant disease by the competent authority;]]
+                                    </div>
+                                </div>
+
+                                <!-- Sub-clause (AND/OR GS salinity block) -->
+                                <div class="flex items-start gap-1.5 mt-1">
+                                    <p-checkbox *ngIf="!viewOnly && !form.get('strikeAhT155')?.value" formControlName="strikeAhT155_GsSalinity" [binary]="true" (onChange)="onToggleT155SubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Cross out GS salinity requirement"></p-checkbox>
+                                    <div class="flex-1" [ngClass]="{'uk-struck-item': form.get('strikeAhT155')?.value || form.get('strikeAnimalHealthAll')?.value || form.get('strikeAhT155_GsSalinity')?.value}">
+                                        (*)AND/OR [in the case consignments for which GS requirements apply, have been held, immediately prior to export, in water with a salinity of at least 25 parts per thousand for a continuous period of at least 14 days and no other live aquatic animals of the species susceptible to GS have been introduced during that period;]
+                                    </div>
+                                </div>
+
+                                <!-- Sub-clause (AND/OR GS eyed eggs block) -->
+                                <div class="flex items-start gap-1.5 mt-1">
+                                    <p-checkbox *ngIf="!viewOnly && !form.get('strikeAhT155')?.value" formControlName="strikeAhT155_GsEggs" [binary]="true" (onChange)="onToggleT155SubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Cross out GS eyed eggs requirement"></p-checkbox>
+                                    <div class="flex-1" [ngClass]="{'uk-struck-item': form.get('strikeAhT155')?.value || form.get('strikeAnimalHealthAll')?.value || form.get('strikeAhT155_GsEggs')?.value}">
+                                        (*) AND/OR [in the case of eyed fish eggs for which GS requirements apply, have been disinfected by a method demonstrated to be effective against GS;]]
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clause AH/P502 -->
+                        <div class="uk-clause-row uk-mt4 flex items-start gap-1.5">
+                            <p-checkbox *ngIf="!viewOnly" formControlName="strikeAhP502" [binary]="true" (onChange)="onToggleSubClause()" class="print-hide mt-0.5 flex-shrink-0" title="Cross out AH/P502"></p-checkbox>
+                            <div class="flex-1" [ngClass]="{'uk-struck-item': form.get('strikeAhP502')?.value || form.get('strikeAnimalHealthAll')?.value}">
+                                <span class="uk-bold">AH/P502 Transport and labelling requirements</span><br />
+                                (a) the aquaculture animals referred to in Part I of this certificate are placed under conditions, including water quality, that do not alter their health status; and<br />
+                                (b) prior to loading the transport container or well boat is clean and disinfected or previously unused; and<br />
+                                (c) the consignment is identified in accordance with GB requirements.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="uk-footer">
+                <span class="uk-footer-brand">Veterinary Certificate — Great Britain</span>
+                <span class="uk-footer-page">3/{{ totalPages }}</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 4 — Part II: Certification (Public Health) ════════ -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <div class="uk-page" [ngClass]="{'last-page': viewMode === 'withoutAttachment'}">
+            <div class="uk-content">
+                <!-- Top bar -->
+                <div class="uk-title-bar">
+                    <span>(GBHC401 v1.1 Aug - 23)</span>
+                    <span>COUNTRY: SRI LANKA &nbsp;&nbsp;&nbsp;&nbsp; Fishery products</span>
+                </div>
+
+                <!-- Ref bar -->
+                <div class="uk-ref-topbar">
+                    <table class="uk-ref-table uk-ref-table-eq3">
+                        <tr>
+                            <td class="uk-ref-td uk-ref-left">
+                                <span class="uk-flbl-xs uk-bold">II Health information</span>
+                            </td>
+                            <td class="uk-ref-td uk-ref-left">
+                                <span class="uk-flbl-xs uk-bold">II.a. Certificate reference no:</span>
+                                <input pInputText formControlName="certificateReferenceNo" class="uk-uline uk-mt2" />
+                            </td>
+                            <td class="uk-ref-td uk-ref-diag">
+                                <span class="uk-diag-label-sm">II.b.</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Public Health attestation block -->
+                <div class="uk-attest-block">
+                    <div class="uk-attest-bold">Public Health</div>
+                    <p class="uk-attest-intro uk-mt4">
+                        I, the undersigned official inspector, declare that I am aware of the relevant requirements of the GB Regulations, and certify that the fishery products described in Part I of this certificate were produced in accordance with those requirements, in particular that:
+                    </p>
+
+                    <p class="uk-attest-item uk-mt4">
+                        <span class="uk-attest-code">PH/E100A Establishment requirements</span><br />
+                        the establishment(s) where the product(s) come(s) from operate(s) under the HACCP principles in accordance with GB regulations;
+                    </p>
+                    <p class="uk-attest-item">
+                        <span class="uk-attest-code">PH/P114 Production requirements</span><br />
+                        comply with health standards and the requirements for catching and handling on board vessels, landing, handling and where appropriate preparing, processing, freezing and hygienic thawing as required by GB regulations;
+                    </p>
+                    <p class="uk-attest-item">
+                        <span class="uk-attest-code">PH/I005 Inspection requirements</span><br />
+                        have satisfactorily undergone the relevant official controls laid down by GB regulations;
+                    </p>
+                    <p class="uk-attest-item">
+                        <span class="uk-attest-code">PH/MK001 Marking requirements</span><br />
+                        the product(s) described in Part I of this certificate has (have) been marked in compliance with the relevant GB regulations;
+                    </p>
+                    <p class="uk-attest-item">
+                        <span class="uk-attest-code">PH/RP002 Residue plans</span><br />
+                        if of aquaculture origin, the guarantees provided by the residue monitoring plans submitted to GB by the country of origin are fulfilled in accordance with GB regulations;
+                    </p>
+                    <p class="uk-attest-item">
+                        <span class="uk-attest-code">PH/S105B Storage and transportation requirements</span><br />
+                        have been wrapped, packaged, stored and transported in compliance with relevant GB regulations;
+                    </p>
+                    <p class="uk-attest-italic uk-mt4">(*) Keep as appropriate</p>
+                </div>
+
+                <!-- Certifying officer section -->
+                <div class="uk-cert-officer-hdr uk-mt4">Certifying officer</div>
+                <div class="uk-cert-officer-intro">By signing this certificate, I certify that the requirements laid out above and, in the accompanying, notes for completion have been met.</div>
+
+                <!-- Signature table -->
+                <table class="uk-sig-table">
+                    <tr>
+                        <td class="uk-sig-td" style="width: 40%">
+                            <div class="uk-flbl">Name (in capital letters):</div>
+                            <div *ngIf="!viewOnly" class="print-hide">
+                                <input pInputText formControlName="signatoryName" class="uk-uline uk-mt4" />
+                            </div>
+                            <div class="uk-uline uk-mt4" [ngClass]="{'print-show': !viewOnly}" style="min-height: 20px; padding-top: 2px">
+                                {{ form.get('signatoryName')?.value || '&nbsp;' }}
+                            </div>
+                        </td>
+                        <td class="uk-sig-td" style="width: 30%">
+                            <div style="font-size: 9pt; font-weight: 600; width: 80px">Signatory:</div>
+                            <div style="flex: 1; margin-right: 20px">
+                                <div *ngIf="!isCompany && !viewOnly" class="print-hide">
+                                    <p-select
+                                        [options]="userOptions"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        formControlName="signatoryUserId"
+                                        placeholder="Select User"
+                                        styleClass="signatory-select"
+                                        [style]="{ width: '100%' }"
+                                        (onChange)="onSignatoryChange($event.value)"
+                                    >
+                                    </p-select>
+                                </div>
+                                <div class="uk-uline" [ngClass]="{'print-show': !viewOnly}" style="min-height: 28px; padding-top: 5px">
+                                    {{ form.get('signatoryName')?.value || '&nbsp;' }}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="uk-sig-td">
+                            <div style="font-size: 9pt; font-weight: 600; width: 100px">Qualification and title:</div>
+                            <div class="ci" style="flex: 1; padding-top: 5px">
+                                <div *ngIf="!viewOnly" class="print-hide">
+                                    <textarea pInputTextarea formControlName="qualification" rows="2" [autoResize]="true" class="uk-uline uk-mt4"></textarea>
+                                </div>
+                                <div class="uk-uline uk-mt4" [ngClass]="{'print-show': !viewOnly}" style="min-height: 20px; padding-top: 2px">
+                                    {{ form.get('qualification')?.value || '&nbsp;' }}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="uk-sig-td view-hide" colspan="3">
+                            <div class="uk-sig-row">
+                                <div class="uk-sig-section">
+                                    <div class="uk-sig-label">Stamp:</div>
+                                    <div class="uk-sig-area">Stamp Area</div>
+                                </div>
+                                <div class="uk-sig-section">
+                                    <div class="uk-sig-label">Signature:</div>
+                                    <div class="uk-sig-area">Signature Area</div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="uk-sig-td" colspan="3">
+                            <div class="uk-flbl">Date:</div>
+                            <p-datepicker formControlName="certifiedDate" [showIcon]="true" appendTo="body" styleClass="uk-date uk-mt4" inputStyleClass="uk-date-input"></p-datepicker>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="uk-footer">
+                <span class="uk-footer-brand">Veterinary Certificate — Great Britain</span>
+                <span class="uk-footer-page">4/{{ totalPages }}</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 5 — Official Attachment Table (Mode: 'withAttachment') -->
+        <!-- ════════════════════════════════════════════════════════════ -->
+        <ng-container *ngIf="viewMode === 'withAttachment'">
+            <div class="uk-page uk-attachment-page last-page" id="uk-attachment-page-0">
+                <div class="uk-content">
+                    <!-- Top Attachment Header (Certificate reference No | Attachment | Date) -->
+                    <div class="uk-att-top-row">
+                        <div class="uk-att-top-left text-xs">
+                            <span class="font-normal text-slate-800">Certificate reference No :</span>
+                            <span class="font-bold ml-1">{{ form.get('certificateReferenceNo')?.value }}</span>
+                        </div>
+                        <div class="uk-att-top-mid font-bold text-center text-sm">
+                            Attachment
+                        </div>
+                        <div class="uk-att-top-right text-right text-xs">
+                            <span class="font-normal text-slate-800">Date:</span>
+                            <span class="font-bold ml-1">{{ (form.get('dateOfDeparture')?.value || form.get('certifiedDate')?.value) | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- 10-Column Official Attachment Table Matching PDF 2 -->
+                    <table class="uk-prod-table uk-att-full-table uk-mt2">
+                        <thead>
+                            <tr>
+                                <th style="width: 22%;">Species (Scientific name)</th>
+                                <th style="width: 10%;">Code and CN title (HS CODE)</th>
+                                <th style="width: 8%;">Nature of Commodity</th>
+                                <th style="width: 9%;">Treatment type</th>
+                                <th style="width: 13%;">Vessel / Manufacturing plant</th>
+                                <th style="width: 13%;">Cold Store</th>
+                                <th style="width: 5%;">Number of packages</th>
+                                <th style="width: 6%;">Net weight (kg)</th>
+                                <th style="width: 6%;">Batch No</th>
+                                <th style="width: 8%;">Type of packing</th>
+                                <th class="print-hide" style="width: 24px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="products">
+                            <tr *ngFor="let p of products.controls; let i = index" [formGroupName]="i" class="uk-att-row">
+                                <!-- Col 1: Species (Scientific name) -->
+                                <td class="uk-att-td-species">
+                                    <textarea pInputTextarea formControlName="species" rows="1" [autoResize]="true" class="uk-ti uk-ti-italic"></textarea>
+                                </td>
+
+                                <!-- Col 2: Code and CN title (HS CODE) -->
+                                <td class="uk-att-td-hs">
+                                    <input pInputText formControlName="codeCNTitle" class="uk-ti text-center" />
+                                </td>
+
+                                <!-- Col 3: Nature of Commodity (Merged across all rows) -->
+                                <td *ngIf="i === 0" [attr.rowspan]="products.length" class="uk-att-merged-cell">
+                                    <textarea pInputTextarea [formControl]="getControl('attNatureOfCommodity')" rows="4" [autoResize]="true" class="uk-ti uk-att-merged-ti font-bold uppercase"></textarea>
+                                </td>
+
+                                <!-- Col 4: Treatment type (Merged across all rows) -->
+                                <td *ngIf="i === 0" [attr.rowspan]="products.length" class="uk-att-merged-cell">
+                                    <textarea pInputTextarea [formControl]="getControl('attTreatmentType')" rows="6" [autoResize]="true" class="uk-ti uk-att-merged-ti font-bold uppercase"></textarea>
+                                </td>
+
+                                <!-- Col 5: Vessel / Manufacturing plant (Merged across all rows) -->
+                                <td *ngIf="i === 0" [attr.rowspan]="products.length" class="uk-att-merged-cell">
+                                    <textarea pInputTextarea [formControl]="getControl('attManufacturingPlant')" rows="8" [autoResize]="true" class="uk-ti uk-att-merged-ti font-bold uppercase"></textarea>
+                                </td>
+
+                                <!-- Col 6: Cold Store (Merged across all rows) -->
+                                <td *ngIf="i === 0" [attr.rowspan]="products.length" class="uk-att-merged-cell">
+                                    <textarea pInputTextarea [formControl]="getControl('attColdStore')" rows="8" [autoResize]="true" class="uk-ti uk-att-merged-ti font-bold uppercase"></textarea>
+                                </td>
+
+                                <!-- Col 7: Number of packages -->
+                                <td class="uk-att-td-num">
+                                    <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" type="number" class="uk-ti text-right" />
+                                </td>
+
+                                <!-- Col 8: Net weight (kg) -->
+                                <td class="uk-att-td-weight">
+                                    <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" type="number" class="uk-ti text-right" />
+                                </td>
+
+                                <!-- Col 9: Batch No -->
+                                <td class="uk-att-td-batch">
+                                    <input pInputText formControlName="batchNo" class="uk-ti text-center" />
+                                </td>
+
+                                <!-- Col 10: Type of packing (Merged across all rows) -->
+                                <td *ngIf="i === 0" [attr.rowspan]="products.length" class="uk-att-merged-cell">
+                                    <textarea pInputTextarea [formControl]="getControl('attTypeOfPacking')" rows="6" [autoResize]="true" class="uk-ti uk-att-merged-ti font-bold uppercase"></textarea>
+                                </td>
+
+                                <!-- Actions delete column (print-hide) -->
+                                <td class="uk-act-td print-hide">
+                                    <button pButton type="button" icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text p-0 m-0" (click)="removeProductRow(i)" *ngIf="products.length > 1"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Attachment Toolbar (print-hide) -->
+                    <div class="print-hide p-2 flex flex-wrap items-center justify-between gap-2 mt-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!viewOnly">
+                        <div class="flex items-center gap-2">
+                            <p-button label="Load 47 Standard Marine Species (PDF 2)" icon="pi pi-refresh" severity="info" size="small" [outlined]="true" (onClick)="loadDefaultAttachmentSpecies()"></p-button>
+                            <p-button label="Add Species Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProductRow()"></p-button>
+                        </div>
+                        <button pButton label="Clear Quantities" icon="pi pi-times" class="p-button-secondary p-button-sm p-button-text" (click)="clearAttachmentQuantities()"></button>
+                    </div>
+                </div>
+                <div class="uk-footer">
+                    <span class="uk-footer-brand">Veterinary Certificate — Great Britain</span>
+                    <span class="uk-footer-page">5/5</span>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- Actions Bar -->
+        <div class="uk-actions print-hide flex items-center justify-between gap-3 mt-4">
+            <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+            <div class="flex items-center gap-2">
+                <p-button
+                    label="Print / Export PDF"
+                    icon="pi pi-print"
+                    severity="secondary"
+                    [outlined]="true"
+                    [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
+                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                    tooltipPosition="top"
+                    (onClick)="print()"
+                ></p-button>
+                <p-button label="Submit" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [loading]="isSaving" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+            </div>
+        </div>
+    </form>
+
+    <app-confirm-password-dialog
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    >
+    </app-confirm-password-dialog>
+</div>

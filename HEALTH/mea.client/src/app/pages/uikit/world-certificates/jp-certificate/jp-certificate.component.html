@@ -1,0 +1,397 @@
+<div class="jp-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Japan (JP)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('myRef')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('myRef')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- 2 Radio Buttons Selection (print-hide) -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Mode:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="vibrio" inputId="vm_vibrio" (onClick)="onViewModeChange('vibrio')"></p-radiobutton>
+            <span>HEALTH CERTIFICATE (Vibrio cholerae negative)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="cholera" inputId="vm_cholera" (onClick)="onViewModeChange('cholera')"></p-radiobutton>
+            <span>HEALTH CERTIFICATE (Cholera germs free)</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode or when Submitted -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'cholera' ? 'HEALTH CERTIFICATE (Cholera germs free)' : 'HEALTH CERTIFICATE (Vibrio cholerae negative)' }}
+        </span>
+    </div>
+
+    <!-- ════ SINGLE PAGE ════ -->
+        <div class="jp-page last-page">
+            <div class="jp-content">
+                <!-- ── TOP HEADER ── -->
+                <div class="jp-header">
+                    <div class="cert-header-top-row">
+                        <div class="cert-header-spacer"></div>
+                        <div class="jp-logo-row flex justify-center">
+                            <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="jp-logo" />
+                        </div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorName')?.value"
+                                [consignee]="form.get('consigneeName')?.value"
+                                [item]="form.get('descriptionOfGoods')?.value"
+                                [date]="form.get('date')?.value"
+                                [officer]="form.get('signatoryName')?.value"
+                                [destination]="'JAPAN'"
+                                [viewOnly]="viewOnly">
+                            </app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="jp-dept-si">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                    <div class="jp-dept-ta">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                    <div class="jp-dept-en">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+
+                    <div class="jp-web-row">
+                        <span>web site : http://www.fisheriesdept.gov.lk</span>
+                        <span>E - mail : info&#64;fisheriesdept.gov.lk</span>
+                    </div>
+
+                    <!-- Multilingual address bar -->
+                    <div class="jp-addr-bar">
+                        <span class="jp-addr-ta">புதிய செயலகம், மாளிகாவத்தை, கொழும்பு 10, இலங்கை</span>
+                        <span class="jp-addr-si">නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                        <span class="jp-addr-en">New Secretariat, Maligawaththa, Colombo 10</span>
+                    </div>
+                </div>
+
+                <!-- ── REF / DATE ROW — 3 bracketed fields ── -->
+                <div class="jp-ref-row">
+                    <div class="jp-ref-block">
+                        <div class="jp-ref-labels">
+                            <span>මගේ අංකය</span>
+                            <span>எனது இல</span>
+                            <span>My Ref</span>
+                        </div>
+                        <div class="jp-ref-brace">&#125;</div>
+                        <input pInputText formControlName="myRef" class="jp-ref-input font-bold" />
+                    </div>
+                    <div class="jp-ref-block">
+                        <div class="jp-ref-labels">
+                            <span>ඔබේ අංකය</span>
+                            <span>உமது இல</span>
+                            <span>Your Ref</span>
+                        </div>
+                        <div class="jp-ref-brace">&#125;</div>
+                        <input pInputText formControlName="yourRef" class="jp-ref-input font-bold" />
+                    </div>
+                    <div class="jp-ref-block">
+                        <div class="jp-ref-labels">
+                            <span>දිනය</span>
+                            <span>திகதி</span>
+                            <span>Date</span>
+                        </div>
+                        <div class="jp-ref-brace">&#125;</div>
+                        <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" styleClass="p-inputtext-sm"></p-datepicker>
+                    </div>
+                </div>
+
+                <!-- ── HEALTH CERTIFICATE title ── -->
+                <h2 class="jp-cert-title">HEALTH CERTIFICATE</h2>
+
+                <!-- ── Statement paragraphs ── -->
+                <p class="jp-stmt">
+                    The undersigned Official Inspector hereby certifies that the following consignment of fishery
+                    product has been processed in an approved fish processing establishment under the relevant
+                    conditions laid down in Fish Products (Export) Regulations, 1998 required for the production of
+                    fishery products for human consumption and intended for export market.
+                </p>
+
+                <p class="jp-stmt jp-mt4" *ngIf="viewMode === 'vibrio'">
+                    Samples of the fishery products are regularly tested and found Vibrio cholerae negative.
+                </p>
+                <p class="jp-stmt jp-mt4" *ngIf="viewMode === 'cholera'">
+                    Samples of the fishery products are regularly tested and found free of cholera germs.
+                </p>
+
+                <!-- ── Fishery Product sub-title ── -->
+                <h3 class="jp-sub-title">Fish and Fishery Products</h3>
+
+                <!-- ── Product fields ── -->
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl font-bold">Item:</span>
+                    <input pInputText formControlName="itemName" class="jp-line-input font-bold" />
+                </div>
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl font-bold">No. of packages:</span>
+                    <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="jp-line-input font-bold" />
+                </div>
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl font-bold">Net weight:</span>
+                    <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="jp-line-input font-bold" />
+                </div>
+
+                <!-- ── Processing Plant ── -->
+                <div class="jp-field-row jp-mt6">
+                    <span class="jp-lbl-lg font-bold">Name and address of the processing plant:</span>
+                    <input pInputText formControlName="processingPlantName" class="jp-line-input font-bold" placeholder="Plant Name" />
+                </div>
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl font-bold"></span>
+                    <textarea pInputTextarea formControlName="processingPlantAddress" rows="2" [autoResize]="true" class="jp-line-input font-bold" placeholder="Plant Address"></textarea>
+                </div>
+
+                <!-- ── Competent Authority Reg No ── -->
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl-lg font-bold">Approval No of the processing plant:</span>
+                    <input pInputText formControlName="competentAuthorityRegNo" class="jp-line-input font-bold" />
+                </div>
+
+                <!-- ── Consignor ── -->
+                <div class="jp-field-row jp-mt6">
+                    <span class="jp-lbl-lg font-bold">Name and address of the consignor:</span>
+                    <input pInputText formControlName="consignorName" class="jp-line-input font-bold" placeholder="Consignor Name" />
+                </div>
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl font-bold"></span>
+                    <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="jp-line-input font-bold" placeholder="Consignor Address"></textarea>
+                </div>
+
+                <!-- ── Consignee ── -->
+                <div class="jp-field-row jp-mt6">
+                    <span class="jp-lbl-lg font-bold">Name and address of the consignee:</span>
+                    <input pInputText formControlName="consigneeName" class="jp-line-input font-bold" placeholder="Consignee Name" />
+                </div>
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl font-bold"></span>
+                    <textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="jp-line-input font-bold" placeholder="Consignee Address"></textarea>
+                </div>
+
+                <!-- ── Despatch lines ── -->
+                <div class="jp-field-row jp-mt6">
+                    <span class="jp-lbl font-bold">Despatch from:</span>
+                    <input pInputText formControlName="despatchFrom" class="jp-line-input font-bold" />
+                    <span class="jp-lbl font-bold ml-4">to:</span>
+                    <input pInputText formControlName="despatchTo" class="jp-line-input font-bold" />
+                </div>
+                <div class="jp-field-row jp-mt4">
+                    <span class="jp-lbl font-bold">Despatch by:</span>
+                    <input pInputText formControlName="despatchByShip" class="jp-line-input font-bold" />
+                </div>
+
+                <!-- Stamp | Signature -->
+                <div class="jp-sig-section flex justify-between items-start mt-6">
+                    <div style="width: 42%;">
+                        <div class="font-bold mb-1">Official stamp:</div>
+                        <div
+                            class="jp-stamp-placeholder"
+                            [class.jp-drop-active]="isDraggingStamp"
+                            [class.has-content]="!!form.get('officialStamp')?.value"
+                            (click)="!viewOnly && stampInputJp.click()"
+                            (dragover)="onStampDragOver($event)"
+                            (dragleave)="onStampDragLeave($event)"
+                            (drop)="onStampDrop($event)"
+                            (paste)="onStampPaste($event)"
+                            tabindex="0"
+                        >
+                            <input type="file" #stampInputJp (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                            <!-- Empty State -->
+                            <div *ngIf="!form.get('officialStamp')?.value" class="jp-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
+                                <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                            </div>
+
+                            <!-- Uploaded Image -->
+                            <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="jp-preview-container">
+                                <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="jp-stamp-img" />
+                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
+                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); stampInputJp.click()" title="Change Stamp">
+                                        <i class="pi pi-pencil text-2xs"></i>
+                                    </button>
+                                    <button type="button" class="jp-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                        <i class="pi pi-trash text-2xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Uploaded PDF -->
+                            <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="jp-preview-container">
+                                <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="jp-pdf-preview"></object>
+                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
+                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); stampInputJp.click()" title="Change Stamp">
+                                        <i class="pi pi-pencil text-2xs"></i>
+                                    </button>
+                                    <button type="button" class="jp-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                        <i class="pi pi-trash text-2xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="width: 55%;" class="text-right">
+                        <div class="font-bold text-left mb-1">Signature of Official Inspector:</div>
+                        <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2 text-left">
+                            <p-select
+                                [options]="userOptions"
+                                formControlName="signatoryUserId"
+                                placeholder="Select Authorized Officer"
+                                (onChange)="onSignatoryChange($event.value)"
+                                styleClass="w-full text-xs"
+                                appendTo="body"
+                            ></p-select>
+                        </div>
+
+                        <!-- Signature Dropzone -->
+                        <div
+                            class="jp-sig-placeholder"
+                            [class.jp-drop-active]="isDraggingSignature"
+                            [class.has-content]="!!form.get('officialSignature')?.value"
+                            (click)="!viewOnly && sigInputJp.click()"
+                            (dragover)="onSignatureDragOver($event)"
+                            (dragleave)="onSignatureDragLeave($event)"
+                            (drop)="onSignatureDrop($event)"
+                            (paste)="onSignaturePaste($event)"
+                            tabindex="0"
+                        >
+                            <input type="file" #sigInputJp (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                            <!-- Empty State -->
+                            <div *ngIf="!form.get('officialSignature')?.value" class="jp-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste signature screenshot / PDF</span>
+                                <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                            </div>
+
+                            <!-- Uploaded Image -->
+                            <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="jp-preview-container">
+                                <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="jp-sig-img" />
+                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
+                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); sigInputJp.click()" title="Change Signature">
+                                        <i class="pi pi-pencil text-2xs"></i>
+                                    </button>
+                                    <button type="button" class="jp-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                        <i class="pi pi-trash text-2xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Uploaded PDF -->
+                            <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="jp-preview-container">
+                                <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="jp-pdf-preview"></object>
+                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
+                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); sigInputJp.click()" title="Change Signature">
+                                        <i class="pi pi-pencil text-2xs"></i>
+                                    </button>
+                                    <button type="button" class="jp-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                        <i class="pi pi-trash text-2xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-left font-bold text-xs mt-2">Name: {{ form.get('signatoryName')?.value }}</div>
+                        <div class="text-left font-bold text-xs whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                    </div>
+                </div>
+            </div>
+            <!-- /jp-content -->
+
+            <!-- ── BOTTOM BAR ── -->
+            <div class="jp-bottom-bar">
+                <div class="jp-bottom-item">
+                    <div class="jp-bottom-labels"><span>තැ.පෙ.</span><span>த.பெ.</span><span>P.O.Box</span></div>
+                    <div class="jp-bottom-brace">&#125;</div>
+                    <span class="jp-bottom-val">531</span>
+                </div>
+                <div class="jp-bottom-item">
+                    <div class="jp-bottom-labels"><span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span></div>
+                    <div class="jp-bottom-brace">&#125;</div>
+                    <span class="jp-bottom-val">+94(0)112446183 (2 lines)</span>
+                </div>
+                <div class="jp-bottom-item">
+                    <div class="jp-bottom-labels"><span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span></div>
+                    <div class="jp-bottom-brace">&#125;</div>
+                    <span class="jp-bottom-val">+94(0) 112449170</span>
+                </div>
+            </div>
+
+            <div class="jp-system-note">This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20</div>
+        </div>
+        <!-- /jp-page -->
+
+        <!-- Bottom Actions (User requested: submit button at the bottom of the form) -->
+        <div class="jp-actions print-hide flex items-center justify-between gap-3 mt-6 mb-8 w-full max-w-[210mm] mx-auto p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs">
+            <p-button
+                *ngIf="!isEmbedded"
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex items-center gap-3">
+                <p-button
+                    label="Print / Export PDF"
+                    [outlined]="true"
+                    (onClick)="printCertificate()"
+                    icon="pi pi-print"
+                    size="small"
+                    [disabled]="isCompany && !isApproved"
+                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                    tooltipPosition="top"
+                ></p-button>
+                <p-button
+                    *ngIf="!viewOnly"
+                    label="Save Certificate"
+                    icon="pi pi-save"
+                    severity="primary"
+                    size="small"
+                    [loading]="isSaving"
+                    [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"
+                    (onClick)="onSubmit()"
+                ></p-button>
+            </div>
+        </div>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

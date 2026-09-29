@@ -1,0 +1,38 @@
+<div class=" certificate-preview-page">
+    <div class="preview-topbar flex justify-between items-center">
+        <p-button label="Back to Requests" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+        <p-button label="Edit Form" icon="pi pi-pencil" severity="warn" (onClick)="onEditCurrentForm()"></p-button>
+    </div>
+
+    <p-tabs [value]="activeTab" class="certificate-preview-tabs">
+        
+        <p-tablist>
+            <p-tab value="country">Certificate</p-tab>
+            <p-tab value="vet">Application</p-tab>
+        </p-tablist>
+
+        <p-tabpanels>
+            <p-tabpanel value="country">
+                <ng-container *ngIf="countryPreviewTab as countryTab">
+                    <ng-container *ngIf="countryTab.src; else countryPreviewMissing">
+                        <iframe [src]="countryTab.src || undefined" class="certificate-preview-frame" title="Country certificate preview"></iframe>
+                    </ng-container>
+                </ng-container>
+                <ng-template #countryPreviewMissing>
+                    <div class="certificate-preview-empty">{{ countryPreviewTab?.emptyMessage }}</div>
+                </ng-template>
+            </p-tabpanel>
+
+            <p-tabpanel value="vet">
+                <ng-container *ngIf="vetPreviewTab as vetTab">
+                    <ng-container *ngIf="vetTab.src; else vetPreviewMissing">
+                        <iframe [src]="vetTab.src || undefined" class="certificate-preview-frame" title="Vet certificate preview"></iframe>
+                    </ng-container>
+                </ng-container>
+                <ng-template #vetPreviewMissing>
+                    <div class="certificate-preview-empty">{{ vetPreviewTab?.emptyMessage }}</div>
+                </ng-template>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
+</div>

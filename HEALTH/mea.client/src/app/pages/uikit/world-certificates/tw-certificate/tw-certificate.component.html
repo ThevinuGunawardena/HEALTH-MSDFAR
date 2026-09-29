@@ -1,0 +1,764 @@
+<div class="tw-wrap" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Taiwan (TW)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('referenceNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('referenceNo')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Shellfish (TA 6894)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleShellfish()"
+                pTooltip="Load Taiwan Shell Fish Certificate (TA 6894 - 2 Pages)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Fish + Attachment (TC 4361)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleFish()"
+                pTooltip="Load Taiwan Fish Health Certificate with Attachment page (TC 4361 - 3 Pages)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Quality (TA 9637)"
+                icon="pi pi-file-import"
+                severity="help"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleQuality()"
+                pTooltip="Load Quality Certificate attachment (TA 9637)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- 2 Certificates Selection & Attachment Options (print-hide) -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="viewMode !== 'quality'">
+        <div class="flex flex-wrap items-center gap-6">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Certificate Type:</span>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="certificateType" formControlName="certificateType" value="fish" inputId="ct_tw_fish" (onClick)="onCertificateTypeChange('fish')"></p-radiobutton>
+                <span>1. HEALTH CERTIFICATE FOR FISH &amp; FISHERY PRODUCTS</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="certificateType" formControlName="certificateType" value="shellfish" inputId="ct_tw_shellfish" (onClick)="onCertificateTypeChange('shellfish')"></p-radiobutton>
+                <span>2. HEALTH CERTIFICATE FOR SHELL FISH</span>
+            </label>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pl-4 border-l border-slate-200">
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1.5 rounded border border-indigo-200 hover:bg-indigo-100">
+                <p-checkbox formControlName="includeAttachment" [binary]="true"></p-checkbox>
+                <span>Include Product List Attachment (Page 3)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded border border-emerald-200 hover:bg-emerald-100">
+                <p-checkbox formControlName="includeQualityCertificate" [binary]="true"></p-checkbox>
+                <span>Include Quality Certificate</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 1 (HEALTH CERTIFICATE) ═══════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="tw-page" *ngIf="viewMode !== 'quality'">
+        <div class="tw-content">
+            <!-- Header -->
+            <div class="tw-hdr">
+                <div class="cert-header-top-row mb-1">
+                    <div class="cert-header-spacer"></div>
+                    <div class="tw-logo flex justify-center">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="tw-logo-img" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('certificateNumber')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorNameAddress')?.value"
+                            [consignee]="form.get('consigneeNameAddress')?.value"
+                            [destination]="'Taiwan'"
+                            [viewOnly]="viewOnly"
+                            [size]="68"
+                        ></app-certificate-qr>
+                    </div>
+                </div>
+                <div class="tw-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="tw-addr">P.O. Box 531, Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                <div class="tw-addr">Telephone: +94-2449170, 2472186, 2472192</div>
+                <div class="tw-addr">Fax: +94-11-2424086, 2449170</div>
+                <div class="tw-addr">E-mail: dgdfar&#64;gmail.com</div>
+
+                <div class="tw-ref-line text-right font-bold text-xs mt-2">
+                    Reference No: <input pInputText formControlName="referenceNo" class="tw-inline-ref font-bold" />
+                </div>
+
+                <div class="tw-title">HEALTH CERTIFICATE</div>
+                <div class="tw-subtitle" *ngIf="form.get('certificateType')?.value === 'shellfish'">
+                    For Shell Fish for human consumption intended for export from the Democratic Socialist Republic of Sri Lanka to Taiwan
+                </div>
+                <div class="tw-subtitle" *ngIf="form.get('certificateType')?.value !== 'shellfish'">
+                    For Fish and Fishery products for human consumption intended for export from the Democratic Socialist Republic of Sri Lanka to Taiwan
+                </div>
+            </div>
+
+            <!-- Table Content -->
+            <table class="tw-tbl w-full border border-black">
+                <!-- Section I -->
+                <thead>
+                    <tr class="tw-sec-hdr">
+                        <th colspan="2" class="text-left font-bold px-2 py-1">I. Information of competent authority:</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tw-td-lbl" style="width: 45%;">Country of export ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="countryOfExport" class="tw-inp font-bold" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Country of production:</td>
+                        <td class="tw-td-val"><input pInputText formControlName="countryOfProduction" class="tw-inp font-bold" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Competent authority ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="competentAuthority" class="tw-inp font-bold" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Department of certificate issuance ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="departmentIssuance" class="tw-inp font-bold" /></td>
+                    </tr>
+                </tbody>
+
+                <!-- Section II -->
+                <thead>
+                    <tr class="tw-sec-hdr">
+                        <th colspan="2" class="text-left font-bold px-2 py-1">II. Identification of the fishery products</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tw-td-lbl">Commodity name ：</td>
+                        <td class="tw-td-val"><textarea pInputTextarea formControlName="commodityName" rows="1" [autoResize]="true" class="tw-inp font-bold uppercase" placeholder="Commodity name"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">HS Code:</td>
+                        <td class="tw-td-val"><input pInputText formControlName="hsCode" class="tw-inp font-bold uppercase" placeholder="HS Code" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Scientific name ：</td>
+                        <td class="tw-td-val"><textarea pInputTextarea formControlName="scientificName" rows="1" [autoResize]="true" class="tw-inp font-bold italic" placeholder="Scientific Name"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Number of packages ：</td>
+                        <td class="tw-td-val font-bold">
+                            <div class="flex items-center gap-2">
+                                <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="tw-inp font-bold w-36" placeholder="" />
+                                <span class="text-xs text-slate-500 font-normal" *ngIf="form.get('includeAttachment')?.value && calculateTotalPackages()">(Total: {{ calculateTotalPackages() }})</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Net weight ：</td>
+                        <td class="tw-td-val font-bold">
+                            <div class="flex items-center gap-2">
+                                <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="tw-inp font-bold w-36" placeholder="" />
+                                <span class="text-xs text-slate-500 font-normal" *ngIf="form.get('includeAttachment')?.value && calculateTotalNetWeight()">(Total: {{ calculateTotalNetWeight() }} KGS)</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+
+                <!-- Section III -->
+                <thead>
+                    <tr class="tw-sec-hdr">
+                        <th colspan="2" class="text-left font-bold px-2 py-1">III. Origin of the fishery products</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tw-td-lbl">Production place ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="productionPlace" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Processing type<sup>1</sup> :</td>
+                        <td class="tw-td-val"><input pInputText formControlName="processingType" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Production mode ：</td>
+                        <td class="tw-td-val">
+                            <div class="flex items-center justify-between pr-4">
+                                <div class="flex items-center gap-2">
+                                    <span>Aquacultured :</span>
+                                    <label class="tw-cbl"><p-checkbox formControlName="aquaculturedYes" [binary]="true"></p-checkbox><span class="ml-1">Yes</span></label>
+                                    <label class="tw-cbl"><p-checkbox formControlName="aquaculturedNo" [binary]="true"></p-checkbox><span class="ml-1">No</span></label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold">Wild Caught</span>
+                                    <label class="tw-cbl font-bold"><p-checkbox formControlName="wildCaughtYes" [binary]="true"></p-checkbox><span class="ml-1">Yes</span></label>
+                                    <label class="tw-cbl"><p-checkbox formControlName="wildCaughtNo" [binary]="true"></p-checkbox><span class="ml-1">No</span></label>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Aquaculture area ：</td>
+                        <td class="tw-td-val">
+                            <div class="flex items-center gap-2">
+                                <input pInputText formControlName="aquacultureArea" class="tw-inp flex-1" />
+                                <span class="font-bold whitespace-nowrap">Catch area / Harvesting area:</span>
+                                <span class="font-bold">{{ form.get('catchArea')?.value }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl"></td>
+                        <td class="tw-td-val">
+                            <div class="flex items-center gap-2">
+                                <span class="whitespace-nowrap">Name &amp; number of vessel for the catch ：</span>
+                                <input pInputText formControlName="vesselName" class="tw-inp flex-1 font-bold" />
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Production and processing enterprise name and registration number:</td>
+                        <td class="tw-td-val">
+                            <div class="font-bold uppercase">{{ form.get('enterpriseName')?.value }}</div>
+                            <div class="font-bold uppercase whitespace-pre-line">{{ form.get('enterpriseAddress')?.value }}</div>
+                            <div class="font-bold" *ngIf="!form.get('enterpriseAddress')?.value">License No: {{ form.get('enterpriseRegistrationNo')?.value }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Production date ：</td>
+                        <td class="tw-td-val font-bold">{{ form.get('productionDate')?.value | date: 'dd/MM/yyyy' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="tw-footer">
+            <span class="tw-footer-page">1/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 2 (TRANSPORT & SIGNATURES) ═══════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="tw-page" *ngIf="viewMode !== 'quality'">
+        <div class="tw-content">
+            <table class="tw-tbl w-full border border-black">
+                <!-- Section IV -->
+                <thead>
+                    <tr class="tw-sec-hdr">
+                        <th colspan="2" class="text-left font-bold px-2 py-1">IV. Information of Transport</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tw-td-lbl" style="width: 45%;">Name and address of consignor ：</td>
+                        <td class="tw-td-val">
+                            <div class="font-bold uppercase">{{ form.get('consignorName')?.value }}</div>
+                            <div class="font-bold uppercase whitespace-pre-line">{{ form.get('consignorAddress')?.value }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Name and address of consignee ：</td>
+                        <td class="tw-td-val">
+                            <div class="font-bold uppercase">{{ form.get('consigneeName')?.value }}</div>
+                            <div class="font-bold uppercase whitespace-pre-line">{{ form.get('consigneeAddress')?.value }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Place of dispatch production ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="placeOfDispatch" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Place of destination ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="placeOfDestination" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Means of transport ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="meansOfTransport" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Name of vessel ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="vesselNameTransport" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Flight number ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="flightNumber" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Other transport means ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="otherTransportMeans" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Container number ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="containerNumber" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                    <tr>
+                        <td class="tw-td-lbl">Seal number ：</td>
+                        <td class="tw-td-val"><input pInputText formControlName="sealNumber" class="tw-inp font-bold uppercase" /></td>
+                    </tr>
+                </tbody>
+
+                <!-- Section V -->
+                <thead>
+                    <tr class="tw-sec-hdr">
+                        <th colspan="2" class="text-left font-bold px-2 py-1">V. Health Attestation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="2" class="p-2 text-justify text-xs leading-relaxed">
+                            <div class="font-bold mb-2">This is to certify that:</div>
+                            <div class="mb-2">1. The above aquatic animals/fishery products originated from an establishment approved by the competent authority.</div>
+                            <div class="mb-2">2. In case of processed fish/fishery products, such products are processed under the required hygienic conditions as stipulated under the Fish Product Export Regulations 1998.</div>
+                            <div class="mb-2">3. The aquatic animals/fishery products meet sanitary requirements and fit for human consumption.</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-2 border-r border-black" style="width: 50%;">
+                            <div class="font-bold text-xs">Place of issue</div>
+                            <input pInputText formControlName="placeOfIssue" class="tw-inp font-bold uppercase mt-1" />
+                        </td>
+                        <td class="p-2" style="width: 50%;">
+                            <div class="font-bold text-xs">Date of issue</div>
+                            <span class="font-bold text-xs">{{ form.get('dateOfIssue')?.value | date: 'dd/MM/yyyy' }}</span>
+                        </td>
+                    </tr>
+                    <tr style="min-height: 140px;">
+                        <td class="p-2 border-r border-black vertical-top" style="width: 50%;">
+                            <div class="font-bold text-xs mb-1">Official stamp</div>
+                            <div
+                                class="tw-stamp-placeholder"
+                                [class.tw-drop-active]="isDraggingStamp"
+                                [class.has-content]="!!form.get('officialStamp')?.value"
+                                (click)="!viewOnly && stampInput.click()"
+                                (dragover)="onStampDragOver($event)"
+                                (dragleave)="onStampDragLeave($event)"
+                                (drop)="onStampDrop($event)"
+                                (paste)="onStampPaste($event)"
+                                tabindex="0"
+                            >
+                                <input type="file" #stampInput (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                <!-- Empty State -->
+                                <div *ngIf="!form.get('officialStamp')?.value" class="tw-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                    <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                    <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                                </div>
+
+                                <!-- Uploaded Image -->
+                                <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="tw-preview-container">
+                                    <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="tw-stamp-img" />
+                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); stampInput.click()" title="Change Stamp">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="tw-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Uploaded PDF -->
+                                <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="tw-preview-container">
+                                    <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="tw-pdf-preview"></object>
+                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); stampInput.click()" title="Change Stamp">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="tw-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-2 vertical-top" style="width: 50%;">
+                            <div class="font-bold text-xs mb-1">Official veterinary signature</div>
+                            <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2 text-left">
+                                <p-select
+                                    [options]="userOptions"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select Authorized Officer"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                    styleClass="w-full text-xs"
+                                    appendTo="body"
+                                ></p-select>
+                            </div>
+                            <div
+                                class="tw-sig-placeholder"
+                                [class.tw-drop-active]="isDraggingSignature"
+                                [class.has-content]="!!form.get('officialSignature')?.value"
+                                (click)="!viewOnly && sigInput.click()"
+                                (dragover)="onSignatureDragOver($event)"
+                                (dragleave)="onSignatureDragLeave($event)"
+                                (drop)="onSignatureDrop($event)"
+                                (paste)="onSignaturePaste($event)"
+                                tabindex="0"
+                            >
+                                <input type="file" #sigInput (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                <!-- Empty State -->
+                                <div *ngIf="!form.get('officialSignature')?.value" class="tw-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                    <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                    <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                </div>
+
+                                <!-- Uploaded Image -->
+                                <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="tw-preview-container">
+                                    <img [src]="form.get('officialSignature')?.value" alt="Signature" class="tw-sig-img" />
+                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); sigInput.click()" title="Change Signature">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="tw-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Uploaded PDF -->
+                                <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="tw-preview-container">
+                                    <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="tw-pdf-preview"></object>
+                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
+                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); sigInput.click()" title="Change Signature">
+                                            <i class="pi pi-pencil text-2xs"></i>
+                                        </button>
+                                        <button type="button" class="tw-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                            <i class="pi pi-trash text-2xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="font-bold text-xs uppercase mt-2">{{ form.get('signatoryName')?.value }}</div>
+                            <div class="font-bold text-xs whitespace-pre-line mt-0.5">{{ form.get('qualification')?.value }}</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="p-1 text-xs">
+                            Note: If any of the information required is not applicable, then the blank area must be filled with ***.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="tw-footer">
+            <span class="tw-footer-page">2/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 3 (ATTACHMENT TO VETERINARY CERTIFICATE) ═════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="tw-page" *ngIf="viewMode !== 'quality' && form.get('includeAttachment')?.value">
+        <div class="tw-content">
+            <!-- Header matching PDF 2 -->
+            <div class="tw-att-title font-bold text-center">
+                Attachment to the Veterinary certificate number
+                <span class="tw-att-ref-val">{{ form.get('referenceNo')?.value || 'TC 4361' }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs font-bold px-1 mb-2">
+                <div class="tw-att-meta">DATE: {{ (form.get('dateOfIssue')?.value || form.get('productionDate')?.value) | date: 'dd/MM/yyyy' }}</div>
+                <div class="tw-att-meta">{{ form.get('enterpriseRegistrationNo')?.value || 'DFAR/FPE/98/74' }}</div>
+            </div>
+
+            <table class="tw-att-tbl w-full border border-black">
+                <thead>
+                    <tr>
+                        <th style="width: 60%;" class="text-left font-bold px-3 py-2">Product</th>
+                        <th style="width: 20%;" class="text-center font-bold px-3 py-2">Number of<br/>Kgs</th>
+                        <th style="width: 20%;" class="text-center font-bold px-3 py-2">Number of Boxes</th>
+                        <th *ngIf="!viewOnly" class="print-hide" style="width: 30px;"></th>
+                    </tr>
+                </thead>
+                <tbody formArrayName="products">
+                    <tr *ngFor="let item of products.controls; let i = index" [formGroupName]="i" class="tw-att-row">
+                        <td class="px-2 py-1">
+                            <textarea
+                                pInputTextarea
+                                formControlName="scientificName"
+                                rows="1"
+                                [autoResize]="true"
+                                class="tw-cinp font-bold uppercase"
+                                placeholder="Product description"
+                            ></textarea>
+                        </td>
+                        <td class="px-2 py-1">
+                            <input
+                                pInputText
+                                formControlName="netWeight"
+                                (keypress)="onlyDecimals($event)"
+                                inputmode="decimal"
+                                class="tw-cinp text-right font-bold"
+                                placeholder=""
+                            />
+                        </td>
+                        <td class="px-2 py-1">
+                            <input
+                                pInputText
+                                formControlName="numberOfPackages"
+                                (keypress)="onlyDigits($event)"
+                                inputmode="numeric"
+                                class="tw-cinp text-right font-bold"
+                                placeholder=""
+                            />
+                        </td>
+                        <td class="print-hide text-center" *ngIf="!viewOnly">
+                            <button
+                                pButton
+                                icon="pi pi-trash"
+                                class="p-button-danger p-button-xs p-button-text"
+                                (click)="removeProduct(i)"
+                                *ngIf="products.length > 1"
+                                pTooltip="Remove Row"
+                            ></button>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="tw-total-row">
+                        <td class="font-bold text-center px-3 py-2">TOTAL</td>
+                        <td class="font-bold text-right px-3 py-2">{{ calculateTotalNetWeight() }}</td>
+                        <td class="font-bold text-right px-3 py-2">{{ calculateTotalPackages() }}</td>
+                        <td *ngIf="!viewOnly" class="print-hide"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Attachment Toolbar (print-hide) -->
+            <div class="print-hide p-2 flex items-center justify-between gap-2 mt-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!viewOnly">
+                <div class="flex items-center gap-2">
+                    <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProduct()"></p-button>
+                    <p-button label="Load 13 Standard Items (TC 4361)" icon="pi pi-refresh" severity="secondary" size="small" [outlined]="true" (onClick)="loadDefaultAttachmentProducts()"></p-button>
+                </div>
+                <button pButton label="Clear All" icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="clearAttachmentProducts()"></button>
+            </div>
+        </div>
+        <div class="tw-footer">
+            <span class="tw-footer-page">{{ attachmentPageNumber }}/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ QUALITY CERTIFICATE PAGE (ATTACHED OR STANDALONE) ══════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="tw-page" *ngIf="viewMode === 'quality' || form.get('includeQualityCertificate')?.value">
+        <div class="tw-content">
+            <!-- Header -->
+            <div class="tw-q-hdr">
+                <div class="cert-header-top-row mb-1">
+                    <div class="cert-header-spacer"></div>
+                    <div class="text-center flex-1">
+                        <div class="tw-q-title font-bold">Quality Certificate</div>
+                        <div class="tw-q-docref-row text-center my-mt2">
+                            <span class="font-bold">Document Reference No: </span>
+                            <input pInputText formControlName="qualityDocumentReferenceNo" class="tw-q-inp-inline font-bold" />
+                        </div>
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('qualityDocumentReferenceNo')?.value || form.get('certificateNumber')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('qualityEstablishmentName')?.value || form.get('consignorNameAddress')?.value"
+                            [destination]="'Taiwan'"
+                            [viewOnly]="viewOnly"
+                            [size]="68"
+                        ></app-certificate-qr>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certification statement -->
+            <div class="tw-q-statement my-mt4">
+                <p class="tw-q-p">
+                    The under secretariat of quality and food safety certified: that after carrying out the corresponding analysis of the aquaculture and/or fishing product (s) detailed below, it is (they are) fit for: Human Consumption
+                    <span class="inline-flex items-center gap-4 ml-3">
+                        <label class="tw-q-cb"><p-checkbox formControlName="qualityHumanConsumptionYes" [binary]="true"></p-checkbox><span>Yes</span></label>
+                        <label class="tw-q-cb"><p-checkbox formControlName="qualityHumanConsumptionNo" [binary]="true"></p-checkbox><span>No</span></label>
+                    </span>
+                </p>
+            </div>
+
+            <!-- Establishment details -->
+            <div class="tw-q-est-block my-mt3">
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">Name of processing establishment:</span>
+                    <textarea pInputTextarea formControlName="qualityEstablishmentName" rows="1" [autoResize]="true" class="tw-q-inp font-bold uppercase"></textarea>
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Processing establishment authorization number:</span>
+                    <input pInputText formControlName="qualityEstablishmentAuthNumber" class="tw-q-inp font-bold uppercase" />
+                </div>
+            </div>
+
+            <!-- 7-Column Product Table -->
+            <div class="my-mt4">
+                <table class="tw-q-table">
+                    <colgroup>
+                        <col style="width: 12%;" />
+                        <col style="width: 14%;" />
+                        <col style="width: 32%;" />
+                        <col style="width: 12%;" />
+                        <col style="width: 12%;" />
+                        <col style="width: 9%;" />
+                        <col style="width: 11%;" />
+                        <col class="print-hide" style="width: 32px;" *ngIf="!viewOnly" />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Product<br/>name</th>
+                            <th>Product type</th>
+                            <th>Test results</th>
+                            <th>Lot code</th>
+                            <th>Sampling<br/>date<br/>(beginning<br/>– end)</th>
+                            <th>Number of<br/>boxes</th>
+                            <th>Lot weight<br/>(Kg)</th>
+                            <th class="print-hide" *ngIf="!viewOnly"></th>
+                        </tr>
+                    </thead>
+                    <tbody formArrayName="qualityProducts">
+                        <tr *ngFor="let p of qualityProducts.controls; let i = index" [formGroupName]="i">
+                            <td><textarea pInputTextarea formControlName="productName" rows="4" [autoResize]="true" class="tw-q-tinp font-bold uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="productType" rows="4" [autoResize]="true" class="tw-q-tinp font-bold uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="testResults" rows="8" [autoResize]="true" class="tw-q-tinp uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="lotCode" rows="4" [autoResize]="true" class="tw-q-tinp font-bold uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="samplingDate" rows="4" [autoResize]="true" class="tw-q-tinp font-bold"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="numberOfBoxes" rows="2" [autoResize]="true" class="tw-q-tinp font-bold uppercase text-center"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="lotWeight" rows="2" [autoResize]="true" class="tw-q-tinp font-bold uppercase text-right"></textarea></td>
+                            <td class="text-center print-hide" *ngIf="!viewOnly">
+                                <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeQualityProduct(i)"></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="tw-q-total-row">
+                            <td colspan="5" class="text-right font-bold pr-4">Total</td>
+                            <td class="font-bold text-center uppercase">{{ calculateQualityTotalBoxes() }}</td>
+                            <td class="font-bold text-right uppercase">{{ calculateQualityTotalWeight() }}</td>
+                            <td class="print-hide" *ngIf="!viewOnly"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="print-hide my-mt2" *ngIf="!viewOnly">
+                    <button pButton label="Add Quality Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addQualityProduct()"></button>
+                </div>
+            </div>
+
+            <!-- Footer Details -->
+            <div class="tw-q-meta-block my-mt4">
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">Tested by:</span>
+                    <input pInputText formControlName="qualityTestedBy" class="tw-q-inp uppercase" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Country of destination:</span>
+                    <input pInputText formControlName="qualityCountryOfDestination" class="tw-q-inp font-bold uppercase" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Commercial invoice:</span>
+                    <input pInputText formControlName="qualityCommercialInvoice" class="tw-q-inp font-bold uppercase" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Unique code:</span>
+                    <input pInputText formControlName="qualityUniqueCode" class="tw-q-inp" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Observations:</span>
+                    <textarea pInputTextarea formControlName="qualityObservations" rows="1" [autoResize]="true" class="tw-q-inp"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="tw-footer">
+            <span class="tw-footer-page">{{ qualityPageNumber }}/{{ qualityPageNumber }}</span>
+        </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="tw-actions print-hide flex items-center justify-between gap-3 mt-6 mb-8 w-full max-w-[210mm] mx-auto p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs">
+        <p-button
+            *ngIf="!isEmbedded"
+            label="Back to Forms Queue"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            (onClick)="goBack()"
+        ></p-button>
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Print / Export PDF"
+                [outlined]="true"
+                severity="secondary"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="top"
+                (onClick)="printCertificate()"
+                icon="pi pi-print"
+                size="small"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                [disabled]="!isCompany && form.get('signatoryUserId')?.invalid && viewMode !== 'quality'"
+                (onClick)="onSubmit()"
+            ></p-button>
+        </div>
+    </div>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

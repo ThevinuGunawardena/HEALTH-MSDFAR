@@ -1,0 +1,126 @@
+.company-list-wrapper {
+    padding: 30px;
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+
+        h2 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .btn-add {
+            background: #16a34a;
+            cursor: pointer;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    }
+
+    .table-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow-x: auto;
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+
+            th,
+            td {
+                padding: 12px 10px;
+                font-size: 14px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            th {
+                text-align: left;
+                font-weight: 600;
+                background: #f9fafb;
+            }
+
+            .center {
+                text-align: center;
+            }
+
+            .status {
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 500;
+
+                &.active {
+                    background: #d1fae5;
+                    color: #065f46;
+                }
+
+                &.inactive {
+                    background: #fee2e2;
+                    color: #991b1b;
+                }
+            }
+
+            .actions {
+                display: flex;
+                gap: 8px;
+                justify-content: center;
+
+                .btn {
+                    min-width: 78px;
+                    padding: 6px 12px;
+                    border-radius: 5px;
+                    font-size: 12px;
+                    text-decoration: none;
+                    cursor: pointer;
+                    text-align: center;
+                    white-space: nowrap;
+                }
+
+                .view {
+                    background: #3b82f6;
+                    color: #fff;
+                }
+
+                .edit {
+                    background: #f59e0b;
+                    color: #fff;
+                }
+
+                .delete {
+                    background: #dc2626;
+                    color: #fff;
+                    border: none;
+                }
+            }
+        }
+    }
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+    padding: 8px 14px;
+    min-height: 44px;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-title {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header-icon {
+    width: 36px;
+    height: 36px;
+}
+
+@media (max-width: 768px) {
+    .company-list-wrapper {
+        padding: 10px;
+    }
+}

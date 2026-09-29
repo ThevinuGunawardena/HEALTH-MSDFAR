@@ -1,0 +1,132 @@
+/* You can add global styles to this file, and also import other style files */
+@use './tailwind.css';
+@use './layout/layout.scss';
+@use 'primeicons/primeicons.css';
+
+@media print {
+    /* Force exact theme colors and backgrounds */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* Hide ALL layout components */
+    [app-sidebar],
+    .layout-sidebar,
+    [app-topbar],
+    .layout-topbar,
+    [app-breadcrumb],
+    .layout-breadcrumb,
+    [app-footer],
+    .layout-footer,
+    app-configurator,
+    .app-configurator,
+    [app-search],
+    .layout-search,
+    [app-rightmenu],
+    .layout-rightmenu,
+    .layout-mask,
+    .print-hide,
+    p-toast,
+    app-confirm-password-dialog {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+
+    /* Reset layout wrapper to occupy full page */
+    .layout-wrapper,
+    .layout-content-wrapper,
+    .layout-content-wrapper-inside,
+    .layout-content {
+        display: block !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Reset body and html */
+    body,
+    html {
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #ffffff !important;
+        height: auto !important;
+        min-height: auto !important;
+        width: 100% !important;
+    }
+
+    /* Aggressively hide datepicker icons and triggers */
+    .p-datepicker-trigger,
+    .p-calendar-button,
+    .p-icon-wrapper,
+    p-datepicker button,
+    p-datepicker i,
+    .pi {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+    }
+
+    /* Certificate page breaks */
+    [class$='-page'],
+    .a4-page {
+        page-break-after: always !important;
+        break-after: page !important;
+    }
+
+    [class$='-page']:last-of-type,
+    .a4-page:last-of-type {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+    }
+
+    form {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        display: block !important;
+    }
+}
+
+/* ════ GLOBAL CERTIFICATE UI FIXES ════ */
+
+/* Unify signatory select font size and padding across all certificates */
+:host ::ng-deep .signatory-select .p-select-label,
+:host ::ng-deep .signatory-select .p-select-item,
+:host ::ng-deep .signatory-select .p-select-option {
+    font-size: 9pt !important;
+}
+
+:host ::ng-deep .signatory-select {
+    height: auto !important;
+    min-height: 0 !important;
+    background: transparent !important;
+}
+
+/* Unify section headers and labels across all certificates to 9pt */
+.am-section-cell, .au-section-cell, .br-section-cell, .ch-section-cell, 
+.hk-section-cell, .id-section-cell, .ind-section-cell, .jp-section-cell, 
+.kw-section-cell, .my-section-cell, .nz-section-cell, .ru-section-cell, 
+.tw-section-hdr, .ua-section-cell, .uk-section-cell, .usa-section-cell, 
+.a4-section-cell, .cell-label, .cert-stmt, .jp-stmt, .br-stmt, .nz-stmt-area,
+.am-lbl, .au-lbl, .br-flabel, .ch-lbl, .hk-lbl, .id-lbl, .ind-lbl, .jp-lbl, .jp-lbl-lg,
+.kw-lbl, .my-lbl, .nz-flbl, .nz-sub-lbl, .ru-lbl, .tw-lbl, .ua-lbl, .uk-lbl, .usa-lbl,
+.ci, .cti, .nz-input, .nz-tinput, .br-input, .jp-line-input, .tw-input, .am-input,
+.ua-input, .ua-flbl, .ua-sub-lbl, .ua-side-label, .ua-inline-input,
+.uk-uline, .uk-flbl, .uk-sub-lbl, .uk-side-label, .uk-attest-item, .uk-ti, .uk-flbl-xs,
+.ch-input, .ch-ref-input, .ch-numref-label, .ch-section-hdr,
+.form-table td, .form-table input, .section-header, .section-hdr,
+.am-flabel, .am-sub-lbl, .am-input, .am-tinput {
+    font-size: 9pt !important;
+}

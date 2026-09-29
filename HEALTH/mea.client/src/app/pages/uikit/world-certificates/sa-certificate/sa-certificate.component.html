@@ -1,0 +1,1187 @@
+<div class="sa-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">SAUDI ARABIA (SA) — Official DFAR Certificate</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Sample Loaders -->
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Air Sample (TC 4359)"
+                icon="pi pi-file-o"
+                size="small"
+                severity="info"
+                [outlined]="true"
+                (onClick)="loadSampleProcessed()"
+                pTooltip="Load Official Letterhead Sample (TC 4359 - Isabela Sea Foods / Fresh Fish via Air to Saudi Arabia)"
+                tooltipPosition="bottom"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Sea Sample (TC 4035)"
+                icon="pi pi-table"
+                size="small"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="loadSampleSea()"
+                pTooltip="Load Official Letterhead Sample (TC 4035 - Aqua 'N Green / Frozen Thiapia Fish via Sea to Jeddah)"
+                tooltipPosition="bottom"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Live Sample (SX 1691)"
+                icon="pi pi-heart"
+                size="small"
+                severity="help"
+                [outlined]="true"
+                (onClick)="loadSampleLive()"
+                pTooltip="Load Official Letterhead Live Animals Sample (SX 1691 - Wild Caught Live Lobster to Riyadh)"
+                tooltipPosition="bottom"
+            ></p-button>
+
+            <span *ngIf="form.get('myRef')?.value || form.get('certificateNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">
+                Ref: {{ form.get('myRef')?.value || form.get('certificateNumber')?.value }}
+            </span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+                [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="print()"
+                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Radio Buttons Format Selector (Creation / Edit mode) -->
+    <div class="flex flex-wrap items-center gap-4 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide w-full max-w-[210mm]" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Format:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('letter')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="letter" inputId="vm_sa_letter" (onClick)="onViewModeChange('letter')"></p-radiobutton>
+            <span>OFFICIAL LETTERHEAD (PROCESSED / CHILLED / FROZEN FISH)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('live')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="live" inputId="vm_sa_live" (onClick)="onViewModeChange('live')"></p-radiobutton>
+            <span>OFFICIAL LETTERHEAD (LIVE ANIMALS / EXAMINED SAMPLE)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('generic')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="generic" inputId="vm_sa_generic" (onClick)="onViewModeChange('generic')"></p-radiobutton>
+            <span>GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('attachment')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment" inputId="vm_sa_attachment" (onClick)="onViewModeChange('attachment')"></p-radiobutton>
+            <span>LIVE ANIMALS / WITH ATTACHMENT TABLE</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode or when Submitted -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs w-full max-w-[210mm]" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'generic' ? 'GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)' : ((form.get('viewMode')?.value || viewMode) === 'attachment' ? 'LIVE ANIMALS / WITH ATTACHMENT TABLE' : ((form.get('viewMode')?.value || viewMode) === 'live' ? 'OFFICIAL LETTERHEAD (LIVE ANIMALS / EXAMINED SAMPLE)' : 'OFFICIAL LETTERHEAD (PROCESSED / CHILLED / FROZEN FISH)')) }}
+        </span>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 1: OFFICIAL LETTERHEAD - PROCESSED FISH (TC 4359 / TC 4035)-->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="sa-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letter'">
+        <div class="sa-content letter-layout">
+            <!-- ── Top Letterhead ── -->
+            <div class="letter-header">
+                <div class="cert-header-top-row">
+                    <div class="cert-header-spacer"></div>
+                    <div class="flex justify-center mb-1">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="letter-logo" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('itemName')?.value"
+                            [date]="form.get('date')?.value"
+                            [officer]="form.get('signatoryName')?.value"
+                            [destination]="'SAUDI ARABIA'"
+                            [viewOnly]="viewOnly">
+                        </app-certificate-qr>
+                    </div>
+                </div>
+                <div class="letter-sinhala-dept font-bold">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="letter-tamil-dept">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                <div class="letter-english-dept font-bold">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="letter-web-email flex justify-center gap-6 mt-0.5">
+                    <span>web site : http://www.fisheriesdept.gov.lk</span>
+                    <span>E - mail : info&#64;fisheriesdept.gov.lk</span>
+                </div>
+                <div class="letter-addr-line flex justify-between mt-0.5 px-1">
+                    <span>புதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை</span>
+                    <span>නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                    <span>New Secretariat,Maligawaththa, Colombo 10</span>
+                </div>
+                <div class="letter-header-hr"></div>
+            </div>
+
+            <!-- ── Reference & Date Row ── -->
+            <div class="letter-ref-bar my-1">
+                <div class="flex items-center gap-1">
+                    <div class="letter-ref-tri-label flex flex-col">
+                        <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
+                    </div>
+                    <span class="letter-bracket">&#125;</span>
+                    <input pInputText formControlName="myRef" class="letter-input-inline font-bold uppercase-text" placeholder="TC 4359" />
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="letter-ref-tri-label flex flex-col">
+                        <span>ඔබේ අංකය</span><span>உமது இல</span><span>Your Ref</span>
+                    </div>
+                    <span class="letter-bracket">&#125;</span>
+                    <input pInputText formControlName="yourRef" class="letter-input-inline font-bold" />
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="letter-ref-tri-label flex flex-col">
+                        <span>දිනය</span><span>திகதி</span><span>Date</span>
+                    </div>
+                    <span class="letter-bracket">&#125;</span>
+                    <div class="print-show font-bold text-xs letter-ref-val">
+                        {{ form.get('date')?.value ? (form.get('date')?.value | date: 'dd/MM/yyyy') : ' ' }}
+                    </div>
+                    <div class="print-hide">
+                        <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy"></p-datepicker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Health Certificate Title ── -->
+            <div class="letter-title text-center my-1.5">HEALTH CERTIFICATE</div>
+
+            <!-- ── Attestation statement ── -->
+            <p class="letter-body-p text-justify mb-2 font-serif">
+                The undersigned official inspector hereby certifies that the following consignment of fishery product has been processed in an approved fish processing establishment under the relevant conditions laid down in Fish Products (Export) Regulations, 1998 required for the production of fishery products for human consumption and intended for export market.
+            </p>
+
+            <!-- ── Sub-title ── -->
+            <div class="text-center font-bold text-xs underline mb-2">Fish and Fishery Products</div>
+
+            <!-- ── Details Block ── -->
+            <div class="letter-details-box flex-1 space-y-1">
+                <div class="flex items-start gap-1">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Item:</span>
+                    <textarea pTextarea formControlName="itemName" rows="2" [autoResize]="true" class="letter-input-full font-bold uppercase-text text-justify" placeholder="WILD CAUGHT: FRESH FISH - BLACK GROUPER FISH..."></textarea>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">No. of packages:</span>
+                    <input pInputText formControlName="numberOfPackages" class="letter-input-inline font-bold flex-1" placeholder="45 Boxes / 1472 CTNS" />
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">Net weight:</span>
+                    <input pInputText formControlName="netWeight" class="letter-input-inline font-bold flex-1" placeholder="950.00 kg / 20,136.000KGS" />
+                </div>
+                <div class="flex items-start gap-1 pt-0.5">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Name and address of the processing plant:</span>
+                    <div class="flex-1">
+                        <input pInputText formControlName="processingPlantName" class="letter-input-full font-bold uppercase-text mb-0.5" placeholder="ISABELA SEA FOODS" />
+                        <textarea pTextarea formControlName="processingPlantAddress" rows="1" [autoResize]="true" class="letter-input-full font-bold uppercase-text" placeholder="NO. 14/2, DUNGALPITIYA, THALAHENA, NEGOMBO, SRI LANKA."></textarea>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2 pt-0.5">
+                    <span class="font-bold whitespace-nowrap">Competent Authority Reg. No.:</span>
+                    <input pInputText formControlName="competentAuthorityRegNo" class="letter-input-inline font-bold uppercase-text flex-1" placeholder="DFAR/FPE/98/59" />
+                </div>
+                <div class="flex items-start gap-1 pt-0.5">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Name and address of consignor:</span>
+                    <div class="flex-1">
+                        <input pInputText formControlName="consignorName" class="letter-input-full font-bold uppercase-text mb-0.5" placeholder="ISABELA SEA FOODS" />
+                        <textarea pTextarea formControlName="consignorAddress" rows="1" [autoResize]="true" class="letter-input-full font-bold uppercase-text" placeholder="NO. 14/2, DUNGALPITIYA, THALAHENA, NEGOMBO, SRI LANKA"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-start gap-1 pt-0.5">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Name and address of consignee:</span>
+                    <div class="flex-1">
+                        <input pInputText formControlName="consigneeName" class="letter-input-full font-bold uppercase-text mb-0.5" placeholder="YAZN TRADING L.L.C" />
+                        <textarea pTextarea formControlName="consigneeAddress" rows="1" [autoResize]="true" class="letter-input-full font-bold uppercase-text" placeholder="CR NO:0507222369, FISH MARKET, SAUDI ARABIA"></textarea>
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <div class="font-bold mb-0.5">The above fishery products are to be dispatched</div>
+                    <div class="space-y-0.5 pl-2">
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold whitespace-nowrap">from:</span>
+                            <input pInputText formControlName="despatchFrom" class="letter-input-inline font-bold uppercase-text flex-1" placeholder="COLOMBO – SRI LANKA" />
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold whitespace-nowrap">to:</span>
+                            <input pInputText formControlName="despatchTo" class="letter-input-inline font-bold uppercase-text flex-1" placeholder="SAUDI ARABIA / JEDDAH- SAUDI ARABIA" />
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <input pInputText formControlName="despatchByShip" class="letter-input-inline font-bold uppercase-text w-full" placeholder="BY AIR FREIGHT / BY SEA FREIGHT" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Signature & Stamp ── -->
+            <div class="sa-stamp-sig-section mt-4 pt-2">
+                <div class="sa-stamp-col">
+                    <div class="font-bold text-xs mb-1">Official stamp:</div>
+                    <div
+                        class="sa-stamp-placeholder"
+                        [class.sa-drop-active]="isDraggingStamp"
+                        [class.has-content]="!!form.get('officialStamp')?.value"
+                        (click)="!viewOnly && stampInputLetter.click()"
+                        (dragover)="onStampDragOver($event)"
+                        (dragleave)="onStampDragLeave($event)"
+                        (drop)="onStampDrop($event)"
+                        (paste)="onStampPaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #stampInputLetter (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <!-- Empty State -->
+                        <div *ngIf="!form.get('officialStamp')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                        </div>
+
+                        <!-- Uploaded Image -->
+                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="sa-stamp-img" />
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded PDF -->
+                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sa-sig-col">
+                    <div class="font-bold text-xs">Signature of Official Inspector:</div>
+                    <div
+                        class="sa-sig-placeholder"
+                        [class.sa-drop-active]="isDraggingSignature"
+                        [class.has-content]="!!form.get('officialSignature')?.value"
+                        (click)="!viewOnly && sigInputLetter.click()"
+                        (dragover)="onSignatureDragOver($event)"
+                        (dragleave)="onSignatureDragLeave($event)"
+                        (drop)="onSignatureDrop($event)"
+                        (paste)="onSignaturePaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #sigInputLetter (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <!-- Empty State -->
+                        <div *ngIf="!form.get('officialSignature')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                        </div>
+
+                        <!-- Uploaded Image -->
+                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="sa-sig-img" />
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded PDF -->
+                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-xs pt-1"><span class="font-bold">Name:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'H.M.U. BANDARA' }}</span></div>
+                    <div class="text-xs"><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                    <div *ngIf="form.get('qualification')?.value" class="text-3xs uppercase text-slate-700 whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                </div>
+            </div>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide my-2 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+                <div *ngIf="form.controls['signatoryUserId'].invalid && form.controls['signatoryUserId'].touched" class="text-red-500 text-xs mt-1">
+                    Authorized signatory selection and confirmation is required
+                </div>
+            </div>
+
+            <!-- ── Bottom Bar ── -->
+            <div class="letter-footer-wrapper">
+                <div class="flex justify-between items-center border-t-2 border-black pt-1 px-2">
+                    <div class="flex items-center">
+                        <div class="letter-ftr-tri-label flex flex-col text-3xs">
+                            <span>තැ.පෙ.</span><span>த.பெ.ப</span><span>P.O.Box</span>
+                        </div>
+                        <span class="letter-bracket-sm">&#125;</span>
+                        <span class="font-bold text-xs ml-1">531</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="letter-ftr-tri-label flex flex-col text-3xs">
+                            <span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span>
+                        </div>
+                        <span class="letter-bracket-sm">&#125;</span>
+                        <span class="font-bold text-xs ml-1">+94(0)112446183 (2 lines)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="letter-ftr-tri-label flex flex-col text-3xs">
+                            <span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span>
+                        </div>
+                        <span class="letter-bracket-sm">&#125;</span>
+                        <span class="font-bold text-xs ml-1">+94(0) 112449170</span>
+                    </div>
+                </div>
+                <div class="text-center text-3xs text-slate-500 mt-0.5">
+                    This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 2: OFFICIAL LETTERHEAD - LIVE ANIMALS (SX 1691 / TB 5820)   -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="sa-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'live'">
+        <div class="sa-content letter-layout">
+            <!-- ── Top Letterhead ── -->
+            <div class="letter-header">
+                <div class="cert-header-top-row">
+                    <div class="cert-header-spacer"></div>
+                    <div class="flex justify-center mb-1">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="letter-logo" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('itemName')?.value"
+                            [date]="form.get('date')?.value"
+                            [officer]="form.get('signatoryName')?.value"
+                            [destination]="'SAUDI ARABIA'"
+                            [viewOnly]="viewOnly">
+                        </app-certificate-qr>
+                    </div>
+                </div>
+                <div class="letter-sinhala-dept font-bold">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="letter-tamil-dept">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                <div class="letter-english-dept font-bold">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="letter-web-email flex justify-center gap-6 mt-0.5">
+                    <span>web site : http://www.fisheriesdept.gov.lk</span>
+                    <span>E - mail : info&#64;fisheriesdept.gov.lk</span>
+                </div>
+                <div class="letter-addr-line flex justify-between mt-0.5 px-1">
+                    <span>புதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை</span>
+                    <span>නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                    <span>New Secretariat,Maligawaththa, Colombo 10</span>
+                </div>
+                <div class="letter-header-hr"></div>
+            </div>
+
+            <!-- ── Reference & Date Row ── -->
+            <div class="letter-ref-bar my-1">
+                <div class="flex items-center gap-1">
+                    <div class="letter-ref-tri-label flex flex-col">
+                        <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
+                    </div>
+                    <span class="letter-bracket">&#125;</span>
+                    <input pInputText formControlName="myRef" class="letter-input-inline font-bold uppercase-text" placeholder="SX 1691 / TB 5820" />
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="letter-ref-tri-label flex flex-col">
+                        <span>ඔබේ අංකය</span><span>உமது இல</span><span>Your Ref</span>
+                    </div>
+                    <span class="letter-bracket">&#125;</span>
+                    <input pInputText formControlName="yourRef" class="letter-input-inline font-bold" />
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="letter-ref-tri-label flex flex-col">
+                        <span>දිනය</span><span>திகதி</span><span>Date</span>
+                    </div>
+                    <span class="letter-bracket">&#125;</span>
+                    <div class="print-show font-bold text-xs letter-ref-val">
+                        {{ form.get('date')?.value ? (form.get('date')?.value | date: 'dd/MM/yyyy') : ' ' }}
+                    </div>
+                    <div class="print-hide">
+                        <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy"></p-datepicker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Title ── -->
+            <div class="letter-title text-center my-1.5">HEALTH CERTIFICATE</div>
+
+            <!-- ── Live Animals Certification Statement ── -->
+            <p class="letter-body-p text-justify mb-2 font-serif">
+                This is to certify that the undersigned Official Inspector of the Fishery Products Quality Control Unit of the Department of Fisheries &amp; Aquatic Resources, Colombo, Sri Lanka has examined a sample of <span class="font-bold underline">{{ form.get('liveSampleType')?.value || 'live lobsters / live crabs / live fish' }}</span> today. At the time of examination, this sample of <span class="font-bold underline">{{ form.get('liveSampleType')?.value || 'live lobsters / live crabs / live fish' }}</span> was found healthy and fit for human consumption.
+            </p>
+
+            <div class="print-hide p-1.5 bg-slate-100 border border-slate-200 rounded mb-2 flex items-center gap-2 text-xs">
+                <span class="font-semibold text-slate-700">Examined Sample in Statement:</span>
+                <input pInputText formControlName="liveSampleType" placeholder="e.g. live lobsters / live crabs / live fish" class="p-inputtext-sm flex-1 font-bold" />
+            </div>
+
+            <!-- ── Sub-title ── -->
+            <div class="text-center font-bold text-xs underline mb-2">Fish and Fishery Products</div>
+
+            <!-- ── Details Block ── -->
+            <div class="letter-details-box flex-1 space-y-1">
+                <div class="flex items-start gap-1">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Item:</span>
+                    <textarea pTextarea formControlName="itemName" rows="2" [autoResize]="true" class="letter-input-full font-bold uppercase-text text-justify" placeholder="WILD CAUGHT - LIVE LOBSTER (Panulirus homarus)"></textarea>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">No. of packages:</span>
+                    <input pInputText formControlName="numberOfPackages" class="letter-input-inline font-bold flex-1" placeholder="12 Styrofoam Boxes" />
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">Net weight:</span>
+                    <input pInputText formControlName="netWeight" class="letter-input-inline font-bold flex-1" placeholder="180.00 kg" />
+                </div>
+                <div class="flex items-start gap-1 pt-0.5">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Name and address of the processing plant:</span>
+                    <div class="flex-1">
+                        <input pInputText formControlName="processingPlantName" class="letter-input-full font-bold uppercase-text mb-0.5" placeholder="BLUE OCEAN AQUATICS PACKING FACILITY" />
+                        <textarea pTextarea formControlName="processingPlantAddress" rows="1" [autoResize]="true" class="letter-input-full font-bold uppercase-text" placeholder="NO. 45, HARBOUR ACCESS ROAD, COLOMBO 15, SRI LANKA"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2 pt-0.5">
+                    <span class="font-bold whitespace-nowrap">Competent Authority Reg. No.:</span>
+                    <input pInputText formControlName="competentAuthorityRegNo" class="letter-input-inline font-bold uppercase-text flex-1" placeholder="DFAR/FPE/98/042" />
+                </div>
+                <div class="flex items-start gap-1 pt-0.5">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Name and address of consignor:</span>
+                    <div class="flex-1">
+                        <input pInputText formControlName="consignorName" class="letter-input-full font-bold uppercase-text mb-0.5" placeholder="BLUE OCEAN AQUATICS (PVT) LTD" />
+                        <textarea pTextarea formControlName="consignorAddress" rows="1" [autoResize]="true" class="letter-input-full font-bold uppercase-text" placeholder="NO. 45, HARBOUR ACCESS ROAD, COLOMBO 15, SRI LANKA"></textarea>
+                    </div>
+                </div>
+                <div class="flex items-start gap-1 pt-0.5">
+                    <span class="font-bold whitespace-nowrap pt-0.5">Name and address of consignee:</span>
+                    <div class="flex-1">
+                        <input pInputText formControlName="consigneeName" class="letter-input-full font-bold uppercase-text mb-0.5" placeholder="RED SEA GOURMET SUPPLIES" />
+                        <textarea pTextarea formControlName="consigneeAddress" rows="1" [autoResize]="true" class="letter-input-full font-bold uppercase-text" placeholder="OLAYA DISTRICT, RIYADH 11564, KINGDOM OF SAUDI ARABIA"></textarea>
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <div class="font-bold mb-0.5">The above fishery products are to be dispatched</div>
+                    <div class="space-y-0.5 pl-2">
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold whitespace-nowrap">from:</span>
+                            <input pInputText formControlName="despatchFrom" class="letter-input-inline font-bold uppercase-text flex-1" placeholder="COLOMBO, SRI LANKA" />
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold whitespace-nowrap">to:</span>
+                            <input pInputText formControlName="despatchTo" class="letter-input-inline font-bold uppercase-text flex-1" placeholder="KING KHALID INTERNATIONAL AIRPORT, RIYADH, SAUDI ARABIA" />
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <input pInputText formControlName="despatchByShip" class="letter-input-inline font-bold uppercase-text w-full" placeholder="BY AIR FREIGHT" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Signature & Stamp ── -->
+            <div class="sa-stamp-sig-section mt-4 pt-2">
+                <div class="sa-stamp-col">
+                    <div class="font-bold text-xs mb-1">Official stamp:</div>
+                    <div
+                        class="sa-stamp-placeholder"
+                        [class.sa-drop-active]="isDraggingStamp"
+                        [class.has-content]="!!form.get('officialStamp')?.value"
+                        (click)="!viewOnly && stampInputLive.click()"
+                        (dragover)="onStampDragOver($event)"
+                        (dragleave)="onStampDragLeave($event)"
+                        (drop)="onStampDrop($event)"
+                        (paste)="onStampPaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #stampInputLive (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <!-- Empty State -->
+                        <div *ngIf="!form.get('officialStamp')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                        </div>
+
+                        <!-- Uploaded Image -->
+                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="sa-stamp-img" />
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded PDF -->
+                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sa-sig-col">
+                    <div class="font-bold text-xs">Signature of Official Inspector:</div>
+                    <div
+                        class="sa-sig-placeholder"
+                        [class.sa-drop-active]="isDraggingSignature"
+                        [class.has-content]="!!form.get('officialSignature')?.value"
+                        (click)="!viewOnly && sigInputLive.click()"
+                        (dragover)="onSignatureDragOver($event)"
+                        (dragleave)="onSignatureDragLeave($event)"
+                        (drop)="onSignatureDrop($event)"
+                        (paste)="onSignaturePaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #sigInputLive (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <!-- Empty State -->
+                        <div *ngIf="!form.get('officialSignature')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                        </div>
+
+                        <!-- Uploaded Image -->
+                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="sa-sig-img" />
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputLive.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded PDF -->
+                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputLive.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-xs pt-1"><span class="font-bold">Name:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'H.M.U. BANDARA' }}</span></div>
+                    <div class="text-xs"><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                    <div *ngIf="form.get('qualification')?.value" class="text-3xs uppercase text-slate-700 whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                </div>
+            </div>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide my-2 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+                <div *ngIf="form.controls['signatoryUserId'].invalid && form.controls['signatoryUserId'].touched" class="text-red-500 text-xs mt-1">
+                    Authorized signatory selection and confirmation is required
+                </div>
+            </div>
+
+            <!-- ── Bottom Bar ── -->
+            <div class="letter-footer-wrapper">
+                <div class="flex justify-between items-center border-t-2 border-black pt-1 px-2">
+                    <div class="flex items-center">
+                        <div class="letter-ftr-tri-label flex flex-col text-3xs">
+                            <span>තැ.පෙ.</span><span>த.பெ.ப</span><span>P.O.Box</span>
+                        </div>
+                        <span class="letter-bracket-sm">&#125;</span>
+                        <span class="font-bold text-xs ml-1">531</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="letter-ftr-tri-label flex flex-col text-3xs">
+                            <span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span>
+                        </div>
+                        <span class="letter-bracket-sm">&#125;</span>
+                        <span class="font-bold text-xs ml-1">+94(0)112446183 (2 lines)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="letter-ftr-tri-label flex flex-col text-3xs">
+                            <span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span>
+                        </div>
+                        <span class="letter-bracket-sm">&#125;</span>
+                        <span class="font-bold text-xs ml-1">+94(0) 112449170</span>
+                    </div>
+                </div>
+                <div class="text-center text-3xs text-slate-500 mt-0.5">
+                    This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 3: GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)      -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="sa-page generic-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'generic'">
+        <div class="sa-content">
+            <div class="sa-boxed-frame">
+                <!-- Header -->
+                <div class="sa-header">
+                    <div class="sa-logo-row">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="sa-logo" />
+                    </div>
+                    <div class="sa-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES, SRI LANKA</div>
+                    <div class="font-bold text-xs uppercase underline">MODEL OFFICIAL CERTIFICATE FOR ENTRY INTO SAUDI ARABIA OF FISHERY PRODUCTS</div>
+                </div>
+
+                <!-- 10 Boxes Grid Table -->
+                <table class="sa-grid">
+                    <colgroup>
+                        <col style="width: 50%;" />
+                        <col style="width: 25%;" />
+                        <col style="width: 25%;" />
+                    </colgroup>
+
+                    <!-- Box 1 & 2 -->
+                    <tr>
+                        <td class="sa-td" rowspan="2">
+                            <span class="sa-flbl">1. Consignor / Exporter:</span>
+                            <input pInputText formControlName="consignorName" class="sa-input font-bold uppercase-text mb-0.5" placeholder="Consignor Name" />
+                            <textarea pTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="sa-input font-bold uppercase-text" placeholder="Consignor Address"></textarea>
+                        </td>
+                        <td class="sa-td" colspan="2">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex-1">
+                                    <span class="sa-flbl">2. Certificate Reference No:</span>
+                                    <input pInputText formControlName="myRef" class="sa-input font-bold uppercase-text" placeholder="TC 4035" />
+                                </div>
+                                <app-certificate-qr
+                                    [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value"
+                                    [certificateRequestId]="certificateRequestId"
+                                    [consignor]="form.get('consignorName')?.value"
+                                    [consignee]="form.get('consigneeName')?.value"
+                                    [item]="form.get('itemName')?.value"
+                                    [date]="form.get('date')?.value"
+                                    [officer]="form.get('signatoryName')?.value"
+                                    [destination]="'SAUDI ARABIA'"
+                                    [viewOnly]="viewOnly"
+                                    [size]="52">
+                                </app-certificate-qr>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Box 3 -->
+                    <tr>
+                        <td class="sa-td" colspan="2">
+                            <span class="sa-flbl">3. Competent Authority:</span>
+                            <input pInputText formControlName="competentAuthority" class="sa-input font-bold uppercase-text" />
+                        </td>
+                    </tr>
+
+                    <!-- Box 4, 5, 6 -->
+                    <tr>
+                        <td class="sa-td">
+                            <span class="sa-flbl">4. Consignee / Importer:</span>
+                            <input pInputText formControlName="consigneeName" class="sa-input font-bold uppercase-text mb-0.5" placeholder="Consignee Name" />
+                            <textarea pTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="sa-input font-bold uppercase-text" placeholder="Consignee Address"></textarea>
+                        </td>
+                        <td class="sa-td">
+                            <span class="sa-flbl">5. Country of Origin:</span>
+                            <input pInputText formControlName="countryOfOrigin" class="sa-input font-bold uppercase-text" />
+                            <span class="text-3xs text-slate-500 font-mono">ISO: {{ form.get('countryOfOriginISO')?.value }}</span>
+                        </td>
+                        <td class="sa-td">
+                            <span class="sa-flbl">6. Country of Destination:</span>
+                            <input pInputText formControlName="countryOfDestination" class="sa-input font-bold uppercase-text" />
+                            <span class="text-3xs text-slate-500 font-mono">ISO: {{ form.get('countryOfDestinationISO')?.value }}</span>
+                        </td>
+                    </tr>
+
+                    <!-- Box 7 & 8 -->
+                    <tr>
+                        <td class="sa-td">
+                            <span class="sa-flbl">7. Place of Loading / Dispatch:</span>
+                            <input pInputText formControlName="despatchFrom" class="sa-input font-bold uppercase-text" />
+                        </td>
+                        <td class="sa-td" colspan="2">
+                            <span class="sa-flbl">8. Means of Transport:</span>
+                            <input pInputText formControlName="despatchByShip" class="sa-input font-bold uppercase-text" placeholder="BY AIR FREIGHT / BY SEA FREIGHT" />
+                        </td>
+                    </tr>
+
+                    <!-- Box 9 -->
+                    <tr>
+                        <td class="sa-td" colspan="3">
+                            <span class="sa-flbl">9. Identification of Fishery Products:</span>
+                            <div class="grid grid-cols-3 gap-2 mt-0.5">
+                                <div>
+                                    <span class="text-3xs font-bold block">Description / Commodity:</span>
+                                    <input pInputText formControlName="itemName" class="sa-input font-bold uppercase-text" />
+                                </div>
+                                <div>
+                                    <span class="text-3xs font-bold block">No. of Packages:</span>
+                                    <input pInputText formControlName="numberOfPackages" class="sa-input font-bold" />
+                                </div>
+                                <div>
+                                    <span class="text-3xs font-bold block">Net Weight:</span>
+                                    <input pInputText formControlName="netWeight" class="sa-input font-bold" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-1">
+                                <div>
+                                    <span class="text-3xs font-bold block">Processing Plant Name &amp; Address:</span>
+                                    <input pInputText formControlName="processingPlantName" class="sa-input font-bold uppercase-text mb-0.5" placeholder="Plant Name" />
+                                    <textarea pTextarea formControlName="processingPlantAddress" rows="1" [autoResize]="true" class="sa-input font-bold uppercase-text" placeholder="Plant Address"></textarea>
+                                </div>
+                                <div>
+                                    <span class="text-3xs font-bold block">Competent Authority Reg. No.:</span>
+                                    <input pInputText formControlName="competentAuthorityRegNo" class="sa-input font-bold uppercase-text" />
+                                    <span class="text-3xs font-bold block mt-1">Storage Condition:</span>
+                                    <input pInputText formControlName="conditionsOfStorage" class="sa-input font-bold uppercase-text" />
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Box 10 -->
+                    <tr>
+                        <td class="sa-td" colspan="3">
+                            <span class="sa-flbl">10. Official Attestation &amp; Signatory Block:</span>
+                            <p class="sa-attest-text text-justify mb-2">
+                                The undersigned official inspector certifies that the fish and fishery products described above were handled, prepared, processed, frozen, packaged and stored under hygienic conditions in compliance with official export regulations.
+                            </p>
+                            <div class="grid grid-cols-2 gap-4 mt-1">
+                                <!-- Official Stamp Area -->
+                                <div>
+                                    <div class="font-bold text-xs mb-1">Official stamp:</div>
+                                    <div
+                                        class="sa-stamp-placeholder"
+                                        [class.sa-drop-active]="isDraggingStamp"
+                                        [class.has-content]="!!form.get('officialStamp')?.value"
+                                        (click)="!viewOnly && stampInputGeneric.click()"
+                                        (dragover)="onStampDragOver($event)"
+                                        (dragleave)="onStampDragLeave($event)"
+                                        (drop)="onStampDrop($event)"
+                                        (paste)="onStampPaste($event)"
+                                        tabindex="0"
+                                    >
+                                        <input type="file" #stampInputGeneric (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                        <!-- Empty State -->
+                                        <div *ngIf="!form.get('officialStamp')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                                        </div>
+
+                                        <!-- Uploaded Image -->
+                                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="sa-stamp-img" />
+                                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputGeneric.click()" title="Change Stamp">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Uploaded PDF -->
+                                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputGeneric.click()" title="Change Stamp">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-xs space-y-0.5">
+                                    <div class="font-bold">Signature of Official Inspector:</div>
+                                    <div
+                                        class="sa-sig-placeholder"
+                                        [class.sa-drop-active]="isDraggingSignature"
+                                        [class.has-content]="!!form.get('officialSignature')?.value"
+                                        (click)="!viewOnly && sigInputGeneric.click()"
+                                        (dragover)="onSignatureDragOver($event)"
+                                        (dragleave)="onSignatureDragLeave($event)"
+                                        (drop)="onSignatureDrop($event)"
+                                        (paste)="onSignaturePaste($event)"
+                                        tabindex="0"
+                                    >
+                                        <input type="file" #sigInputGeneric (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                                        <!-- Empty State -->
+                                        <div *ngIf="!form.get('officialSignature')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                                        </div>
+
+                                        <!-- Uploaded Image -->
+                                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="sa-sig-img" />
+                                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputGeneric.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Uploaded PDF -->
+                                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputGeneric.click()" title="Change Signature">
+                                                    <i class="pi pi-pencil text-2xs"></i>
+                                                </button>
+                                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                                    <i class="pi pi-trash text-2xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pt-1"><span class="font-bold">Official Inspector:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'H.M.U. BANDARA' }}</span></div>
+                                    <div><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                                    <div *ngIf="form.get('qualification')?.value" class="text-3xs text-slate-600 whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                                    <div class="flex items-center gap-2 pt-0.5">
+                                        <span class="font-bold">Date:</span>
+                                        <span class="font-bold">{{ form.get('date')?.value | date: 'dd/MM/yyyy' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="sa-boxed-footer-notes flex justify-between items-center mt-1">
+                    <span>Note :- The Generic Model Official Certificate should be read in conjunction with the explanatory notes</span>
+                    <span>*If required</span>
+                </div>
+            </div>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide mt-3 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 4: MULTI-ITEM ATTACHMENT TABLE (WHEN ATTACHMENT SELECTED) -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="sa-page attachment-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'attachment'">
+        <div class="sa-content letter-layout">
+            <div class="letter-header mb-2">
+                <div class="flex justify-center mb-1">
+                    <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="letter-logo" />
+                </div>
+                <div class="letter-sinhala-dept font-bold">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="letter-english-dept font-bold">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="letter-header-hr my-1"></div>
+            </div>
+
+            <div class="text-center mb-3">
+                <div class="letter-title">ATTACHMENT TO HEALTH CERTIFICATE</div>
+                <div class="text-xs font-bold text-slate-700 mt-1">
+                    Certificate Reference No: <span class="font-mono underline">{{ form.get('myRef')?.value || form.get('certificateNumber')?.value || '________________' }}</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-2 print-hide">
+                <span class="text-xs font-bold text-slate-700 uppercase">Product Breakdown Attachment:</span>
+                <p-button label="Add Product Item" icon="pi pi-plus" size="small" (onClick)="addProductAttachment()" *ngIf="!viewOnly"></p-button>
+            </div>
+
+            <table class="sa-sub-table">
+                <thead>
+                    <tr>
+                        <th style="width: 35px;">#</th>
+                        <th>Product / Species</th>
+                        <th>Lot Identifier / Batch</th>
+                        <th>Type of Packaging</th>
+                        <th style="width: 90px;">No. of Boxes</th>
+                        <th style="width: 110px;">Net Weight (KG)</th>
+                        <th style="width: 50px;" class="print-hide" *ngIf="!viewOnly">Action</th>
+                    </tr>
+                </thead>
+                <tbody formArrayName="productsAttachment">
+                    <tr *ngFor="let item of productsAttachment.controls; let i = index" [formGroupName]="i">
+                        <td class="text-center font-bold">{{ i + 1 }}</td>
+                        <td>
+                            <input pInputText formControlName="product" class="sa-tinput font-bold uppercase-text" placeholder="Product / Species" />
+                        </td>
+                        <td>
+                            <input pInputText formControlName="lotIdentifier" class="sa-tinput font-bold uppercase-text" placeholder="Lot ID / Batch" />
+                        </td>
+                        <td>
+                            <input pInputText formControlName="typeOfPackaging" class="sa-tinput font-bold uppercase-text" placeholder="e.g. Master Cartons" />
+                        </td>
+                        <td class="text-center">
+                            <input pInputText type="number" formControlName="numberOfBoxes" inputmode="numeric" class="sa-tinput text-center font-bold" placeholder="0" />
+                        </td>
+                        <td class="text-right">
+                            <input pInputText formControlName="numberOfKgs" inputmode="decimal" class="sa-tinput text-right font-bold" placeholder="0.00" />
+                        </td>
+                        <td class="text-center print-hide" *ngIf="!viewOnly">
+                            <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small" (onClick)="removeProductAttachment(i)"></p-button>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="bg-slate-100 font-bold">
+                        <td colspan="4" class="text-right pr-2">TOTALS:</td>
+                        <td class="text-center">{{ calculateAttachmentTotalPackages() }}</td>
+                        <td class="text-right pr-2">{{ calculateAttachmentTotalNetWeight() | number: '1.2-2' }} KG</td>
+                        <td class="print-hide" *ngIf="!viewOnly"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Signatory endorsement on attachment -->
+            <div class="sa-stamp-sig-section flex justify-between items-end mt-auto pt-4">
+                <div class="sa-stamp-col">
+                    <div class="font-bold text-xs mb-1">Official stamp:</div>
+                    <div
+                        class="sa-stamp-placeholder"
+                        [class.sa-drop-active]="isDraggingStamp"
+                        [class.has-content]="!!form.get('officialStamp')?.value"
+                        (click)="!viewOnly && stampInputAtt.click()"
+                        (dragover)="onStampDragOver($event)"
+                        (dragleave)="onStampDragLeave($event)"
+                        (drop)="onStampDrop($event)"
+                        (paste)="onStampPaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #stampInputAtt (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <!-- Empty State -->
+                        <div *ngIf="!form.get('officialStamp')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
+                        </div>
+
+                        <!-- Uploaded Image -->
+                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="sa-stamp-img" />
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputAtt.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded PDF -->
+                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="sa-preview-container">
+                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); stampInputAtt.click()" title="Change Stamp">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sa-sig-col">
+                    <div class="font-bold text-xs">Signature of Official Inspector:</div>
+                    <div
+                        class="sa-sig-placeholder"
+                        [class.sa-drop-active]="isDraggingSignature"
+                        [class.has-content]="!!form.get('officialSignature')?.value"
+                        (click)="!viewOnly && sigInputAtt.click()"
+                        (dragover)="onSignatureDragOver($event)"
+                        (dragleave)="onSignatureDragLeave($event)"
+                        (drop)="onSignatureDrop($event)"
+                        (paste)="onSignaturePaste($event)"
+                        tabindex="0"
+                    >
+                        <input type="file" #sigInputAtt (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
+
+                        <!-- Empty State -->
+                        <div *ngIf="!form.get('officialSignature')?.value" class="sa-empty-upload flex flex-col items-center justify-center p-2 text-center">
+                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
+                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
+                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
+                        </div>
+
+                        <!-- Uploaded Image -->
+                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="sa-sig-img" />
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputAtt.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Uploaded PDF -->
+                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="sa-preview-container">
+                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="sa-pdf-preview"></object>
+                            <div class="sa-action-overlay print-hide" *ngIf="!viewOnly">
+                                <button type="button" class="sa-mini-btn" (click)="$event.stopPropagation(); sigInputAtt.click()" title="Change Signature">
+                                    <i class="pi pi-pencil text-2xs"></i>
+                                </button>
+                                <button type="button" class="sa-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
+                                    <i class="pi pi-trash text-2xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-xs pt-1"><span class="font-bold">Name:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'H.M.U. BANDARA' }}</span></div>
+                    <div class="text-xs"><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                    <div class="text-xs"><span class="font-bold">Date:</span> <span>{{ form.get('date')?.value | date: 'dd/MM/yyyy' }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Bottom Bar -->
+    <div class="actions-bottom-bar print-hide flex items-center justify-between gap-3 mt-6 p-3 bg-white border border-slate-200 rounded-lg shadow-xs w-full max-w-[210mm]">
+        <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+        <div class="flex items-center gap-2 ml-auto">
+            <p-button
+                label="Print Certificate"
+                icon="pi pi-print"
+                [outlined]="true"
+                (onClick)="print()"
+                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="top"
+            ></p-button>
+            <p-button label="Submit &amp; Save" icon="pi pi-check" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [loading]="isSaving" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+        </div>
+    </div>
+
+    <app-confirm-password-dialog
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

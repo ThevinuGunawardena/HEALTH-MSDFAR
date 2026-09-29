@@ -1,0 +1,567 @@
+<div class="form-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Australia (AU)</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <span *ngIf="form.get('certificateReferenceNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateReferenceNumber')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Crustaceans (TB 7676)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleCrustaceans()"
+                pTooltip="Load Australia Mud Crab (Crustaceans) sample (TB 7676)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Wild Fish (TB 7669)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleWildFish()"
+                pTooltip="Load Australia Spanish Mackerel (Wild Fish) sample (TB 7669)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Aquaculture (TC 2542)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleAquaculture()"
+                pTooltip="Load Australia Barramundi (Aquaculture Fish) sample (TC 2542)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Molluscs (TA 0554)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleMolluscs()"
+                pTooltip="Load Australia Baby Squid (Molluscs) sample (TA 0554)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="isCompany && !isApproved"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="bottom"
+                (onClick)="onPrint()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Mode Selector (print-hide) -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Certificate Type:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="crustaceans" inputId="vm_crustaceans" (onClick)="onViewModeChange('crustaceans')"></p-radiobutton>
+            <span>1. CRUSTACEAN - WILD CAUGHT</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="wild_fish" inputId="vm_wild_fish" (onClick)="onViewModeChange('wild_fish')"></p-radiobutton>
+            <span>2. FISH - WILD CAUGHT</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="aquaculture" inputId="vm_aquaculture" (onClick)="onViewModeChange('aquaculture')"></p-radiobutton>
+            <span>3. FISH - AQUACULTURE</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="molluscs" inputId="vm_molluscs" (onClick)="onViewModeChange('molluscs')"></p-radiobutton>
+            <span>4. MOLLUSCS - WILD CAUGHT</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ form.get('viewMode')?.value === 'wild_fish' ? '2. FISH - WILD CAUGHT' : (form.get('viewMode')?.value === 'aquaculture' ? '3. FISH - AQUACULTURE' : (form.get('viewMode')?.value === 'molluscs' ? '4. MOLLUSCS - WILD CAUGHT' : '1. CRUSTACEAN - WILD CAUGHT')) }}
+        </span>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 1 — BOXES 1.1 to 1.14 ════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="a4-page">
+        <div class="page-content">
+            <div class="cert-header">
+                <div class="cert-header-top-row mb-1">
+                    <div class="cert-header-spacer"></div>
+                    <div class="flex justify-center items-center">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" style="height: 58px" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('certificateReferenceNumber')?.value"
+                            [certificateRequestId]="requestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [destination]="'AUSTRALIA'"
+                            [viewOnly]="viewOnly"
+                            [size]="68">
+                        </app-certificate-qr>
+                    </div>
+                </div>
+                <h2 class="text-center font-bold mb-0.5" style="font-size: 11pt; letter-spacing: 0.3px;">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</h2>
+                <p class="text-center mb-0" style="font-size: 8.5pt; line-height: 1.25;">P.O.Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka.</p>
+                <p class="text-center mb-0" style="font-size: 8.5pt; line-height: 1.25;">Telephone: +94 -11- 2449170, 2472186, 2472192</p>
+                <p class="text-center mb-0" style="font-size: 8.5pt; line-height: 1.25;">Fax: +94-11-2449170, 2424086</p>
+                <p class="text-center mb-1" style="font-size: 8.5pt; line-height: 1.25;">E-mail: depfish&#64;diamond.lanka.net</p>
+                <div class="cert-title-row">
+                    <span class="font-bold uppercase">COUNTRY: SRI LANKA</span>
+                    <span class="font-bold uppercase">VETERINARY CERTIFICATE</span>
+                </div>
+            </div>
+
+            <div class="cert-grid-wrapper">
+                <div class="part-side-label">Part 1: Details of Dispatched Consignment</div>
+                <div class="cert-grid">
+                    <!-- Row A: 1.1 Consignor | 1.2 + 1.2a + 1.3 + 1.4 -->
+                    <div class="grid-row">
+                        <!-- 1.1 Consignor -->
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">1.1.Consignor</div>
+                            <div class="cell-sub"><span class="sub-lbl font-bold">Name:</span><input pInputText formControlName="consignorName" class="ci font-bold uppercase" /></div>
+                            <div class="cell-sub mt1"><span class="sub-lbl font-bold">Address:</span><textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="ci font-bold uppercase"></textarea></div>
+                            <div class="cell-sub mt1"><span class="sub-lbl">Postal code:</span><input pInputText formControlName="consignorPostalCode" class="ci" /></div>
+                            <div class="cell-sub mt1"><span class="sub-lbl">Tel No.:</span><input pInputText formControlName="consignorTelNo" class="ci" /></div>
+                        </div>
+                        <!-- Right stack: 1.2 / 1.2a / 1.3 / 1.4 -->
+                        <div class="grid-cell col-stack" style="flex: 1;">
+                            <div class="row-split bb">
+                                <div class="grid-cell br">
+                                    <div class="cell-label">1.2. Certificate reference number</div>
+                                    <input pInputText formControlName="certificateReferenceNumber" class="ci font-bold" />
+                                </div>
+                                <div class="grid-cell diag-cell p-1">
+                                    <div class="cell-label">1.2. a</div>
+                                </div>
+                            </div>
+                            <div class="grid-cell bb">
+                                <div class="cell-label">1.3. Central Competent Authority</div>
+                                <textarea pInputTextarea formControlName="centralCompetentAuthority" rows="2" [autoResize]="true" class="ci font-bold uppercase"></textarea>
+                            </div>
+                            <div class="grid-cell">
+                                <div class="cell-label">1.4. Local Competent Authority</div>
+                                <textarea pInputTextarea formControlName="localCompetentAuthority" rows="2" [autoResize]="true" class="ci font-bold uppercase"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row B: 1.5 Consignee | 1.6 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">1.5. Consignee</div>
+                            <div class="cell-sub"><span class="sub-lbl font-bold">Name:</span><input pInputText formControlName="consigneeName" class="ci font-bold uppercase" /></div>
+                            <div class="cell-sub mt1"><span class="sub-lbl font-bold">Address:</span><textarea pInputTextarea formControlName="consigneeAddress" rows="3" [autoResize]="true" class="ci font-bold uppercase"></textarea></div>
+                            <div class="cell-sub mt1"><span class="sub-lbl">Postal code:</span><input pInputText formControlName="consigneePostalCode" class="ci" /></div>
+                            <div class="cell-sub mt1"><span class="sub-lbl">Tel No.:</span><input pInputText formControlName="consigneeTelNo" class="ci" /></div>
+                        </div>
+                        <div class="grid-cell diag-cell" style="flex: 1;">
+                            <div class="cell-label">1.6.</div>
+                        </div>
+                    </div>
+
+                    <!-- Row C: 1.7 | 1.8 | 1.9 | 1.10 -->
+                    <div class="grid-row bt quad">
+                        <div class="grid-cell br">
+                            <div class="cell-label">1.7 Country of origin</div>
+                            <div class="flex items-baseline justify-between mt-1">
+                                <input pInputText formControlName="countryOfOrigin" class="ci font-bold uppercase" />
+                                <span class="text-xs font-bold ml-1">ISO code:</span>
+                                <input pInputText formControlName="countryOfOriginIsoCode" class="ci iso font-bold uppercase w-10 text-center" />
+                            </div>
+                        </div>
+                        <div class="grid-cell br">
+                            <div class="cell-label">1.8 Region of origin</div>
+                            <div class="flex items-baseline justify-between mt-1">
+                                <input pInputText formControlName="regionOfOrigin" class="ci font-bold uppercase" />
+                                <span class="text-xs font-bold ml-1">Code:</span>
+                                <input pInputText formControlName="regionOfOriginCode" class="ci iso font-bold uppercase w-10 text-center" />
+                            </div>
+                        </div>
+                        <div class="grid-cell br">
+                            <div class="cell-label">1.9. Country of destination</div>
+                            <div class="flex items-baseline justify-between mt-1">
+                                <input pInputText formControlName="countryOfDestination" class="ci font-bold uppercase" />
+                                <span class="text-xs font-bold ml-1">ISO code:</span>
+                                <input pInputText formControlName="countryOfDestinationIso" class="ci iso font-bold uppercase w-10 text-center" />
+                            </div>
+                        </div>
+                        <div class="grid-cell diag-cell">
+                            <div class="cell-label">1.10</div>
+                        </div>
+                    </div>
+
+                    <!-- Row D: 1.11 | 1.12 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">1.11. Place of origin</div>
+                            <div class="cell-sub"><span class="sub-lbl font-bold">Name:</span><input pInputText formControlName="placeOfOriginName" class="ci font-bold uppercase" /></div>
+                            <div class="cell-sub mt1 approval-row"><span class="sub-lbl font-bold">Approval number:</span><input pInputText formControlName="placeOfOriginApprovalNumber" class="ci font-bold" /></div>
+                            <div class="cell-sub mt1"><span class="sub-lbl font-bold">Address:</span><textarea pInputTextarea formControlName="placeOfOriginAddress" rows="2" [autoResize]="true" class="ci font-bold uppercase"></textarea></div>
+                        </div>
+                        <div class="grid-cell diag-cell" style="flex: 1;">
+                            <div class="cell-label">1.12.</div>
+                        </div>
+                    </div>
+
+                    <!-- Row E: 1.13 | 1.14 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">1.13. Place of loading</div>
+                            <input pInputText formControlName="placeOfLoading" class="ci font-bold uppercase" />
+                        </div>
+                        <div class="grid-cell" style="flex: 1;">
+                            <div class="cell-label font-bold">1.14. Date of departure</div>
+                            <p-datepicker formControlName="dateOfDeparture" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy"></p-datepicker>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer">
+            <span class="page-number">1</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 2 — BOXES 1.15 to 1.28 ════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="a4-page">
+        <div class="page-content">
+            <div class="part2-title-row part2-title-flex">
+                <div class="font-bold uppercase part2-title-left">COUNTRY: SRI LANKA</div>
+                <div class="font-bold part2-title-right">Fishery products</div>
+            </div>
+
+            <div class="cert-grid-wrapper fill-page">
+                <div class="part-side-label">Part 1: Details of Dispatched Consignment (cont.)</div>
+                <div class="cert-grid">
+                    <!-- 1.15 | 1.16 | 1.17 -->
+                    <div class="grid-row transport-entry-row">
+                        <div class="grid-cell br transport-left-cell">
+                            <div class="cell-label font-bold">1.15. Means of transport</div>
+                            <div class="transport-cb-row">
+                                <label class="cert-cb transport-cb-item"><span>Aero plane</span><p-checkbox formControlName="transportAeroPlane" [binary]="true"></p-checkbox></label>
+                                <label class="cert-cb transport-cb-item"><span>Ship</span><p-checkbox formControlName="transportShip" [binary]="true"></p-checkbox></label>
+                                <label class="cert-cb transport-cb-item"><span>Railway wagon</span><p-checkbox formControlName="transportRailwayWagon" [binary]="true"></p-checkbox></label>
+                                <label class="cert-cb transport-cb-item"><span>Road vehicle</span><p-checkbox formControlName="transportRoadVehicle" [binary]="true"></p-checkbox></label>
+                                <label class="cert-cb transport-cb-item"><span>Other</span><p-checkbox formControlName="transportOther" [binary]="true"></p-checkbox></label>
+                            </div>
+                            <div class="transport-doc-input mt-1">
+                                <textarea pInputTextarea formControlName="identificationDocumentReferences" rows="2" [autoResize]="true" class="ci font-bold uppercase" placeholder="AWB NO:&#10;FLIGHT:"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="grid-cell entry-stack-cell">
+                            <div class="grid-cell entry-bip-cell bb">
+                                <div class="cell-label font-bold">1.16. Entry BIP</div>
+                                <input pInputText formControlName="entryBIP" class="ci font-bold uppercase" />
+                            </div>
+                            <div class="grid-cell entry-diag-cell diag-cell">
+                                <div class="cell-label">1.17.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.18 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell">
+                            <div class="cell-label font-bold">1.18. Description of commodity</div>
+                            <textarea pInputTextarea formControlName="descriptionOfCommodity" rows="2" [autoResize]="true" class="ci font-bold uppercase"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 1.19 | 1.20 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">1.19. Commodity code (HS Code)</div>
+                            <input pInputText formControlName="commodityCodeHS" class="ci font-bold" />
+                        </div>
+                        <div class="grid-cell" style="flex: 1;">
+                            <div class="cell-label font-bold">1.20 Quantity</div>
+                            <input pInputText formControlName="quantity" class="ci font-bold uppercase" />
+                        </div>
+                    </div>
+
+                    <!-- 1.21 Temperature -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell">
+                            <div class="cell-label font-bold">1.21. Temperature of the product:</div>
+                            <div class="cert-cb-row">
+                                <label class="cert-cb"><p-checkbox formControlName="temperatureAmbient" [binary]="true"></p-checkbox><span>Ambient</span></label>
+                                <label class="cert-cb"><p-checkbox formControlName="temperatureChilled" [binary]="true"></p-checkbox><span>Chilled</span></label>
+                                <label class="cert-cb"><p-checkbox formControlName="temperatureFrozen" [binary]="true"></p-checkbox><span>Frozen</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.22 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell">
+                            <div class="cell-label font-bold">1.22. Number of packages:</div>
+                            <input pInputText formControlName="numberOfPackages" class="ci font-bold uppercase" />
+                        </div>
+                    </div>
+
+                    <!-- 1.23 | 1.24 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">1.23. Identification of container/Seal number:</div>
+                            <textarea pInputTextarea formControlName="containerSealNumber" rows="1" [autoResize]="true" class="ci font-bold uppercase"></textarea>
+                        </div>
+                        <div class="grid-cell" style="flex: 1;">
+                            <div class="cell-label font-bold">1.24. Type of packaging:</div>
+                            <textarea pInputTextarea formControlName="typeOfPackaging" rows="2" [autoResize]="true" class="ci font-bold uppercase"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 1.25 | 1.26 | 1.27 -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">1.25. Commodities certified for:</div>
+                            <div class="cert-cb-row mt-1">
+                                <label class="cert-cb"><p-checkbox formControlName="commoditiesHumanConsumption" [binary]="true"></p-checkbox><span>Human consumption</span></label>
+                            </div>
+                        </div>
+                        <div class="grid-cell br diag-cell" style="width: 50px; flex: none;">
+                            <div class="cell-label">1.26.</div>
+                        </div>
+                        <div class="grid-cell for-import-container" style="flex: 1;">
+                            <div class="cell-label font-bold">1.27. For import or admission into</div>
+                            <div class="for-import-framed-box">
+                                <input pInputText formControlName="forImportOrAdmissionInto" class="ci font-bold uppercase text-center" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1.28 Table -->
+                    <div class="grid-row bt flex-col" style="padding: 4px 6px; flex: 1 1 auto;">
+                        <div class="cell-label font-bold mb-1">1.28. Identification of the commodities</div>
+                        <div class="overflow-x-auto">
+                            <table class="cert-product-table w-full">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 22%;">Species<br />(Scientific name)</th>
+                                        <th style="width: 16%;">Nature of<br />commodity</th>
+                                        <th style="width: 14%;">Treatment<br />type</th>
+                                        <th style="width: 26%;">Approval number of<br />establishments<br />Manufacturing plant</th>
+                                        <th style="width: 11%;">Number of<br />packages</th>
+                                        <th style="width: 11%;">Net weight</th>
+                                        <th class="print-hide" style="width: 30px" *ngIf="!viewOnly"></th>
+                                    </tr>
+                                </thead>
+                                <tbody formArrayName="products">
+                                    <tr *ngFor="let product of products.controls; let i = index" [formGroupName]="i">
+                                        <td><textarea pInputTextarea formControlName="speciesScientificName" rows="2" [autoResize]="true" class="cti italic font-bold"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="natureOfCommodity" rows="2" [autoResize]="true" class="cti uppercase font-bold text-center"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="treatmentType" rows="2" [autoResize]="true" class="cti uppercase font-bold text-center"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="manufacturingPlant" rows="4" [autoResize]="true" class="cti uppercase font-bold"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="numberOfPackages" rows="2" [autoResize]="true" class="cti uppercase font-bold text-center"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="netWeight" rows="2" [autoResize]="true" class="cti uppercase font-bold text-right"></textarea></td>
+                                        <td class="text-center print-hide" *ngIf="!viewOnly">
+                                            <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeProduct(i)" *ngIf="products.length > 1"></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4" class="text-right font-bold p-1">Total</td>
+                                        <td class="font-bold text-center p-1">{{ calculateTotalPackages() }}</td>
+                                        <td class="font-bold text-right p-1">{{ calculateTotalNetWeight() }}</td>
+                                        <td class="print-hide" *ngIf="!viewOnly"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="my-1 print-hide" *ngIf="!viewOnly">
+                            <button pButton label="Add Product Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addProduct()"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer">
+            <span class="page-number">2</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 3 — PART II CERTIFICATION ═════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="a4-page last-page">
+        <div class="page-content">
+            <div class="part2-title-row part2-title-flex">
+                <div class="font-bold uppercase part2-title-left">COUNTRY: SRI LANKA</div>
+                <div class="font-bold part2-title-right">Fishery products</div>
+            </div>
+
+            <div class="cert-grid-wrapper fill-page">
+                <div class="part-side-label">Part II: Certification</div>
+                <div class="cert-grid">
+                    <!-- II header: label | II.a ref | II.b -->
+                    <div class="grid-row">
+                        <div class="grid-cell br" style="flex: 1.15">
+                            <div class="cell-label font-bold">II. Health attestation</div>
+                        </div>
+                        <div class="grid-cell br" style="flex: 1">
+                            <div class="cell-label">II.a. Certificate reference number</div>
+                            <input pInputText formControlName="healthAttestationCertRefNumber" class="ci font-bold" />
+                        </div>
+                        <div class="grid-cell diag-cell" style="flex: 0.35">
+                            <div class="cell-label">II. b.</div>
+                        </div>
+                    </div>
+
+                    <!-- 1. CRUSTACEANS - WILD CAUGHT (TB 7676) -->
+                    <div class="grid-row bt health-attestation-block" *ngIf="form.get('viewMode')?.value === 'crustaceans'">
+                        <div class="cell-label font-bold mb-2">II. 1. Health attestation</div>
+                        <p class="cert-stmt">This shipment does not contain any other product, other than listed in the Health Certificate and that the products were not grown or harvested in any aquaculture system and were wild caught</p>
+                        <p class="cert-stmt">The crustaceans / <span class="strikethrough-text">molluscs</span> / <span class="strikethrough-text">fish</span> have been processed, inspected and graded in premises approved by and under the control of the DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES.</p>
+                        <p class="cert-stmt">The crustaceans / <span class="strikethrough-text">molluscs</span> / <span class="strikethrough-text">fish</span> are deemed fit for human consumption and crustaceans / <span class="strikethrough-text">molluscs</span> / <span class="strikethrough-text">fish</span> are free from visible signs of infectious disease.</p>
+                        <div class="mt-4">
+                            <span class="font-bold text-sm">EXPORT APPROVAL NUMBER : </span>
+                            <input pInputText formControlName="exportApprovalNumber" class="ci font-bold uppercase inline-block w-48" />
+                        </div>
+                    </div>
+
+                    <!-- 2. WILD CAUGHT FISH (TB 7669) -->
+                    <div class="grid-row bt health-attestation-block" *ngIf="form.get('viewMode')?.value === 'wild_fish'">
+                        <div class="cell-label font-bold mb-2">II. 1. Health attestation</div>
+                        <p class="cert-stmt">This shipment does not contain any other species, other than listed in the Health Certificate and that the products were not grown and harvested in any aquaculture system and were wild caught.</p>
+                        <p class="cert-stmt">The fish were eviscerated (Gutted), gills &amp; head removed and internal &amp; external surface thoroughly washed.</p>
+                        <p class="cert-stmt">The products have been processed, inspected and graded in premises approved by and under the control of DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES.</p>
+                        <p class="cert-stmt">The products are free from visible signs of infectious disease.</p>
+                        <p class="cert-stmt">All products listed are deemed to be fit for human consumption and were found free from visible lesions associated with infectious disease.</p>
+                        <div class="mt-4">
+                            <span class="font-bold text-sm">EXPORT APPROVAL NUMBER : </span>
+                            <input pInputText formControlName="exportApprovalNumber" class="ci font-bold uppercase inline-block w-48" />
+                        </div>
+                    </div>
+
+                    <!-- 3. FISH - AQUACULTURE (TC 2542) -->
+                    <div class="grid-row bt health-attestation-block" *ngIf="form.get('viewMode')?.value === 'aquaculture'">
+                        <div class="cell-label font-bold mb-2">II. 1. Health attestation</div>
+                        <p class="cert-stmt">This shipment contains fish species grown in aquaculture systems which are under the control of national aquaculture chemical residue monitoring programme for aqua cultured species.</p>
+                        <p class="cert-stmt">The fish/<span class="strikethrough-text">crustaceans</span> have been processed in premises approved by and under the control of the DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES.</p>
+                        <p class="cert-stmt">The fish/<span class="strikethrough-text">crustaceans</span> were eviscerated (gutted), gills &amp; head removed, and internal &amp; external surfaces thoroughly washed.</p>
+                        <p class="cert-stmt">The fish were inspected under supervision of the DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES.</p>
+                        <p class="cert-stmt">The product is deemed fit for human consumption, and the product is free from visible Lesions associated with infectious disease.</p>
+                        <div class="mt-4">
+                            <span class="font-bold text-sm">EXPORT APPROVAL NUMBER : </span>
+                            <input pInputText formControlName="exportApprovalNumber" class="ci font-bold uppercase inline-block w-48" />
+                        </div>
+                    </div>
+
+                    <!-- 4. MOLLUSCS - WILD CAUGHT (TA 0554) -->
+                    <div class="grid-row bt health-attestation-block" *ngIf="form.get('viewMode')?.value === 'molluscs'">
+                        <div class="cell-label font-bold mb-2">II. 1. Health attestation</div>
+                        <p class="cert-stmt">This shipment does not contain any other product, other than listed in the Health Certificate and that the products were not grown or harvested in any aquaculture system and were wild caught</p>
+                        <p class="cert-stmt">The <span class="strikethrough-text">crustaceans</span> / molluscs / <span class="strikethrough-text">fish</span> have been processed, inspected and graded in premises approved by and under the control of the DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES.</p>
+                        <p class="cert-stmt">The <span class="strikethrough-text">crustaceans</span> / molluscs / <span class="strikethrough-text">fish</span> are deemed fit for human consumption and <span class="strikethrough-text">crustaceans</span> / molluscs / <span class="strikethrough-text">fish</span> are free from visible signs of infectious disease.</p>
+                        <div class="mt-4">
+                            <span class="font-bold text-sm">EXPORT APPROVAL NUMBER : </span>
+                            <input pInputText formControlName="exportApprovalNumber" class="ci font-bold uppercase inline-block w-48" />
+                        </div>
+                    </div>
+
+                    <!-- Name | Qualification | Date -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">Name (in capitals):</div>
+                            <input pInputText formControlName="nameInCapitals" class="ci uppercase font-bold" />
+                        </div>
+                        <div class="grid-cell" style="flex: 1;">
+                            <div class="cell-label font-bold">Qualification and title:</div>
+                            <textarea pInputTextarea formControlName="qualificationAndTitle" rows="2" [autoResize]="true" class="ci font-bold"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="flex: 1.15;">
+                            <div class="cell-label font-bold">Date:</div>
+                            <span class="font-bold text-xs">{{ form.get('signatureDate')?.value | date: 'dd/MM/yyyy' }}</span>
+                        </div>
+                        <div class="grid-cell" style="flex: 1;"></div>
+                    </div>
+
+                    <!-- Stamp | Signature -->
+                    <div class="grid-row bt">
+                        <div class="grid-cell br" style="min-height: 120px; flex: 1.15;">
+                            <div class="cell-label font-bold mb-1">Stamp:</div>
+                        </div>
+                        <div class="grid-cell" style="min-height: 120px; flex: 1;">
+                            <div class="cell-label font-bold mb-1">Signature:</div>
+                            <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2 text-left mt-2">
+                                <p-select
+                                    [options]="userOptions"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select Authorized Officer"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                    styleClass="w-full text-xs"
+                                    appendTo="body"
+                                ></p-select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer">
+            <span class="page-number">3</span>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="au-actions print-hide flex items-center justify-between gap-3 mt-4 mb-8 w-full max-w-[210mm] mx-auto p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs">
+        <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+        <div class="flex items-center gap-2">
+            <p-button
+                label="Print / Export PDF"
+                [outlined]="true"
+                (onClick)="onPrint()"
+                icon="pi pi-print"
+                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
+                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                tooltipPosition="top"
+            ></p-button>
+            <p-button label="Save Certificate" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+        </div>
+    </div>
+
+    <app-confirm-password-dialog [(visible)]="showPasswordDialog" [userEmail]="pendingSignatoryUserEmail" [userId]="pendingSignatoryUserId || ''" (onConfirm)="onSignatoryConfirmed($event)" (onCancel)="onSignatoryCanceled()">
+    </app-confirm-password-dialog>
+</div>

@@ -1,0 +1,64 @@
+{
+  "fisherman": [
+    "fisherman-profile-view",
+    "fisherman-license-view",
+    "fisherman-license-download",
+    "fisherman-profile-edit",
+
+    "SkipperController-payment",
+    "BoatRegistrationController-create",
+    "NationalLicenseController-create"
+
+  ],
+  "fi": [
+    "fisherman-profile-view",
+    "fisherman-profile-create",
+    "fisherman-profile-update",
+    "fisherman-license-view",
+    "fisherman-license-download",
+    "fisherman-profile-office-view",
+    "fisherman-list",
+
+    "ScientificController",
+    "ScientificController-list",
+    "ScientificController-view",
+    "ScientificController-create",
+
+    "SkipperController-list",
+    "SkipperController-office-view",
+    "SkipperController-create",
+    "SkipperController-update",
+    "SkipperController-payment",
+    "SkipperController-license-view",
+    "SkipperController-license-download",
+
+    "NationalLicenseController-list",
+    "NationalLicenseController-office-view",
+    "NationalLicenseController-create",
+    "NationalLicenseController-renew",
+    "NationalLicenseController-update",
+    "NationalLicenseController-payment",
+    "NationalLicenseController-license-view",
+    "NationalLicenseController-license-download",
+
+    "BoatNumbersController-list",
+    "BoatNumbersController-office-view",
+    "BoatNumbersController-create",
+    "BoatNumbersController-renew",
+    "BoatNumbersController-update",
+    "BoatNumbersController-payment",
+    "BoatNumbersController-licens e-view",
+    "BoatNumbersController-license-download",
+
+    "HighseasLicenseController-list",
+    "HighseasLicenseController-office-view",
+    "HighseasLicenseController-create",
+    "HighseasLicenseController-renew",
+    "HighseasLicenseController-update",
+    "HighseasLicenseController-payment",
+    "HighseasLicenseController-license-view",
+    "HighseasLicenseController-license-download"
+
+
+  ]
+}

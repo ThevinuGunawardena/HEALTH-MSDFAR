@@ -1,0 +1,458 @@
+* {
+    box-sizing: border-box;
+}
+
+.hk-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hk-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 12mm 18mm 10mm 18mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+}
+
+.hk-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2mm;
+}
+
+.hk-footer {
+    flex: 0 0 8mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 8pt;
+    font-family: 'Times New Roman', Times, serif;
+}
+.hk-footer-brand {
+    font-style: italic;
+    color: #aaa;
+}
+.hk-footer-page {
+    font-weight: 600;
+    color: #333;
+}
+
+.hk-header {
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    text-align: center;
+}
+.hk-logo-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+.hk-logo {
+    height: 65px;
+    width: auto;
+}
+
+.hk-dept {
+    text-align: center;
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+.hk-addr {
+    text-align: center;
+    font-size: 8.5pt;
+    line-height: 1.35;
+}
+
+.hk-title-bar {
+    border-top: 1px solid #000;
+    padding-top: 6px;
+}
+
+.hk-title {
+    text-align: center;
+    font-size: 10pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.hk-id-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9.5pt;
+}
+
+.hk-info-box {
+    border: 1px solid #000;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.hk-info-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9pt;
+}
+
+.hk-section-hdr {
+    text-align: center;
+    font-size: 9.5pt;
+    font-weight: 700;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+
+.hk-table-wrap {
+    width: 100%;
+    margin-bottom: 4px;
+}
+.hk-prod-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+.hk-prod-table th {
+    border: 1px solid #000;
+    padding: 4px;
+    font-weight: 700;
+    text-align: left;
+    vertical-align: bottom;
+    font-size: 8pt;
+    line-height: 1.25;
+}
+.hk-prod-table td {
+    border: 1px solid #000;
+    padding: 0 4px;
+    vertical-align: middle;
+    height: 24px;
+}
+.hk-prod-table tfoot td {
+    padding: 3px 4px;
+}
+
+.hk-att-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+.hk-att-table th {
+    border: 1px solid #000;
+    padding: 4px;
+    font-weight: 700;
+    text-align: left;
+    vertical-align: bottom;
+    font-size: 8pt;
+    line-height: 1.25;
+}
+.hk-att-table td {
+    border: 1px solid #000;
+    padding: 0 4px;
+    vertical-align: middle;
+    height: 24px;
+}
+.hk-att-table tfoot td {
+    padding: 3px 4px;
+}
+
+.hk-tinput {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 2px 2px !important;
+    background: transparent !important;
+    outline: none;
+}
+.hk-tinput:focus {
+    background: #f0f7ff !important;
+}
+
+.hk-inline-input {
+    flex: 1;
+    min-width: 60px;
+    font-size: 9pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px solid #777 !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none;
+}
+.hk-inline-input:focus {
+    border-bottom-color: #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.hk-line-input {
+    font-size: 8.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px solid #777 !important;
+    background: transparent !important;
+    padding: 1px 2px !important;
+}
+
+.hk-textarea {
+    display: block;
+    width: 100%;
+    font-size: 9pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px solid #777 !important;
+    border-radius: 0 !important;
+    padding: 2px 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none;
+    resize: none;
+}
+
+.hk-sig-line {
+    border-bottom: 1px solid #000;
+    height: 35px;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.hk-sig-line-bar {
+    border-bottom: 1px solid #000;
+    margin-bottom: 3px;
+    width: 100%;
+}
+
+.hk-sig-placeholder {
+    min-height: 55px;
+    max-height: 80px;
+    height: auto;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.hk-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.hk-sig-placeholder.hk-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.hk-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.hk-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.hk-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hk-sig-img {
+    max-height: 65px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.hk-pdf-preview {
+    width: 100%;
+    height: 65px;
+    border: none;
+    pointer-events: none;
+}
+
+.hk-action-overlay {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.hk-sig-placeholder:hover .hk-action-overlay {
+    opacity: 1;
+}
+
+.hk-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.hk-mini-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.hk-mini-btn.danger {
+    color: #ef4444;
+}
+
+.hk-mini-btn.danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.text-2xs {
+    font-size: 0.65rem;
+}
+
+.text-3xs {
+    font-size: 0.55rem;
+}
+
+.text-xxs {
+    font-size: 7pt;
+}
+
+@media print {
+    .hk-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        min-height: 40px !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .hk-sig-img {
+        max-height: 55px !important;
+    }
+
+    .hk-pdf-preview {
+        height: 55px !important;
+    }
+
+    .print-hide {
+        display: none !important;
+    }
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .hk-container {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .hk-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        padding: 12mm 18mm 10mm 18mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+    }
+    .hk-page:last-of-type,
+    .hk-page.last-page {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .hk-inline-input,
+    .hk-line-input,
+    .hk-textarea,
+    .hk-tinput {
+        border-bottom: none !important;
+    }
+
+    :host ::ng-deep .p-datepicker-trigger,
+    :host ::ng-deep .p-calendar-button,
+    :host ::ng-deep .pi-calendar {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-datepicker,
+    :host ::ng-deep .p-calendar {
+        display: inline-block !important;
+        border: none !important;
+        padding: 0 !important;
+        width: auto !important;
+    }
+
+    :host ::ng-deep .p-datepicker .p-inputtext,
+    :host ::ng-deep .p-calendar .p-inputtext {
+        border: none !important;
+        padding: 0 !important;
+        font-size: 8.5pt !important;
+        background: transparent !important;
+    }
+}
