@@ -105,9 +105,11 @@ class HealthSsoHelper
             $fullName = !empty($user->nic) ? 'User ' . $user->nic : 'MSDFAR User ' . $user->id;
         }
 
-        // Email resolution (fallback to valid synthetic address if user record has empty email)
+        // Email resolution: Map HEALTH Admin and administrators to HEALTH Admin account (admin@gmail.com)
         $email = trim((string)$user->email);
-        if (empty($email)) {
+        if (strcasecmp((string)$user->nic, 'adminHEALTH') === 0 || $isAdmin) {
+            $email = 'admin@gmail.com';
+        } elseif (empty($email)) {
             $nicClean = preg_replace('/[^a-zA-Z0-9]/', '', (string)$user->nic);
             $email = !empty($nicClean) ? "{$nicClean}@msdfar.gov.lk" : "user{$user->id}@msdfar.gov.lk";
         }

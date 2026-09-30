@@ -32,14 +32,21 @@ builder.Services.AddScoped<ICertificateService, CertificateService>();
 var app = builder.Build();
 
 // Seed database roles and users
-using (var scope = app.Services.CreateScope())
+try
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AppDbContext>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = services.GetRequiredService<UserManager<MEA.Server.Entities.AppUser>>();
-    
-    await ApplicationDbContextSeed.SeedAsync(context, roleManager, userManager);
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<AppDbContext>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<MEA.Server.Entities.AppUser>>();
+        
+        await ApplicationDbContextSeed.SeedAsync(context, roleManager, userManager);
+    }
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning("Database seeding skipped or SQL Server not running: {Message}", ex.Message);
 }
 
 app.ConfigureCORS(builder.Configuration);
