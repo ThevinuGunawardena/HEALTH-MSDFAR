@@ -145,9 +145,25 @@ export class SsoComponent implements OnInit {
 
     private extractTokenFromHash(): string | null {
         try {
+            const href = window.location.href || '';
+            const matchHref = href.match(/[?&]token=([^&#]+)/);
+            if (matchHref) {
+                return decodeURIComponent(matchHref[1]);
+            }
+
             const hash = window.location.hash || '';
-            const match = hash.match(/[?&]token=([^&]+)/);
-            return match ? decodeURIComponent(match[1]) : null;
+            const matchHash = hash.match(/[?&]token=([^&#]+)/);
+            if (matchHash) {
+                return decodeURIComponent(matchHash[1]);
+            }
+
+            const search = window.location.search || '';
+            const matchSearch = search.match(/[?&]token=([^&#]+)/);
+            if (matchSearch) {
+                return decodeURIComponent(matchSearch[1]);
+            }
+
+            return null;
         } catch {
             return null;
         }
