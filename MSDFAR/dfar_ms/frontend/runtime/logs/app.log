@@ -213,3 +213,43 @@ $_SERVER = [
     'REQUEST_TIME_FLOAT' => 1790738999.8676
     'REQUEST_TIME' => 1790738999
 ]
+2026-09-30 09:56:58 [127.0.0.1][-][cffa9a9bb2dbea58547278740a73dd55][error][yii\web\HttpException:401] yii\web\UnauthorizedHttpException: Invalid or expired session. Please log in again. in /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/backend/components/Controller.php:79
+Stack trace:
+#0 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Controller.php(180): backend\components\Controller->beforeAction(Object(yii\base\InlineAction))
+#1 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Module.php(547): yii\base\Controller->runAction('', Array)
+#2 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Application.php(105): yii\base\Module->runAction('', Array)
+#3 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#4 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/frontend/web/index.php(18): yii\base\Application->run()
+#5 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/frontend/web/router.php(10): require_once('/Users/mesandas...')
+#6 {main}
+2026-09-30 09:56:58 [127.0.0.1][-][cffa9a9bb2dbea58547278740a73dd55][info][application] $_GET = []
+
+$_POST = []
+
+$_FILES = []
+
+$_COOKIE = []
+
+$_SESSION = [
+    '__flash' => []
+]
+
+$_SERVER = [
+    'DOCUMENT_ROOT' => '/Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/frontend/web'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'REMOTE_PORT' => '53876'
+    'SERVER_SOFTWARE' => 'PHP/8.5.11 (Development Server)'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'SERVER_NAME' => '0.0.0.0'
+    'SERVER_PORT' => '8081'
+    'REQUEST_URI' => '/'
+    'REQUEST_METHOD' => 'GET'
+    'SCRIPT_NAME' => '/index.php'
+    'SCRIPT_FILENAME' => '/Users/mesandasethumika/Desktop/HEALTH-MSDFAR/Untitled/MSDFAR/dfar_ms/frontend/web/index.php'
+    'PHP_SELF' => '/index.php'
+    'HTTP_HOST' => 'localhost:8081'
+    'HTTP_USER_AGENT' => 'curl/8.7.1'
+    'HTTP_ACCEPT' => '*/*'
+    'REQUEST_TIME_FLOAT' => 1790742418.8732
+    'REQUEST_TIME' => 1790742418
+]
