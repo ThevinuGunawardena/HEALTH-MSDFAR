@@ -46,17 +46,17 @@ if exist "C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\PHP.PHP
 )
 
 echo Starting MSDFAR Backend on http://localhost:8080 ...
-start "MSDFAR-Backend" /min cmd /c "cd /d \"!ROOT_DIR!MSDFAR\dfar_ms\" && \"!PHP_BIN!\" -S 0.0.0.0:8080 -t backend/web backend/web/router.php"
+start "MSDFAR-Backend" /min cmd /c "cd /d "!ROOT_DIR!MSDFAR\dfar_ms" && "!PHP_BIN!" -S 0.0.0.0:8080 -t backend/web backend/web/router.php"
 
 echo Starting MSDFAR Frontend on http://localhost:8081 ...
-start "MSDFAR-Frontend" /min cmd /c "cd /d \"!ROOT_DIR!MSDFAR\dfar_ms\" && \"!PHP_BIN!\" -S 0.0.0.0:8081 -t frontend/web frontend/web/router.php"
+start "MSDFAR-Frontend" /min cmd /c "cd /d "!ROOT_DIR!MSDFAR\dfar_ms" && "!PHP_BIN!" -S 0.0.0.0:8081 -t frontend/web frontend/web/router.php"
 
 :: 4. Start HEALTH .NET API & Angular Client
 echo Starting HEALTH .NET Backend API...
-start "HEALTH-API" /min cmd /c "cd /d \"!ROOT_DIR!HEALTH\MEA.Server\" && dotnet run --launch-profile https"
+start "HEALTH-API" /min cmd /c "cd /d "!ROOT_DIR!HEALTH\MEA.Server" && dotnet run --launch-profile https"
 
 echo Starting HEALTH Angular Client...
-start "HEALTH-Client" /min cmd /c "cd /d \"!ROOT_DIR!HEALTH\mea.client\" && npm start"
+start "HEALTH-Client" /min cmd /c "cd /d "!ROOT_DIR!HEALTH\mea.client" && npm start"
 
 timeout /t 5 >nul
 
