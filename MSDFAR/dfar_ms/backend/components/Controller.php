@@ -10,8 +10,13 @@ use yii\web\UnauthorizedHttpException;
 class Controller extends \yii\web\Controller
 {
     private const PUBLIC_ROUTES = [
+        'site/index',
+        'site/about',
+        'site/contact',
         'site/login',
         'site/signup',
+        'site/verify-email',
+        'site/resend-verification-email',
         'site/error',
         'site/license-validation',
         'site/captcha',

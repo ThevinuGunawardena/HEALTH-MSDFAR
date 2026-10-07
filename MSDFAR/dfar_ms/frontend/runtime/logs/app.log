@@ -535,3 +535,128 @@ $_SERVER = [
     'REQUEST_TIME_FLOAT' => 1791364758.7182
     'REQUEST_TIME' => 1791364758
 ]
+2026-10-07 16:10:43 [127.0.0.1][-][hs011k4qvob5i2mbpu0gf7jc8t][error][yii\web\HttpException:401] yii\web\UnauthorizedHttpException: Invalid or expired session. Please log in again. in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\components\Controller.php:79
+Stack trace:
+#0 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Controller.php(180): backend\components\Controller->beforeAction(Object(yii\base\InlineAction))
+#1 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Module.php(547): yii\base\Controller->runAction('', Array)
+#2 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\web\Application.php(105): yii\base\Module->runAction('', Array)
+#3 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#4 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\frontend\web\index.php(25): yii\base\Application->run()
+#5 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\frontend\web\router.php(10): require('C:\\Users\\Admini...')
+#6 {main}
+2026-10-07 16:10:43 [127.0.0.1][-][hs011k4qvob5i2mbpu0gf7jc8t][info][application] $_GET = []
+
+$_POST = []
+
+$_FILES = []
+
+$_COOKIE = []
+
+$_SESSION = [
+    '__flash' => []
+]
+
+$_SERVER = [
+    'DOCUMENT_ROOT' => 'C:\\Users\\Administrator\\Downloads\\HEALTH+MSDFAR\\MSDFAR\\dfar_ms\\frontend\\web'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'REMOTE_PORT' => '49682'
+    'SERVER_SOFTWARE' => 'PHP 8.2.33 Development Server'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'SERVER_NAME' => '127.0.0.1'
+    'SERVER_PORT' => '8081'
+    'REQUEST_URI' => '/site/login'
+    'REQUEST_METHOD' => 'GET'
+    'SCRIPT_NAME' => '/index.php'
+    'SCRIPT_FILENAME' => 'C:\\Users\\Administrator\\Downloads\\HEALTH+MSDFAR\\MSDFAR\\dfar_ms\\frontend\\web\\index.php'
+    'PATH_INFO' => '/site/login'
+    'PHP_SELF' => '/index.php/site/login'
+    'HTTP_ACCEPT_ENCODING' => 'identity'
+    'HTTP_HOST' => '127.0.0.1:8081'
+    'HTTP_USER_AGENT' => 'Mozilla/5.0'
+    'HTTP_CONNECTION' => 'close'
+    'REQUEST_TIME_FLOAT' => 1791369643.1791
+    'REQUEST_TIME' => 1791369643
+]
+2026-10-07 16:11:36 [127.0.0.1][-][c4ov6pcl509lfjbg2o193hnitr][error][yii\web\HttpException:401] yii\web\UnauthorizedHttpException: Invalid or expired session. Please log in again. in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\components\Controller.php:79
+Stack trace:
+#0 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Controller.php(180): backend\components\Controller->beforeAction(Object(yii\base\InlineAction))
+#1 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Module.php(547): yii\base\Controller->runAction('', Array)
+#2 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\web\Application.php(105): yii\base\Module->runAction('', Array)
+#3 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#4 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\frontend\web\index.php(25): yii\base\Application->run()
+#5 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\frontend\web\router.php(10): require('C:\\Users\\Admini...')
+#6 {main}
+2026-10-07 16:11:36 [127.0.0.1][-][c4ov6pcl509lfjbg2o193hnitr][info][application] $_GET = []
+
+$_POST = []
+
+$_FILES = []
+
+$_COOKIE = []
+
+$_SESSION = [
+    '__flash' => []
+]
+
+$_SERVER = [
+    'DOCUMENT_ROOT' => 'C:\\Users\\Administrator\\Downloads\\HEALTH+MSDFAR\\MSDFAR\\dfar_ms\\frontend\\web'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'REMOTE_PORT' => '52320'
+    'SERVER_SOFTWARE' => 'PHP 8.2.33 Development Server'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'SERVER_NAME' => '127.0.0.1'
+    'SERVER_PORT' => '8081'
+    'REQUEST_URI' => '/site/login'
+    'REQUEST_METHOD' => 'GET'
+    'SCRIPT_NAME' => '/index.php'
+    'SCRIPT_FILENAME' => 'C:\\Users\\Administrator\\Downloads\\HEALTH+MSDFAR\\MSDFAR\\dfar_ms\\frontend\\web\\index.php'
+    'PATH_INFO' => '/site/login'
+    'PHP_SELF' => '/index.php/site/login'
+    'HTTP_ACCEPT_ENCODING' => 'identity'
+    'HTTP_HOST' => '127.0.0.1:8081'
+    'HTTP_USER_AGENT' => 'Python-urllib/3.12'
+    'HTTP_CONNECTION' => 'close'
+    'REQUEST_TIME_FLOAT' => 1791369696.4222
+    'REQUEST_TIME' => 1791369696
+]
+2026-10-07 16:13:00 [127.0.0.1][-][12ku0pubosjrmtfh61ago59cun][error][yii\web\HttpException:401] yii\web\UnauthorizedHttpException: Invalid or expired session. Please log in again. in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\components\Controller.php:79
+Stack trace:
+#0 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Controller.php(180): backend\components\Controller->beforeAction(Object(yii\base\InlineAction))
+#1 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Module.php(547): yii\base\Controller->runAction('', Array)
+#2 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\web\Application.php(105): yii\base\Module->runAction('', Array)
+#3 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\vendor\yiisoft\yii2\base\Application.php(382): yii\web\Application->handleRequest(Object(yii\web\Request))
+#4 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\frontend\web\index.php(25): yii\base\Application->run()
+#5 C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\frontend\web\router.php(10): require('C:\\Users\\Admini...')
+#6 {main}
+2026-10-07 16:13:00 [127.0.0.1][-][12ku0pubosjrmtfh61ago59cun][info][application] $_GET = []
+
+$_POST = []
+
+$_FILES = []
+
+$_COOKIE = []
+
+$_SESSION = [
+    '__flash' => []
+]
+
+$_SERVER = [
+    'DOCUMENT_ROOT' => 'C:\\Users\\Administrator\\Downloads\\HEALTH+MSDFAR\\MSDFAR\\dfar_ms\\frontend\\web'
+    'REMOTE_ADDR' => '127.0.0.1'
+    'REMOTE_PORT' => '52331'
+    'SERVER_SOFTWARE' => 'PHP 8.2.33 Development Server'
+    'SERVER_PROTOCOL' => 'HTTP/1.1'
+    'SERVER_NAME' => '127.0.0.1'
+    'SERVER_PORT' => '8081'
+    'REQUEST_URI' => '/'
+    'REQUEST_METHOD' => 'GET'
+    'SCRIPT_NAME' => '/index.php'
+    'SCRIPT_FILENAME' => 'C:\\Users\\Administrator\\Downloads\\HEALTH+MSDFAR\\MSDFAR\\dfar_ms\\frontend\\web\\index.php'
+    'PHP_SELF' => '/index.php'
+    'HTTP_ACCEPT_ENCODING' => 'identity'
+    'HTTP_HOST' => '127.0.0.1:8081'
+    'HTTP_USER_AGENT' => 'Python-urllib/3.12'
+    'HTTP_CONNECTION' => 'close'
+    'REQUEST_TIME_FLOAT' => 1791369780.9182
+    'REQUEST_TIME' => 1791369780
+]

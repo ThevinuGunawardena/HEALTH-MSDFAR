@@ -140,16 +140,50 @@ class HealthSsoHelper
      */
     public static function getHealthSsoUrl($user, ?string $returnUrl = null): string
     {
-        $portalUrl = Yii::$app->params['healthPortalUrl'] ?? 'https://health.msdfar.com/#/auth/sso';
+        // 1. Detect if running in local development environment
+        $isLocal = false;
+        if (isset(Yii::$app->request) && method_exists(Yii::$app->request, 'getHostInfo')) {
+            $host = (string)Yii::$app->request->getHostInfo();
+            $isLocal = (stripos($host, 'localhost') !== false || stripos($host, '127.0.0.1') !== false);
+        } elseif (isset($_SERVER['HTTP_HOST'])) {
+            $isLocal = (stripos($_SERVER['HTTP_HOST'], 'localhost') !== false || stripos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false);
+        }
+
+        // 2. Resolve SSO target endpoint and internal destination route
+        $targetSsoEndpoint = null;
+        $destinationPath = null;
+
+        if (!empty($returnUrl)) {
+            if (stripos($returnUrl, 'auth/sso') !== false) {
+                // returnUrl itself is the SSO gateway endpoint (e.g. from vet-login.ts)
+                $targetSsoEndpoint = $returnUrl;
+            } elseif (stripos($returnUrl, 'localhost:57549') !== false || stripos($returnUrl, '127.0.0.1:57549') !== false) {
+                $targetSsoEndpoint = 'https://localhost:57549/auth/sso';
+                $destinationPath = $returnUrl;
+            } else {
+                $destinationPath = $returnUrl;
+            }
+        }
+
+        if ($targetSsoEndpoint === null) {
+            if ($isLocal && !empty(Yii::$app->params['healthPortalLocalUrl'])) {
+                $targetSsoEndpoint = Yii::$app->params['healthPortalLocalUrl'];
+            } else {
+                $targetSsoEndpoint = Yii::$app->params['healthPortalUrl'] ?? 'https://health.msdfar.com/auth/sso';
+            }
+        }
+
+        // Normalize legacy hash-based route (/#/auth/sso -> /auth/sso) for Angular path router
+        $targetSsoEndpoint = str_replace('/#/auth/sso', '/auth/sso', $targetSsoEndpoint);
+
         $payload = self::buildUserPayload($user);
         $token = self::generateToken($payload);
 
-        $url = $portalUrl;
-        $separator = (strpos($url, '?') !== false) ? '&' : '?';
-        $url .= $separator . 'token=' . urlencode($token);
+        $separator = (strpos($targetSsoEndpoint, '?') !== false) ? '&' : '?';
+        $url = $targetSsoEndpoint . $separator . 'token=' . urlencode($token);
 
-        if (!empty($returnUrl) && $returnUrl !== $portalUrl && stripos($returnUrl, 'auth/sso') === false && stripos($returnUrl, 'sso-to-health') === false) {
-            $url .= '&returnUrl=' . urlencode($returnUrl);
+        if (!empty($destinationPath) && $destinationPath !== $targetSsoEndpoint && stripos($destinationPath, 'auth/sso') === false && stripos($destinationPath, 'sso-to-health') === false) {
+            $url .= '&returnUrl=' . urlencode($destinationPath);
         }
 
         return $url;

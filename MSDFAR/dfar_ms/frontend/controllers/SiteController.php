@@ -91,8 +91,28 @@ class SiteController extends Controller
             return $this->goHome();
         }
 
+        $returnUrl = Yii::$app->request->get('returnUrl');
+        if (!empty($returnUrl)) {
+            Yii::$app->user->setReturnUrl($returnUrl);
+        }
+
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
+            $user = Yii::$app->user->identity;
+            $savedReturnUrl = Yii::$app->user->getReturnUrl(null);
+            $isHealthReturn = !empty($savedReturnUrl) && (
+                stripos($savedReturnUrl, 'sso') !== false ||
+                stripos($savedReturnUrl, 'health') !== false ||
+                stripos($savedReturnUrl, '57549') !== false
+            );
+
+            if ($user && ($isHealthReturn ||
+                strcasecmp($user->nic, 'adminHEALTH') === 0 ||
+                stripos($user->nic, 'health') !== false
+            )) {
+                return $this->redirect(\common\components\HealthSsoHelper::getHealthSsoUrl($user, $isHealthReturn ? $savedReturnUrl : null));
+            }
+
             return $this->goBack();
         }
 
@@ -101,6 +121,24 @@ class SiteController extends Controller
         return $this->render('login', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * Single Sign-On (SSO) action to authenticate active MSDFAR user into the HEALTH certificate portal
+     *
+     * @param string|null $returnUrl Optional destination route within HEALTH portal
+     * @return \yii\web\Response
+     */
+    public function actionSsoToHealth(?string $returnUrl = null)
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['site/login', 'returnUrl' => Yii::$app->request->url]);
+        }
+
+        $user = Yii::$app->user->identity;
+        $targetUrl = \common\components\HealthSsoHelper::getHealthSsoUrl($user, $returnUrl);
+
+        return $this->redirect($targetUrl);
     }
 
     /**
