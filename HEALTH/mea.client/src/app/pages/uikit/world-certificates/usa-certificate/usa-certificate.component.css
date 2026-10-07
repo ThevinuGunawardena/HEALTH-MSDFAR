@@ -607,6 +607,16 @@
     text-transform: uppercase;
 }
 
+.usa-stamp-box,
+.usa-sig-box {
+    min-height: 110px;
+    border: 1px dashed #94a3b8;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 @media print {
     .print-hide { display: none !important; }
     .print-show { display: inline-block !important; }
@@ -648,6 +658,11 @@
         height: auto !important;
         min-height: auto !important;
         padding: 0 !important;
+    }
+
+    .usa-stamp-box,
+    .usa-sig-box {
+        border: none !important;
     }
 
     .usa-stamp-img {

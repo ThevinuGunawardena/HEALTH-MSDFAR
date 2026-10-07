@@ -69,13 +69,11 @@
                 (onClick)="onSubmit()"
             ></p-button>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="onPrint()"
             ></p-button>
         </div>
@@ -114,8 +112,10 @@
     <!-- ════ PAGE 1 — BOXES 1.1 to 1.14 ════════════════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="a4-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="page-content">
-            <div class="cert-header">
+            
+    <div class="cert-header">
                 <div class="cert-header-top-row mb-1">
                     <div class="cert-header-spacer"></div>
                     <div class="flex justify-center items-center">
@@ -260,6 +260,7 @@
     <!-- ════ PAGE 2 — BOXES 1.15 to 1.28 ════════════════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="a4-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="page-content">
             <div class="part2-title-row part2-title-flex">
                 <div class="font-bold uppercase part2-title-left">COUNTRY: SRI LANKA</div>
@@ -267,7 +268,7 @@
             </div>
 
             <div class="cert-grid-wrapper fill-page">
-                <div class="part-side-label">Part 1: Details of Dispatched Consignment (cont.)</div>
+        <div class="part-side-label">Part 1: Details of Dispatched Consignment (cont.)</div>
                 <div class="cert-grid">
                     <!-- 1.15 | 1.16 | 1.17 -->
                     <div class="grid-row transport-entry-row">
@@ -423,6 +424,7 @@
     <!-- ════ PAGE 3 — PART II CERTIFICATION ═════════════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="a4-page last-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="page-content">
             <div class="part2-title-row part2-title-flex">
                 <div class="font-bold uppercase part2-title-left">COUNTRY: SRI LANKA</div>
@@ -430,7 +432,7 @@
             </div>
 
             <div class="cert-grid-wrapper fill-page">
-                <div class="part-side-label">Part II: Certification</div>
+        <div class="part-side-label">Part II: Certification</div>
                 <div class="cert-grid">
                     <!-- II header: label | II.a ref | II.b -->
                     <div class="grid-row">
@@ -550,12 +552,12 @@
         <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
         <div class="flex items-center gap-2">
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 [outlined]="true"
                 (onClick)="onPrint()"
                 icon="pi pi-print"
-                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                [disabled]="form.get('signatoryUserId')?.invalid"
                 tooltipPosition="top"
             ></p-button>
             <p-button label="Save Certificate" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>

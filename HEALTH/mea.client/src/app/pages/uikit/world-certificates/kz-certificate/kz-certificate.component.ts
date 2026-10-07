@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -63,8 +64,7 @@ export const DEFAULT_KZ_PRODUCTS = [
 @Component({
     selector: 'app-kz-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -76,19 +76,24 @@ export const DEFAULT_KZ_PRODUCTS = [
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './kz-certificate.component.html',
     styleUrls: ['./kz-certificate.component.css', '../certificate-print.css']
 })
 export class KzCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSubmitted = false;
 
@@ -107,6 +112,7 @@ export class KzCertificateComponent implements OnInit {
     isDraggingStamp = false;
     safeSignaturePdfUrl: SafeResourceUrl | null = null;
     safeStampPdfUrl: SafeResourceUrl | null = null;
+    refNumber: string = '';
 
     onlyDigits(event: KeyboardEvent): boolean {
         const charCode = event.which ? event.which : event.keyCode;
@@ -300,6 +306,8 @@ export class KzCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -312,6 +320,7 @@ export class KzCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({
                     certificateNo: params['ref']
                 });
@@ -405,6 +414,13 @@ export class KzCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.certificateNo?.startsWith('HC-') || data.certificateNo?.startsWith('*') ? data.certificateNo : '') ||
+                               (data.certificateNo && !['ffff', 'FFFF', 'TC 4791', 'Draft'].includes(data.certificateNo.trim()) ? data.certificateNo : '') ||
+                               this.refNumber || 'TC 4791';
+
                 this.form.patchValue({
                     viewMode: mode,
                     includeAttachment: hasMultiple || mode === 'full',
@@ -412,7 +428,7 @@ export class KzCertificateComponent implements OnInit {
                     consigneeNameAddress: consigneeFull || '',
                     meansOfTransport: transport,
                     countryOfTransit: data.countryOfTransit || 'NONE',
-                    certificateNo: data.certificateNo || this.form.get('certificateNo')?.value || '',
+                    certificateNo: certNo,
                     countryOrigin: data.countryOrigin || 'SRI LANKA',
                     countryIssuing: data.countryIssuing || 'SRI LANKA',
                     competentAuthorityExporting: data.competentAuthorityExporting || 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -480,14 +496,20 @@ export class KzCertificateComponent implements OnInit {
             next: (data: VetFormFieldResponse) => {
                 if (!data) return;
 
-                const certNo = data.healthCertNo || data.newHC || '';
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.healthCertNo?.startsWith('HC-') || data.healthCertNo?.startsWith('*') ? data.healthCertNo : '') ||
+                               (data.newHC?.startsWith('HC-') || data.newHC?.startsWith('*') ? data.newHC : '') ||
+                               (data.healthCertNo && !['ffff', 'FFFF', 'TC 4791'].includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                               this.refNumber || 'TC 4791';
                 const consignorFull = [data.consignorName, data.consignorAddress].filter(Boolean).join(',\n');
                 const consigneeFull = [data.consigneeName, data.consigneeAddress].filter(Boolean).join(',\n');
                 const estParts = [data.processingEstName, data.processingEstAddress, data.approvalNo].filter(Boolean);
                 const estFull = estParts.length > 0 ? estParts.join('\n') : (data.consignorName ? `${data.consignorName}\n${data.consignorAddress || ''}\n${data.approvalNo || ''}` : '');
 
                 this.form.patchValue({
-                    certificateNo: certNo || this.form.get('certificateNo')?.value || '',
+                    certificateNo: certNo,
                     consignorNameAddress: consignorFull,
                     consigneeNameAddress: consigneeFull,
                     meansOfTransport: data.transportAeroPlane ? 'AIR' : (data.transportShip ? 'SHIP' : (data.transportId || 'AIR')),
@@ -889,9 +911,17 @@ export class KzCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ certificateNo: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -899,11 +929,11 @@ export class KzCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

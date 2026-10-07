@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -29,8 +30,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-kw-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -43,21 +43,27 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './kw-certificate.component.html',
     styleUrls: ['./kw-certificate.component.css', '../certificate-print.css']
 })
 export class KwCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSubmitted = false;
+    refNumber: string = '';
 
     userOptions: { label: string; value: string }[] = [];
     users: User[] = [];
@@ -213,6 +219,8 @@ export class KwCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -221,6 +229,7 @@ export class KwCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ certificateReferenceNo: params['ref'] });
             }
 
@@ -254,8 +263,12 @@ export class KwCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                const cleanRefNo = (data.certificateReferenceNo && !dummyValues.includes(data.certificateReferenceNo.trim())) ? data.certificateReferenceNo : '';
+                const finalRef = this.refNumber || data.referenceNumber || cleanRefNo || '';
+
                 this.form.patchValue({
-                    certificateReferenceNo: data.certificateReferenceNo || '',
+                    certificateReferenceNo: finalRef,
                     placeOfIssue: data.placeOfIssue || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     dateOfIssue: data.dateOfIssue ? new Date(data.dateOfIssue) : new Date(),
                     consignorName: data.consignorName || '',
@@ -322,7 +335,10 @@ export class KwCertificateComponent implements OnInit {
             next: (data: VetFormFieldResponse) => {
                 if (!data) return;
 
-                const certNo = data.healthCertNo || data.newHC || '';
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                const cleanCertNo = (data.healthCertNo && !dummyValues.includes(data.healthCertNo.trim())) ? data.healthCertNo : 
+                                    (data.newHC && !dummyValues.includes(data.newHC.trim())) ? data.newHC : '';
+                const certNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
                 const consignorAddr = `${data.consignorAddress || ''}\n${data.consignorPostal || ''}\nSRI LANKA`.trim();
                 const consigneeAddr = `${data.consigneeAddress || ''}\n${data.consigneePostal || ''}\nKUWAIT`.trim();
                 const plantName = data.processingEstName || data.consignorName || 'AWP LANKA PVT LTD';
@@ -712,9 +728,17 @@ export class KwCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ certificateReferenceNo: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -722,11 +746,11 @@ export class KwCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

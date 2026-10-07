@@ -56,8 +56,10 @@
         </div>
     </div>
 
+    
     <!-- Step 1 -->
     <form *ngIf="step === 1" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <!-- Attached Payment Slip Banner in Step 1 for instant visibility -->
         <div *ngIf="viewModePaymentSlip" class="mb-4 print-hide p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between gap-3 shadow-xs">
             <div class="flex items-center gap-3 min-w-0 flex-1">
@@ -108,12 +110,12 @@
                 <p class="mb-2"><strong>Validity Period of the Exporter’s License</strong></p>
                 <table class="w-full">
                     <tr>
-                        <td class="py-1 pr-2 whitespace-nowrap">H/C OLD NO:</td>
-                        <td class="py-1"><input class="w-full" pInputText formControlName="oldHC" type="text" /></td>
+                        <td class="py-1 pr-2 whitespace-nowrap font-medium">H/C OLD NO:</td>
+                        <td class="py-1"><input class="w-full" pInputText formControlName="oldHC" type="text" placeholder="Previous H/C No (if applicable)" /></td>
                     </tr>
                     <tr>
-                        <td class="py-1 pr-2 whitespace-nowrap">H/C NEW NO:</td>
-                        <td class="py-1"><input class="w-full" pInputText formControlName="newHC" type="text" /></td>
+                        <td class="py-1 pr-2 whitespace-nowrap font-bold text-slate-800">H/C NEW NO:</td>
+                        <td class="py-1"><input class="w-full bg-slate-100 font-bold text-slate-800 cursor-not-allowed" pInputText formControlName="newHC" type="text" [readonly]="true" placeholder="Auto-generated Ref No" /></td>
                     </tr>
                 </table>
             </div>
@@ -234,75 +236,6 @@
                             <td><input pInputText formControlName="healthCertNo" type="text" /></td>
                         </tr>
                         <tr>
-                            <td>Upload certificate:</td>
-                            <td>
-                                <div *ngIf="!viewOnly" class="flex flex-col gap-6 pt-2 pb-2">
-                                    <p-fileupload
-                                        #fu
-                                        mode="basic"
-                                        [multiple]="true"
-                                        chooseLabel="Choose"
-                                        chooseIcon="pi pi-upload"
-                                        name="uploadedCertificateFile"
-                                        accept="image/*,application/pdf"
-                                        maxFileSize="5000000"
-                                        (onSelect)="onCertificateSelect($event)"
-                                        [auto]="false"
-                                    />
-                                    <div *ngIf="uploadedCertificateFiles.length > 0" class="border border-gray-200 rounded-md p-3 bg-gray-50">
-                                        <p class="font-semibold mb-2">Selected files</p>
-                                        <div class="flex flex-col gap-2">
-                                            <div *ngFor="let file of uploadedCertificateFiles; let i = index" class="flex items-center justify-between gap-3 text-sm">
-                                                <div class="flex items-center gap-3 min-w-0 flex-1">
-                                                    <img *ngIf="isImageFile(file)" [src]="getCertificatePreviewUrl(file)" [alt]="file.name" class="w-10 h-10 object-cover rounded border border-gray-200" />
-                                                    <div *ngIf="!isImageFile(file)" class="w-10 h-10 rounded border border-gray-200 bg-white flex items-center justify-center text-red-600">
-                                                        <i *ngIf="isPdfFile(file)" class="pi pi-file-pdf"></i>
-                                                        <i *ngIf="!isPdfFile(file)" class="pi pi-file"></i>
-                                                    </div>
-                                                    <div class="min-w-0 flex-1">
-                                                        <span class="truncate block">{{ file.name }}</span>
-                                                        <input
-                                                            pInputText
-                                                            type="text"
-                                                            class="w-full mt-1"
-                                                            placeholder="Secondary file name (optional)"
-                                                            [value]="getCertificateSecondaryName(file)"
-                                                            (input)="setCertificateSecondaryName(file, $any($event.target).value)"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <p-button type="button" label="Remove" icon="pi pi-times" severity="danger" [text]="true" size="small" (onClick)="removeCertificateFile(i)"></p-button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div *ngIf="viewModeAttachments.length > 0" class="pt-2">
-                                     <div class="border border-gray-200 rounded-md p-3 bg-gray-50">
-                                         <p class="font-semibold mb-2">Attached files</p>
-                                         <div class="flex flex-col gap-2">
-                                             <div *ngFor="let attachment of viewModeAttachments; let i = index" class="flex items-center justify-between gap-3 text-sm">
-                                                 <div class="flex items-center gap-3 min-w-0 flex-1">
-                                                     <img
-                                                         *ngIf="isAttachmentImageItem(attachment) && getAttachmentSmallPreviewUrl(attachment)"
-                                                         [src]="getAttachmentSmallPreviewUrl(attachment)"
-                                                         [alt]="getAttachmentDisplayName(attachment, i)"
-                                                         class="w-10 h-10 object-cover rounded border border-gray-200"
-                                                     />
-                                                     <div *ngIf="!isAttachmentImageItem(attachment) || !getAttachmentSmallPreviewUrl(attachment)" class="w-10 h-10 rounded border border-gray-200 bg-white flex items-center justify-center text-red-600">
-                                                         <i *ngIf="isAttachmentPdfItem(attachment)" class="pi pi-file-pdf"></i>
-                                                         <i *ngIf="!isAttachmentPdfItem(attachment)" class="pi pi-file"></i>
-                                                     </div>
-                                                     <span class="truncate">{{ getAttachmentDisplayName(attachment, i) }}</span>
-                                                 </div>
-                                                 <p-button type="button" label="View" icon="pi pi-eye" severity="info" [text]="true" size="small" (onClick)="openAttachmentPreview(attachment, i)"></p-button>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 </div>
-                                 <div *ngIf="viewOnly && viewModeAttachments.length === 0 && form.get('uploadedCertificateFile')?.value" class="text-sm text-gray-600">Certificate file attached.</div>
-                            </td>
-                        </tr>
-                        <tr>
                             <td>d) Product type:</td>
                             <td>
                                 <div class="radio-group flex flex-col md:flex-row gap-2 mb-4">
@@ -337,6 +270,7 @@
 
     <!-- Step 2 -->
     <form *ngIf="step === 2" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <h3 class="text-lg font-semibold mb-2">2. Destination of the fishery products & origin:</h3>
 
         <div>
@@ -435,6 +369,7 @@
 
     <!-- Step 3 -->
     <form *ngIf="step === 3" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <h3 class="text-lg font-semibold mb-2">4. Means of transport :</h3>
         <div>
             <p class="mb-4">4.1 (Aero plane/Ship/Railway wagon/Road vehicle/other):</p>
@@ -690,6 +625,7 @@
 
     <!-- Step 4 -->
     <form *ngIf="step === 4" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <h3 class="section-title text-lg font-semibold mb-3">6. Health attestation :</h3>
         <p class="leading-normal text-md mb-3">
             6.1 I the undersigned, declare that I am aware of the relevant provisions of Regulations (EC) No. 178/2002, (EC) No. 852/2004 and (EC) No. 853/2004 and (EC) No. 854/2004 and certify that the fishery products described above were produced

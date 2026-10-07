@@ -35,6 +35,9 @@ export interface CertificateRequestResponse {
     isExpired?: boolean;
     hasFormSubmitted?: boolean;
     paymentSlip?: PaymentSlipPreview | null;
+    cancelsAndReplacesRef?: string | null;
+    cancelsAndReplacesDate?: string | null;
+    replacedCertificateRequestId?: number | null;
     requests?: CertificateRequestResponse[];
 }
 
@@ -308,6 +311,7 @@ export interface VetFormFieldResponse {
     countryOrigin?: string;
     arrivalConsignment?: string;
     healthCertNo?: string;
+    referenceNumber?: string;
     productTypeAquaculture?: boolean;
     productTypeWildCaught?: boolean;
     consignorName: string;
@@ -320,6 +324,7 @@ export interface VetFormFieldResponse {
     consigneeTel: string;
     countryOriginISO: string;
     regionOriginISO: string;
+    countryDestination?: string;
     countryDestinationISO: string;
     placeOfLoading: string;
     dateOfDeparture: string;
@@ -1357,6 +1362,7 @@ export interface IlCertificateProductView {
 export interface IlCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     certificateType?: string | null;
     certificationNo: string | null;
     centralCompetentAuthority: string | null;
@@ -1429,6 +1435,7 @@ export interface AuCertificateProductView {
 export interface AuCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
     consignorPostal: string | null;
@@ -1508,6 +1515,7 @@ export interface AmAttachmentView {
 export interface AmCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
     consignorPostal: string | null;
@@ -1601,6 +1609,7 @@ export interface BrCertificateProductView {
 export interface BrCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     refNumber: string | null;
     countryOfExport: string | null;
     certificateNo: string | null;
@@ -1650,6 +1659,7 @@ export interface ChAttachmentView {
 export interface ChCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     certificateType: string | null;
     refNumber: string | null;
     countryOfExport: string | null;
@@ -1736,6 +1746,7 @@ export interface HkCertificateProductView {
 export interface HkCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     certificateType: string | null;
     identificationNumber: string | null;
     countryOfDispatch: string | null;
@@ -1782,6 +1793,7 @@ export interface IdCertificateProductView {
 export interface IdCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     numberNomor: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
@@ -1868,6 +1880,7 @@ export interface IndCertificateProductView {
 export interface IndCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     certificateType: string | null;
     countryOfDispatch: string | null;
     certificateNumber: string | null;
@@ -1924,6 +1937,7 @@ export interface IndCertificateView {
 export interface JpCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     myRef: string | null;
     yourRef: string | null;
     date: string | null;
@@ -1964,6 +1978,7 @@ export interface KwCertificateProductView {
 export interface KwCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
     certificateReferenceNo: string | null;
@@ -2016,6 +2031,7 @@ export interface MyCertificateProductView {
 export interface MyCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     exporterName: string | null;
     certificateReferenceNo: string | null;
     qualityCertificateNo: string | null;
@@ -2074,6 +2090,7 @@ export interface NzCertificateProductView {
 export interface NzCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
     certificateRefNumber: string | null;
@@ -2123,6 +2140,7 @@ export interface RuAttachmentView {
 export interface RuCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
     consigneeName: string | null;
@@ -2171,6 +2189,7 @@ export interface RuCertificateView {
 export interface KzCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
     consigneeName: string | null;
@@ -2228,6 +2247,7 @@ export interface TwCertificateProductView {
 export interface TwCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     referenceNo: string | null;
     countryOfExport: string | null;
     countryOfProduction: string | null;
@@ -2285,6 +2305,7 @@ export interface UaCertificateProductView {
 export interface UaCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
     consignorPostalCode: string | null;
@@ -2369,6 +2390,7 @@ export interface UkCertificateProductView {
 export interface UkCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     certificateReferenceNo: string | null;
     consignorName: string | null;
     consignorAddress: string | null;
@@ -2535,6 +2557,7 @@ export interface MvCertificateProductAttachmentView {
 export interface MvCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     consignorExporter: string;
     certificateNumber: string;
     competentAuthority: string;
@@ -2587,6 +2610,7 @@ export interface MvCertificateResponse {
 export interface UsaCertificateView {
     id: number;
     certificateRequestId: number | null;
+    referenceNumber?: string | null;
     myRef: string | null;
     yourRef: string | null;
     date: string | null;
@@ -2623,6 +2647,7 @@ export interface CaProductAttachmentPayload {
 
 export interface CreateCaCertificatePayload {
     certificateRequestId?: number | null;
+    referenceNumber?: string | null;
     myRef?: string;
     yourRef?: string;
     date?: string | Date | null;
@@ -2959,4 +2984,67 @@ export class CertificateRequestService {
             payload
         );
     }
+
+    // --- Replacement Requests ---
+    getReplacementRequests() {
+        return this.http.get<ReplacementRequestItem[]>(`${environment.apiBaseUrl}/api/replacement-requests`).pipe(
+            catchError(() => of([] as ReplacementRequestItem[]))
+        );
+    }
+
+    getEligibleCertificatesForReplacement() {
+        return this.http.get<EligibleCertificateItem[]>(`${environment.apiBaseUrl}/api/replacement-requests/eligible-certificates`).pipe(
+            catchError(() => of([] as EligibleCertificateItem[]))
+        );
+    }
+
+    createReplacementRequest(payload: { originalCertificateRequestId?: number; originalReferenceNumber?: string; reason: string; remarks?: string }) {
+        return this.http.post<ReplacementRequestItem>(`${environment.apiBaseUrl}/api/replacement-requests`, payload);
+    }
+
+    approveReplacementRequest(id: number) {
+        return this.http.post<{ message: string; item: ReplacementRequestItem }>(`${environment.apiBaseUrl}/api/replacement-requests/${id}/approve`, {});
+    }
+
+    rejectReplacementRequest(id: number, reason: string) {
+        return this.http.post<{ message: string; item: ReplacementRequestItem }>(`${environment.apiBaseUrl}/api/replacement-requests/${id}/reject`, { reason });
+    }
+
+    createReplacement(requestId: number) {
+        return this.http.post<{
+            newRequestId: number;
+            newReferenceNumber: string;
+            originalReferenceNumber: string;
+            originalDate: string;
+            countryName?: string;
+            certificateType: string;
+        }>(`${environment.apiBaseUrl}/api/certificaterequest/certificate-requests/${requestId}/create-replacement`, {});
+    }
+}
+
+export interface ReplacementRequestItem {
+    id: number;
+    originalCertificateRequestId?: number | null;
+    originalReferenceNumber: string;
+    replacementReferenceNumber: string;
+    companyUserId: string;
+    companyName: string;
+    country: string;
+    certificateType: string;
+    reason: string;
+    remarks?: string | null;
+    rejectionReason?: string | null;
+    status: number | string; // 0: Pending, 1: Approved, 2: Rejected
+    createdAt: string;
+    processedAt?: string | null;
+    processedByUserId?: string | null;
+}
+
+export interface EligibleCertificateItem {
+    id: number;
+    referenceNumber: string;
+    certificateType: string;
+    country: string;
+    companyName: string;
+    createdAt: string;
 }

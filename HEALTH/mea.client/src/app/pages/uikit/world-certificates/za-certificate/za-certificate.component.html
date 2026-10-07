@@ -18,17 +18,17 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <span *ngIf="form.get('myRef')?.value || form.get('certificateNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">
-                Ref: {{ form.get('myRef')?.value || form.get('certificateNumber')?.value }}
+            <span *ngIf="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">
+                Ref: {{ form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber }}
             </span>
             <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                [disabled]="form.get('signatoryUserId')?.invalid"
                 tooltipPosition="bottom"
                 (onClick)="print()"
             ></p-button>
@@ -68,6 +68,7 @@
     <!-- FORMAT: OFFICIAL LETTERHEAD - LIVE ANIMALS (SX 1691 / TB 5820)   -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="za-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'live'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="za-content">
             <!-- ── TOP HEADER ── -->
             <div class="za-header">
@@ -78,7 +79,7 @@
                     </div>
                     <div class="cert-header-qr-slot">
                         <app-certificate-qr
-                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value"
+                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || ''"
                             [certificateRequestId]="certificateRequestId"
                             [consignor]="form.get('consignorName')?.value"
                             [consignee]="form.get('consigneeName')?.value"
@@ -111,7 +112,7 @@
                         <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
                     </div>
                     <div class="za-ref-brace">&#125;</div>
-                    <input pInputText formControlName="myRef" class="za-ref-input uppercase-text font-bold" placeholder="e.g. SX 1691 / TB 5820" />
+                    <input pInputText formControlName="myRef" class="za-ref-input uppercase-text font-bold" placeholder="e.g. SX 1691 / TB 5820" [readonly]="!!refNumber || !!certificateRequestId" />
                 </div>
                 <div class="za-ref-block">
                     <div class="za-ref-labels">
@@ -219,100 +220,14 @@
             <div class="za-stamp-sig-section mt-4 pt-2">
                 <div class="za-stamp-col">
                     <div class="za-lbl-bold font-bold text-xs">Official stamp:</div>
-                    <div
-                        class="za-stamp-placeholder"
-                        [class.za-drop-active]="isDraggingStamp"
-                        [class.has-content]="!!form.get('officialStamp')?.value"
-                        (click)="!viewOnly && stampInputLive.click()"
-                        (dragover)="onStampDragOver($event)"
-                        (dragleave)="onStampDragLeave($event)"
-                        (drop)="onStampDrop($event)"
-                        (paste)="onStampPaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #stampInputLive (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialStamp')?.value" class="za-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="za-stamp-img" />
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                     </div>
                 </div>
                 <div class="za-sig-col">
                     <div class="za-lbl-bold font-bold text-xs">Signature of Official Inspector:</div>
-                    <div
-                        class="za-sig-placeholder"
-                        [class.za-drop-active]="isDraggingSignature"
-                        [class.has-content]="!!form.get('officialSignature')?.value"
-                        (click)="!viewOnly && sigInputLive.click()"
-                        (dragover)="onSignatureDragOver($event)"
-                        (dragleave)="onSignatureDragLeave($event)"
-                        (drop)="onSignatureDrop($event)"
-                        (paste)="onSignaturePaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #sigInputLive (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialSignature')?.value" class="za-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="za-sig-img" />
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputLive.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputLive.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                     </div>
 
                     <!-- Officer Credentials Info -->
@@ -390,6 +305,7 @@
     <!-- FORMAT 1: OFFICIAL LETTERHEAD HEALTH CERTIFICATE (TB 3688)       -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="za-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letter'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="za-content">
             <!-- ── TOP HEADER ── -->
             <div class="za-header">
@@ -400,7 +316,7 @@
                     </div>
                     <div class="cert-header-qr-slot">
                         <app-certificate-qr
-                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value"
+                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || ''"
                             [certificateRequestId]="certificateRequestId"
                             [consignor]="form.get('consignorName')?.value"
                             [consignee]="form.get('consigneeName')?.value"
@@ -438,7 +354,7 @@
                         <span>My Ref</span>
                     </div>
                     <div class="za-ref-brace">&#125;</div>
-                    <input pInputText formControlName="myRef" class="za-ref-input uppercase-text font-bold" placeholder="e.g. TB 3688" />
+                    <input pInputText formControlName="myRef" class="za-ref-input uppercase-text font-bold" placeholder="e.g. TB 3688" [readonly]="!!refNumber || !!certificateRequestId" />
                 </div>
                 <div class="za-ref-block">
                     <div class="za-ref-labels">
@@ -541,100 +457,14 @@
             <div class="za-stamp-sig-section mt-4 pt-2">
                 <div class="za-stamp-col">
                     <div class="za-lbl-bold font-bold text-xs">Official stamp:</div>
-                    <div
-                        class="za-stamp-placeholder"
-                        [class.za-drop-active]="isDraggingStamp"
-                        [class.has-content]="!!form.get('officialStamp')?.value"
-                        (click)="!viewOnly && stampInputLetter.click()"
-                        (dragover)="onStampDragOver($event)"
-                        (dragleave)="onStampDragLeave($event)"
-                        (drop)="onStampDrop($event)"
-                        (paste)="onStampPaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #stampInputLetter (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialStamp')?.value" class="za-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="za-stamp-img" />
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                     </div>
                 </div>
                 <div class="za-sig-col">
                     <div class="za-lbl-bold font-bold text-xs">Signature of Official Inspector:</div>
-                    <div
-                        class="za-sig-placeholder"
-                        [class.za-drop-active]="isDraggingSignature"
-                        [class.has-content]="!!form.get('officialSignature')?.value"
-                        (click)="!viewOnly && sigInputLetter.click()"
-                        (dragover)="onSignatureDragOver($event)"
-                        (dragleave)="onSignatureDragLeave($event)"
-                        (drop)="onSignatureDrop($event)"
-                        (paste)="onSignaturePaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #sigInputLetter (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialSignature')?.value" class="za-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="za-sig-img" />
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                     </div>
 
                     <!-- Officer Credentials Info -->
@@ -712,6 +542,7 @@
     <!-- FORMAT 2: GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)      -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="za-page boxed-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'generic' || (form.get('viewMode')?.value || viewMode) === 'attachment'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="za-content">
             <!-- Header -->
             <div class="za-boxed-header text-center mb-2">
@@ -737,10 +568,10 @@
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex-1">
                                 <span class="font-bold block">2. Certificate Reference No:</span>
-                                <input pInputText formControlName="myRef" class="w-full font-bold uppercase-text" placeholder="Certificate No" />
+                                <input pInputText formControlName="myRef" class="w-full font-bold uppercase-text" placeholder="Certificate No" [readonly]="!!refNumber || !!certificateRequestId" />
                             </div>
                             <app-certificate-qr
-                                [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value"
+                                [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || ''"
                                 [certificateRequestId]="certificateRequestId"
                                 [consignor]="form.get('consignorName')?.value"
                                 [consignee]="form.get('consigneeName')?.value"
@@ -826,102 +657,14 @@
                         <div class="grid grid-cols-2 gap-4 mt-2">
                             <div>
                                 <span class="font-bold text-3xs uppercase block mb-1">Official Stamp:</span>
-                                <div
-                                    class="za-stamp-placeholder"
-                                    [class.za-drop-active]="isDraggingStamp"
-                                    [class.has-content]="!!form.get('officialStamp')?.value"
-                                    (click)="!viewOnly && stampInputGeneric.click()"
-                                    (dragover)="onStampDragOver($event)"
-                                    (dragleave)="onStampDragLeave($event)"
-                                    (drop)="onStampDrop($event)"
-                                    (paste)="onStampPaste($event)"
-                                    tabindex="0"
-                                    style="min-height: 80px;"
-                                >
-                                    <input type="file" #stampInputGeneric (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <!-- Empty State -->
-                                    <div *ngIf="!form.get('officialStamp')?.value" class="za-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                        <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">Official Stamp</span>
-                                    </div>
-
-                                    <!-- Uploaded Image -->
-                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="za-stamp-img" />
-                                        <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputGeneric.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Uploaded PDF -->
-                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                                        <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputGeneric.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                                 </div>
                             </div>
                             <div>
                                 <span class="font-bold text-3xs uppercase block mb-1">Official Signature:</span>
-                                <div
-                                    class="za-sig-placeholder"
-                                    [class.za-drop-active]="isDraggingSignature"
-                                    [class.has-content]="!!form.get('officialSignature')?.value"
-                                    (click)="!viewOnly && sigInputGeneric.click()"
-                                    (dragover)="onSignatureDragOver($event)"
-                                    (dragleave)="onSignatureDragLeave($event)"
-                                    (drop)="onSignatureDrop($event)"
-                                    (paste)="onSignaturePaste($event)"
-                                    tabindex="0"
-                                    style="min-height: 50px;"
-                                >
-                                    <input type="file" #sigInputGeneric (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <!-- Empty State -->
-                                    <div *ngIf="!form.get('officialSignature')?.value" class="za-empty-upload flex flex-col items-center justify-center p-1 text-center">
-                                        <i class="pi pi-pencil text-slate-400 text-xs mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                                    </div>
-
-                                    <!-- Uploaded Image -->
-                                    <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                                        <img [src]="form.get('officialSignature')?.value" alt="Signature" class="za-sig-img" />
-                                        <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputGeneric.click()" title="Change Signature">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Uploaded PDF -->
-                                    <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                                        <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                                        <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputGeneric.click()" title="Change Signature">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                                 </div>
                                 <div class="pt-1"><span class="font-bold">Official Inspector:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span></div>
                                 <div><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
@@ -961,11 +704,12 @@
     <!-- FORMAT 3: MULTI-ITEM ATTACHMENT TABLE (WHEN ATTACHMENT SELECTED) -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="za-page attachment-page mt-4" *ngIf="(form.get('viewMode')?.value || viewMode) === 'attachment'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="za-content">
             <div class="attachment-header text-center mb-3">
                 <div class="font-bold text-sm uppercase underline">ATTACHMENT TO HEALTH CERTIFICATE</div>
                 <div class="text-xs font-bold text-slate-700 mt-1">
-                    Reference No: <span class="font-mono">{{ form.get('myRef')?.value || form.get('certificateNumber')?.value || '________________' }}</span>
+                    Reference No: <span class="font-mono">{{ form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || '________________' }}</span>
                 </div>
             </div>
 
@@ -1023,100 +767,14 @@
             <div class="za-stamp-sig-section flex justify-between items-end mt-auto pt-4 border-t border-slate-300">
                 <div class="za-stamp-col">
                     <div class="font-bold text-xs mb-1">Official stamp:</div>
-                    <div
-                        class="za-stamp-placeholder"
-                        [class.za-drop-active]="isDraggingStamp"
-                        [class.has-content]="!!form.get('officialStamp')?.value"
-                        (click)="!viewOnly && stampInputAtt.click()"
-                        (dragover)="onStampDragOver($event)"
-                        (dragleave)="onStampDragLeave($event)"
-                        (drop)="onStampDrop($event)"
-                        (paste)="onStampPaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #stampInputAtt (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialStamp')?.value" class="za-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="za-stamp-img" />
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputAtt.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="za-preview-container">
-                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); stampInputAtt.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                     </div>
                 </div>
                 <div class="za-sig-col">
                     <div class="font-bold text-xs">Signature of Official Inspector:</div>
-                    <div
-                        class="za-sig-placeholder"
-                        [class.za-drop-active]="isDraggingSignature"
-                        [class.has-content]="!!form.get('officialSignature')?.value"
-                        (click)="!viewOnly && sigInputAtt.click()"
-                        (dragover)="onSignatureDragOver($event)"
-                        (dragleave)="onSignatureDragLeave($event)"
-                        (drop)="onSignatureDrop($event)"
-                        (paste)="onSignaturePaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #sigInputAtt (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialSignature')?.value" class="za-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="za-sig-img" />
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputAtt.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="za-preview-container">
-                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="za-pdf-preview"></object>
-                            <div class="za-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="za-mini-btn" (click)="$event.stopPropagation(); sigInputAtt.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="za-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                     </div>
                     <div class="text-xs pt-1"><span class="font-bold">Name:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span></div>
                     <div class="text-xs"><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
@@ -1131,13 +789,13 @@
         <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
         <div class="flex items-center gap-2 ml-auto">
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 [outlined]="true"
                 (onClick)="print()"
-                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                [disabled]="form.get('signatoryUserId')?.invalid"
                 tooltipPosition="top"
             ></p-button>
             <p-button label="Submit &amp; Save" icon="pi pi-check" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>

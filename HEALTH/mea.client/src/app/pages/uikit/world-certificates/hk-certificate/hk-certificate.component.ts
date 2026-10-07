@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -30,8 +31,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-hk-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -44,21 +44,27 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         RadioButton,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './hk-certificate.component.html',
     styleUrls: ['./hk-certificate.component.css', '../certificate-print.css']
 })
 export class HkCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSubmitted = false;
     certificateRequestId: number | null = null;
+    refNumber = '';
 
     // View mode: 'attachment' (3 pages with attachment table), 'single' (2 pages with direct table)
     viewMode: 'attachment' | 'single' = 'attachment';
@@ -301,6 +307,8 @@ export class HkCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -309,6 +317,7 @@ export class HkCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ identificationNumber: params['ref'] });
             }
 
@@ -388,9 +397,16 @@ export class HkCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.identificationNumber?.startsWith('HC-') || data.identificationNumber?.startsWith('*') ? data.identificationNumber : '') ||
+                               (data.identificationNumber && !['ffff', 'FFFF', 'TC 4293', 'Draft'].includes(data.identificationNumber.trim()) ? data.identificationNumber : '') ||
+                               this.refNumber || '';
+
                 this.form.patchValue({
                     viewMode: mode,
-                    identificationNumber: data.identificationNumber || '',
+                    identificationNumber: certNo,
                     countryOfDispatch: data.countryOfDispatch || 'SRI LANKA',
                     competentAuthority: data.competentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCE',
                     certifyingBody: data.certifyingBody || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
@@ -467,7 +483,13 @@ export class HkCertificateComponent implements OnInit {
                 const plantAddress = `${data.processingEstName || data.consignorName || ''}\n${data.processingEstAddress || data.consignorAddress || ''}\n${data.consignorPostal || ''}\nSRI LANKA`.trim();
                 const isShip = data.transportShip ?? false;
                 const meansTransport = isShip ? 'SEA FREIGHT' : 'AIR FREIGHT';
-                const certNo = data.healthCertNo || data.newHC || 'TC 4293';
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.healthCertNo?.startsWith('HC-') || data.healthCertNo?.startsWith('*') ? data.healthCertNo : '') ||
+                               (data.newHC?.startsWith('HC-') || data.newHC?.startsWith('*') ? data.newHC : '') ||
+                               (data.healthCertNo && !['ffff', 'FFFF', 'TC 4293'].includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                               this.refNumber || 'TC 4293';
 
                 this.form.patchValue({
                     identificationNumber: certNo,
@@ -764,8 +786,16 @@ export class HkCertificateComponent implements OnInit {
         this.certificateRequestService.getRequestById(requestId).subscribe({
             next: (req) => {
                 if (req) {
+                    if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                    if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                }
+                if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ identificationNumber: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -773,11 +803,11 @@ export class HkCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

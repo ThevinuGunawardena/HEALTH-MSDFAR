@@ -102,26 +102,6 @@ export interface PublicVerificationResponse {
                             </div>
 
                             <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-                                <span class="text-slate-500 font-medium block">Consignor (Exporter):</span>
-                                <span class="text-xs font-bold text-slate-900 mt-0.5 block uppercase">
-                                    {{ verificationData?.consignorName || urlConsignor || 'REGISTERED EXPORTER' }}
-                                </span>
-                                <span class="text-3xs text-slate-500 mt-0.5 block" *ngIf="verificationData?.consignorAddress">
-                                    {{ verificationData?.consignorAddress }}
-                                </span>
-                            </div>
-
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-                                <span class="text-slate-500 font-medium block">Consignee (Importer):</span>
-                                <span class="text-xs font-bold text-slate-900 mt-0.5 block uppercase">
-                                    {{ verificationData?.consigneeName || urlConsignee || 'AUTHORIZED IMPORTER' }}
-                                </span>
-                                <span class="text-3xs text-slate-500 mt-0.5 block" *ngIf="verificationData?.consigneeAddress">
-                                    {{ verificationData?.consigneeAddress }}
-                                </span>
-                            </div>
-
-                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
                                 <span class="text-slate-500 font-medium block">Destination Country:</span>
                                 <span class="text-xs font-bold text-slate-900 mt-0.5 block uppercase">
                                     {{ verificationData?.countryOfDestination || urlDestination || 'INTERNATIONAL DESTINATION' }}

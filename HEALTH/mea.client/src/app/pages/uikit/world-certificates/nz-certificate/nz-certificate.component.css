@@ -552,7 +552,9 @@
     }
 
     .nz-stamp-placeholder,
-    .nz-sig-placeholder {
+    .nz-sig-placeholder,
+    .nz-stamp-box,
+    .nz-sig-box {
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;

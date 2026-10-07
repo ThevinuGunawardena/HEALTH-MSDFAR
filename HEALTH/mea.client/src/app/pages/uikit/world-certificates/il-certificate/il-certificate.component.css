@@ -567,7 +567,9 @@ input[type="number"].il-cinp::-webkit-outer-spin-button {
     }
 
     .il-stamp-placeholder,
-    .il-sig-placeholder {
+    .il-sig-placeholder,
+    .il-stamp-box,
+    .il-sig-box {
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;

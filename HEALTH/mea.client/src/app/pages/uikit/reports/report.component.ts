@@ -11,69 +11,8 @@ import { CompanyService } from '@/pages/service/company.service';
 import { CountryService } from '@/pages/service/country.service';
 import { Router } from '@angular/router';
 import { Button } from 'primeng/button';
-import { catchError, forkJoin, map, Observable, of } from 'rxjs';
-
-const COUNTRY_CERTIFICATE_MAP: Record<string, string> = {
-    Australia: '/uikit/world-certificates/au-certificate',
-    Brazil: '/uikit/world-certificates/br-certificate',
-    China: '/uikit/world-certificates/ch-certificate',
-    Armenia: '/uikit/world-certificates/am-certificate',
-    'Hong Kong': '/uikit/world-certificates/hk-certificate',
-    India: '/uikit/world-certificates/in-certificate',
-    Indonesia: '/uikit/world-certificates/id-certificate',
-    Malaysia: '/uikit/world-certificates/my-certificate',
-    Kuwait: '/uikit/world-certificates/kw-certificate',
-    Taiwan: '/uikit/world-certificates/tw-certificate',
-    Ukraine: '/uikit/world-certificates/ua-certificate',
-    Russia: '/uikit/world-certificates/ru-certificate',
-    Kazakhstan: '/uikit/world-certificates/kz-certificate',
-    Japan: '/uikit/world-certificates/jp-certificate',
-    'New Zealand': '/uikit/world-certificates/nz-certificate',
-    USA: '/uikit/world-certificates/usa-certificate',
-    'United States of America': '/uikit/world-certificates/usa-certificate',
-    'United States': '/uikit/world-certificates/usa-certificate',
-    UK: '/uikit/world-certificates/uk-certificate',
-    'United Kingdom': '/uikit/world-certificates/uk-certificate',
-    'Great Britain': '/uikit/world-certificates/uk-certificate',
-    Israel: '/uikit/world-certificates/il-certificate',
-    Maldives: '/uikit/world-certificates/mv-certificate',
-    Canada: '/uikit/world-certificates/ca-certificate',
-    'Saudi Arabia': '/uikit/world-certificates/sa-certificate',
-    'South Africa': '/uikit/world-certificates/za-certificate'
-};
-
-function getCertificatePath(countryName?: string | null): string | null {
-    if (!countryName) return null;
-    const normalized = countryName.trim().toLowerCase();
-
-    if (normalized === 'australia') return '/uikit/world-certificates/au-certificate';
-    if (normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') return '/uikit/world-certificates/usa-certificate';
-    if (normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') return '/uikit/world-certificates/uk-certificate';
-    if (normalized === 'brazil') return '/uikit/world-certificates/br-certificate';
-    if (normalized === 'china') return '/uikit/world-certificates/ch-certificate';
-    if (normalized === 'armenia') return '/uikit/world-certificates/am-certificate';
-    if (normalized === 'hong kong' || normalized === 'hongkong') return '/uikit/world-certificates/hk-certificate';
-    if (normalized === 'india') return '/uikit/world-certificates/in-certificate';
-    if (normalized === 'indonesia') return '/uikit/world-certificates/id-certificate';
-    if (normalized === 'malaysia') return '/uikit/world-certificates/my-certificate';
-    if (normalized === 'kuwait') return '/uikit/world-certificates/kw-certificate';
-    if (normalized === 'taiwan') return '/uikit/world-certificates/tw-certificate';
-    if (normalized === 'ukraine') return '/uikit/world-certificates/ua-certificate';
-    if (normalized === 'russia') return '/uikit/world-certificates/ru-certificate';
-    if (normalized === 'kazakhstan' || normalized === 'republic of kazakhstan') return '/uikit/world-certificates/kz-certificate';
-    if (normalized === 'japan') return '/uikit/world-certificates/jp-certificate';
-    if (normalized === 'new zealand' || normalized === 'newzealand') return '/uikit/world-certificates/nz-certificate';
-    if (normalized === 'israel') return '/uikit/world-certificates/il-certificate';
-    if (normalized === 'maldives') return '/uikit/world-certificates/mv-certificate';
-    if (normalized === 'canada') return '/uikit/world-certificates/ca-certificate';
-    if (normalized === 'saudi arabia' || normalized === 'saudi') return '/uikit/world-certificates/sa-certificate';
-    if (normalized === 'south africa' || normalized === 'southafrica') return '/uikit/world-certificates/za-certificate';
-
-    const matchKey = Object.keys(COUNTRY_CERTIFICATE_MAP).find(
-        (k) => k.toLowerCase().trim() === normalized
-    );
-    return matchKey ? COUNTRY_CERTIFICATE_MAP[matchKey] : null;
-}
+import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
+import { getCertificatePath } from '@/shared/country-certificate-templates';
 
 @Component({
     selector: 'app-report',
@@ -210,58 +149,63 @@ export class ReportComponent implements OnInit {
     }
 
     private hasSubmittedCertificate(request: CertificateRequestResponse): Observable<boolean> {
-        if (request.certificateType === 'EU' || request.certificateType === 0) {
-            return this.toExistsResult(this.certificateService.getVetFormByRequestId(request.id));
-        }
+        // Check if VetCertificateForm exists first (the standard form submitted by companies for both EU & NonEU)
+        return this.toExistsResult(this.certificateService.getVetFormByRequestId(request.id)).pipe(
+            switchMap((exists) => {
+                if (exists) return of(true);
 
-        if (!request.countryName) {
-            return of(false);
-        }
+                if (request.certificateType === 'EU' || request.certificateType === 0 || !request.countryName) {
+                    return of(false);
+                }
 
-        switch (request.countryName.trim().toLowerCase()) {
-            case 'australia':
-                return this.toExistsResult(this.certificateService.getAuCertificateByRequestId(request.id));
-            case 'armenia':
-                return this.toExistsResult(this.certificateService.getAmCertificateByRequestId(request.id));
-            case 'brazil':
-                return this.toExistsResult(this.certificateService.getBrCertificateByRequestId(request.id));
-            case 'china':
-                return this.toExistsResult(this.certificateService.getChCertificateByRequestId(request.id));
-            case 'hong kong':
-                return this.toExistsResult(this.certificateService.getHkCertificateByRequestId(request.id));
-            case 'india':
-                return this.toExistsResult(this.certificateService.getIndCertificateByRequestId(request.id));
-            case 'indonesia':
-                return this.toExistsResult(this.certificateService.getIdCertificateByRequestId(request.id));
-            case 'japan':
-                return this.toExistsResult(this.certificateService.getJpCertificateByRequestId(request.id));
-            case 'kuwait':
-                return this.toExistsResult(this.certificateService.getKwCertificateByRequestId(request.id));
-            case 'malaysia':
-                return this.toExistsResult(this.certificateService.getMyCertificateByRequestId(request.id));
-            case 'maldives':
-                return this.toExistsResult(this.certificateService.getMvCertificateByRequestId(request.id));
-            case 'new zealand':
-                return this.toExistsResult(this.certificateService.getNzCertificateByRequestId(request.id));
-            case 'russia':
-                return this.toExistsResult(this.certificateService.getRuCertificateByRequestId(request.id));
-            case 'taiwan':
-                return this.toExistsResult(this.certificateService.getTwCertificateByRequestId(request.id));
-            case 'ukraine':
-                return this.toExistsResult(this.certificateService.getUaCertificateByRequestId(request.id));
-            case 'uk':
-            case 'united kingdom':
-            case 'great britain':
-                return this.toExistsResult(this.certificateService.getUkCertificateByRequestId(request.id));
-            case 'usa':
-            case 'united states of america':
-            case 'united states':
-                return this.toExistsResult(this.certificateService.getUsaCertificateByRequestId(request.id));
-            case 'israel':
-                return this.toExistsResult(this.certificateService.getIlCertificateByRequestId(request.id));
-            default:
-                return of(false);
-        }
+                switch (request.countryName.trim().toLowerCase()) {
+                    case 'australia':
+                        return this.toExistsResult(this.certificateService.getAuCertificateByRequestId(request.id));
+                    case 'armenia':
+                        return this.toExistsResult(this.certificateService.getAmCertificateByRequestId(request.id));
+                    case 'brazil':
+                        return this.toExistsResult(this.certificateService.getBrCertificateByRequestId(request.id));
+                    case 'china':
+                        return this.toExistsResult(this.certificateService.getChCertificateByRequestId(request.id));
+                    case 'hong kong':
+                    case 'hongkong':
+                        return this.toExistsResult(this.certificateService.getHkCertificateByRequestId(request.id));
+                    case 'india':
+                        return this.toExistsResult(this.certificateService.getIndCertificateByRequestId(request.id));
+                    case 'indonesia':
+                        return this.toExistsResult(this.certificateService.getIdCertificateByRequestId(request.id));
+                    case 'japan':
+                        return this.toExistsResult(this.certificateService.getJpCertificateByRequestId(request.id));
+                    case 'kuwait':
+                        return this.toExistsResult(this.certificateService.getKwCertificateByRequestId(request.id));
+                    case 'malaysia':
+                        return this.toExistsResult(this.certificateService.getMyCertificateByRequestId(request.id));
+                    case 'maldives':
+                        return this.toExistsResult(this.certificateService.getMvCertificateByRequestId(request.id));
+                    case 'new zealand':
+                    case 'newzealand':
+                        return this.toExistsResult(this.certificateService.getNzCertificateByRequestId(request.id));
+                    case 'russia':
+                        return this.toExistsResult(this.certificateService.getRuCertificateByRequestId(request.id));
+                    case 'taiwan':
+                        return this.toExistsResult(this.certificateService.getTwCertificateByRequestId(request.id));
+                    case 'ukraine':
+                        return this.toExistsResult(this.certificateService.getUaCertificateByRequestId(request.id));
+                    case 'uk':
+                    case 'united kingdom':
+                    case 'great britain':
+                        return this.toExistsResult(this.certificateService.getUkCertificateByRequestId(request.id));
+                    case 'usa':
+                    case 'united states of america':
+                    case 'united states':
+                        return this.toExistsResult(this.certificateService.getUsaCertificateByRequestId(request.id));
+                    case 'israel':
+                        return this.toExistsResult(this.certificateService.getIlCertificateByRequestId(request.id));
+                    default:
+                        return of(false);
+                }
+            })
+        );
     }
 
     private toExistsResult<T>(request$: Observable<T>): Observable<boolean> {

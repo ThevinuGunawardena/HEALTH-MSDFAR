@@ -100,6 +100,73 @@
         </ng-template>
     </p-dialog>
 
+    <!-- Template Selection Dialog (Option B) -->
+    <p-dialog
+        [(visible)]="templateDialogVisible"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        [closable]="true"
+        [style]="{ width: '42rem' }"
+        [breakpoints]="{ '960px': '85vw', '640px': '96vw' }"
+        (onHide)="closeTemplateDialog()"
+        styleClass="template-selection-dialog"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="template-header-icon-box">
+                    <i class="pi pi-file-edit text-xl text-blue-600"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-lg text-slate-800">Select Certificate Template</div>
+                    <div class="text-xs text-slate-500 font-medium" *ngIf="selectedRequestForTemplate as req">
+                        Destination: <span class="font-semibold text-slate-700">{{ req.country }}</span> &bull; Ref: <span class="font-semibold text-slate-700">{{ req.refNumber }}</span>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-container *ngIf="selectedRequestForTemplate as req">
+            <div class="template-dialog-body">
+                <p class="template-dialog-lead">
+                    Destination country <strong class="text-blue-900">{{ req.country }}</strong> has multiple official health/veterinary certificate forms.
+                    Please select which certificate template you wish to {{ templateDialogAction === 'edit' ? 'edit' : 'continue and fill' }}:
+                </p>
+
+                <div class="template-options-grid">
+                    <div
+                        *ngFor="let opt of templateOptions"
+                        class="template-card"
+                        (click)="selectTemplate(opt)"
+                    >
+                        <div class="template-card-main">
+                            <div class="template-icon-wrapper">
+                                <i [class]="opt.icon || 'pi pi-file'"></i>
+                            </div>
+                            <div class="template-card-info">
+                                <div class="template-card-title-row">
+                                    <span class="template-card-title">{{ opt.label }}</span>
+                                    <span class="template-badge">{{ opt.badge }}</span>
+                                </div>
+                                <p class="template-card-desc">{{ opt.description }}</p>
+                            </div>
+                        </div>
+                        <div class="template-card-action">
+                            <span class="template-action-label">{{ templateDialogAction === 'edit' ? 'Edit' : 'Fill' }} Form</span>
+                            <i class="pi pi-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-template pTemplate="footer">
+            <div class="confirm-dialog-actions">
+                <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="closeTemplateDialog()"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
     <p-table [value]="filteredRequests" [rows]="10" [paginator]="false" [responsiveLayout]="'scroll'" styleClass="p-datatable-striped p-datatable-gridlines">
         <ng-template pTemplate="header">
             <tr>
@@ -118,7 +185,21 @@
                 <td>{{ request.date | date: 'yyyy-MM-dd' }}</td>
                 <td>{{ request.company }}</td>
                 <td>
-                    <span class="font-bold">{{ request.refNumber }}</span>
+                    <div class="flex flex-col gap-1 items-start">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-bold text-gray-900">{{ request.refNumber }}</span>
+                            <span *ngIf="request.cancelsAndReplacesRef || (request.refNumber && request.refNumber.startsWith('*'))"
+                                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-xs"
+                                  title="Replacement Certificate">
+                                REPLACEMENT
+                            </span>
+                        </div>
+                        <div *ngIf="request.cancelsAndReplacesRef" class="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                            <span class="text-gray-400">Replaces:</span>
+                            <span class="font-semibold text-gray-700">{{ request.cancelsAndReplacesRef }}</span>
+                            <span *ngIf="request.cancelsAndReplacesDate" class="text-gray-400">({{ request.cancelsAndReplacesDate | date: 'dd/MM/yyyy' }})</span>
+                        </div>
+                    </div>
                 </td>
                 <td>
                     <span [class]="'type-badge type-' + request.type.toLowerCase()">
@@ -134,17 +215,22 @@
                 </td>
                 <td>
                     <div class="flex gap-2 flex-wrap items-center" *ngIf="request.status === 'Pending' && !isCompanyUser">
+                        <p-button label="View" icon="pi pi-eye" severity="info" [outlined]="true" size="small" (onClick)="onView(request)"></p-button>
                         <p-button label="Confirm" icon="pi pi-check" severity="success" [outlined]="true" size="small" (onClick)="onConfirm(request)"></p-button>
                         <p-button label="Edit" icon="pi pi-pencil" severity="warn" [outlined]="true" size="small" (onClick)="onEdit(request)"></p-button>
+                        <p-button label="Replacement" icon="pi pi-refresh" severity="help" [outlined]="true" size="small" (onClick)="onReplacement(request)" title="Cancel & Issue Replacement Certificate"></p-button>
                         <p-button label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" size="small" (onClick)="onReject(request)"></p-button>
                     </div>
                     <div class="flex gap-2 flex-wrap items-center" *ngIf="request.status === 'Confirmed'">
                         <p-button *ngIf="request.hasSubmittedCertificate === true" label="View" icon="pi pi-eye" severity="info" [outlined]="true" size="small" (onClick)="onView(request)"></p-button>
-                        <p-button *ngIf="!isCompanyUser" label="Edit" icon="pi pi-pencil" severity="warn" [outlined]="true" size="small" (onClick)="onEdit(request)"></p-button>
                         <p-button *ngIf="request.hasSubmittedCertificate === false && !isCompanyUser" label="Continue" icon="pi pi-pencil" severity="secondary" [outlined]="true" size="small" (onClick)="onContinue(request)"></p-button>
                         <p-button *ngIf="request.hasSubmittedCertificate === false && !isCompanyUser" label="Reject" icon="pi pi-times" severity="danger" [outlined]="true" size="small" (onClick)="onReject(request)"></p-button>
                     </div>
-                    <span *ngIf="request.status == 'Rejected'" class="text-sm italic text-gray-500"> Processed </span>
+                    <div class="flex gap-2 flex-wrap items-center" *ngIf="request.status === 'Rejected'">
+                        <p-button *ngIf="request.hasSubmittedCertificate === true" label="View" icon="pi pi-eye" severity="info" [outlined]="true" size="small" (onClick)="onView(request)"></p-button>
+                        <p-button *ngIf="!isCompanyUser" label="Replacement" icon="pi pi-refresh" severity="help" [outlined]="true" size="small" (onClick)="onReplacement(request)" title="Cancel & Issue Replacement Certificate"></p-button>
+                        <span *ngIf="isCompanyUser" class="text-sm italic text-gray-500"> Processed </span>
+                    </div>
                 </td>
             </tr>
         </ng-template>

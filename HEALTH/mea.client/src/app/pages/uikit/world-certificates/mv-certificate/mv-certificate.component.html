@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <span *ngIf="form.get('certificateNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateNumber')?.value }}</span>
+            <span *ngIf="form.get('certificateNumber')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateNumber')?.value || refNumber }}</span>
             <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
             <p-button
                 *ngIf="!viewOnly"
@@ -30,13 +30,11 @@
                 (onClick)="onSubmit()"
             ></p-button>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="print()"
             ></p-button>
         </div>
@@ -81,6 +79,7 @@
     <!-- FORMAT 1: GENERIC MODEL OFFICIAL CERTIFICATE (BOXED - TC 4683)  -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="mv-page boxed-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'generic'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="mv-content">
             <!-- Boxed Outer Frame enclosing Header, Grid, and Footer Note -->
             <div class="mv-boxed-frame">
@@ -91,7 +90,7 @@
                         <div class="mv-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="mv-logo" /></div>
                         <div class="cert-header-qr-slot">
                             <app-certificate-qr
-                                [refNumber]="form.get('certificateNumber')?.value || 'TC 4683'"
+                                [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || refNumber || ''"
                                 [certificateRequestId]="certificateRequestId"
                                 [consignor]="form.get('consignorExporter')?.value"
                                 [consignee]="form.get('consigneeImporter')?.value"
@@ -124,8 +123,8 @@
                         </td>
                         <td class="mv-td" colspan="2">
                             <div>
-                                <span class="mv-flbl font-bold">2. Certificate number: <span class="font-normal">{{ form.get('certificateNumber')?.value || 'TC 4683' }}</span></span>
-                                <input pInputText formControlName="certificateNumber" class="mv-input font-bold print-hide mt-0.5" />
+                                <span class="mv-flbl font-bold">2. Certificate number: <span class="font-normal">{{ form.get('certificateNumber')?.value || refNumber || '' }}</span></span>
+                                <input pInputText formControlName="certificateNumber" class="mv-input font-bold print-hide mt-0.5" [readonly]="!!refNumber || !!certificateRequestId" />
                             </div>
                         </td>
                     </tr>
@@ -357,48 +356,8 @@
                                         <span class="font-bold text-xs">Signature:</span>
                                     </div>
                                     <!-- Signature Dropzone in Box 18 -->
-                                    <div
-                                        class="mv-sig-placeholder"
-                                        [class.mv-drop-active]="isDraggingSignature"
-                                        [class.has-content]="!!form.get('officialSignature')?.value"
-                                        (click)="!viewOnly && sigInputMvBox.click()"
-                                        (dragover)="onSignatureDragOver($event)"
-                                        (dragleave)="onSignatureDragLeave($event)"
-                                        (drop)="onSignatureDrop($event)"
-                                        (paste)="onSignaturePaste($event)"
-                                        tabindex="0"
-                                    >
-                                        <input type="file" #sigInputMvBox (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                        <div *ngIf="!form.get('officialSignature')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-1 text-center">
-                                            <i class="pi pi-pencil text-slate-400 text-xs mb-0.5 print-hide"></i>
-                                            <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste signature</span>
-                                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                                        </div>
-
-                                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
-                                            <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="mv-sig-img" />
-                                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputMvBox.click()" title="Change Signature">
-                                                    <i class="pi pi-pencil text-2xs"></i>
-                                                </button>
-                                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                    <i class="pi pi-trash text-2xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
-                                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
-                                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputMvBox.click()" title="Change Signature">
-                                                    <i class="pi pi-pencil text-2xs"></i>
-                                                </button>
-                                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                    <i class="pi pi-trash text-2xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="mv-sig-box" style="min-height: 105px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                                     </div>
                                 </div>
                             </div>
@@ -406,48 +365,8 @@
                             <!-- Official Stamp Row -->
                             <div>
                                 <div class="font-bold text-xs mb-0.5">Official Stamp:</div>
-                                <div
-                                    class="mv-stamp-placeholder"
-                                    [class.mv-drop-active]="isDraggingStamp"
-                                    [class.has-content]="!!form.get('officialStamp')?.value"
-                                    (click)="!viewOnly && stampInputMvBox.click()"
-                                    (dragover)="onStampDragOver($event)"
-                                    (dragleave)="onStampDragLeave($event)"
-                                    (drop)="onStampDrop($event)"
-                                    (paste)="onStampPaste($event)"
-                                    tabindex="0"
-                                >
-                                    <input type="file" #stampInputMvBox (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <div *ngIf="!form.get('officialStamp')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-1 text-center">
-                                        <i class="pi pi-shield text-slate-400 text-xs mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste stamp</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">[ Official Stamp ]</span>
-                                    </div>
-
-                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
-                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="mv-stamp-img" />
-                                        <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputMvBox.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
-                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
-                                        <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputMvBox.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="mv-stamp-box" style="min-height: 105px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                                 </div>
                             </div>
                         </td>
@@ -467,6 +386,7 @@
     <!-- FORMAT 2: OFFICIAL LETTERHEAD HEALTH CERTIFICATE (TC 4522)       -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="mv-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letterhead'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="mv-content">
             <!-- ── Tri-lingual Official Header ── -->
             <div class="mv-letter-header">
@@ -477,7 +397,7 @@
                     </div>
                     <div class="cert-header-qr-slot">
                         <app-certificate-qr
-                            [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || 'TC 4522'"
+                            [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || refNumber || ''"
                             [certificateRequestId]="certificateRequestId"
                             [consignor]="form.get('consignorExporter')?.value"
                             [consignee]="form.get('consigneeImporter')?.value"
@@ -511,7 +431,7 @@
                         <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
                     </div>
                     <div class="mv-ref-brace">&#125;</div>
-                    <input pInputText formControlName="certificateNumber" class="mv-ref-input uppercase-text font-bold" placeholder="TC 4522" />
+                    <input pInputText formControlName="certificateNumber" class="mv-ref-input uppercase-text font-bold" [readonly]="!!refNumber || !!certificateRequestId" />
                 </div>
                 <div class="mv-ref-block">
                     <div class="mv-ref-labels">
@@ -606,96 +526,16 @@
                 <!-- Left: Official Stamp -->
                 <div class="mv-stamp-col">
                     <div class="mv-letter-lbl font-bold text-xs mb-1">Official stamp:</div>
-                    <div
-                        class="mv-stamp-placeholder"
-                        [class.mv-drop-active]="isDraggingStamp"
-                        [class.has-content]="!!form.get('officialStamp')?.value"
-                        (click)="!viewOnly && stampInputLetter.click()"
-                        (dragover)="onStampDragOver($event)"
-                        (dragleave)="onStampDragLeave($event)"
-                        (drop)="onStampDrop($event)"
-                        (paste)="onStampPaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #stampInputLetter (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <div *ngIf="!form.get('officialStamp')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-shield text-slate-400 text-xs mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste stamp</span>
-                            <span class="print-show text-3xs text-slate-400 italic">[ Official Stamp ]</span>
-                        </div>
-
-                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
-                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="mv-stamp-img" />
-                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="mv-preview-container">
-                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
-                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="mv-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="mv-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                     </div>
                 </div>
 
                 <!-- Right: Signature of Official Inspector -->
                 <div class="mv-sig-col">
                     <div class="mv-letter-lbl font-bold text-xs mb-1">Signature of Official Inspector:</div>
-                    <div
-                        class="mv-sig-placeholder"
-                        [class.mv-drop-active]="isDraggingSignature"
-                        [class.has-content]="!!form.get('officialSignature')?.value"
-                        (click)="!viewOnly && sigInputLetter.click()"
-                        (dragover)="onSignatureDragOver($event)"
-                        (dragleave)="onSignatureDragLeave($event)"
-                        (drop)="onSignatureDrop($event)"
-                        (paste)="onSignaturePaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #sigInputLetter (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <div *ngIf="!form.get('officialSignature')?.value" class="mv-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-pencil text-slate-400 text-xs mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500">Click, drag &amp; drop, or paste signature</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                        </div>
-
-                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
-                            <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="mv-sig-img" />
-                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="mv-preview-container">
-                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="mv-pdf-preview"></object>
-                            <div class="mv-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="mv-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="mv-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="mv-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                     </div>
 
                     <!-- Officer Credentials -->
@@ -780,13 +620,11 @@
         ></p-button>
         <div class="flex items-center gap-3">
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 [outlined]="true"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="top"
                 (onClick)="print()"
             ></p-button>
             <p-button

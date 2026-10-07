@@ -384,13 +384,15 @@
     line-height: 1.4;
 }
 .am-sig-area {
-    border: 1px dashed #888;
+    border: 1px dashed #94a3b8;
+    border-radius: 4px;
     width: 100%;
-    height: 70px;
+    min-height: 105px;
+    height: 105px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #bbb;
+    color: #94a3b8;
     font-style: italic;
     font-size: 9pt;
 }
@@ -1083,13 +1085,15 @@ body {
         line-height: 1.4 !important;
     }
     .am-sig-area {
-        border: 1px dashed #888 !important;
+        border: 1px dashed #94a3b8 !important;
+        border-radius: 4px !important;
         width: 100% !important;
-        height: 70px !important;
+        min-height: 105px !important;
+        height: 105px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        color: #bbb !important;
+        color: #94a3b8 !important;
         font-style: italic !important;
         font-size: 9pt !important;
         -webkit-print-color-adjust: exact;

@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -24,8 +25,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-my-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -39,21 +39,27 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './my-certificate.component.html',
     styleUrls: ['./my-certificate.component.css', '../certificate-print.css']
 })
 export class MyCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSubmitted = false;
+    refNumber: string = '';
     viewMode: 'fresh' | 'quality' | 'frozen' = 'fresh';
 
     userOptions: { label: string; value: string }[] = [];
@@ -187,6 +193,8 @@ export class MyCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -206,6 +214,7 @@ export class MyCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({
                     certificateReferenceNo: params['ref'],
                     certificateReferenceNoPage2: params['ref'],
@@ -314,10 +323,14 @@ export class MyCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                const cleanCertNo = (data.certificateReferenceNo && !dummyValues.includes(data.certificateReferenceNo.trim())) ? data.certificateReferenceNo : '';
+                const finalCertNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
+
                 this.form.patchValue({
                     viewMode: mode,
                     exporterName: data.exporterName,
-                    certificateReferenceNo: data.certificateReferenceNo,
+                    certificateReferenceNo: finalCertNo,
                     qualityCertificateNo: data.qualityCertificateNo || 'N/A',
                     competentAuthority: data.competentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     localAuthority: data.localAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
@@ -344,13 +357,13 @@ export class MyCertificateComponent implements OnInit {
                     transitCountry: data.transitCountry || 'N/A',
                     departureDate: data.departureDate ? new Date(data.departureDate) : new Date(),
                     certifyingOfficialDate: data.certifyingOfficialDate ? new Date(data.certifyingOfficialDate) : new Date(),
-                    certificateReferenceNoPage2: data.certificateReferenceNoPage2 || data.certificateReferenceNo,
+                    certificateReferenceNoPage2: finalCertNo,
                     productBrand: data.productBrand,
                     originFisheries: data.originFisheries,
                     originAquaculture: data.originAquaculture,
                     certifiedProductFor: data.certifiedProductFor || 'HUMAN CONSUMPTION',
                     treatmentType: data.treatmentType || (mode === 'frozen' ? 'FROZEN' : 'Fresh'),
-                    certificateReferenceNoPage3: data.certificateReferenceNoPage3 || data.certificateReferenceNo,
+                    certificateReferenceNoPage3: finalCertNo,
                     additionalInformation: data.additionalInformation || 'N/A',
                     officialStamp: data.officialStamp || '',
                     officialSignature: data.officialSignature || '',
@@ -361,7 +374,7 @@ export class MyCertificateComponent implements OnInit {
                         : 'QUALITY CONTROL OFFICER (GRADE II)\nB.Sc.(BIOLOGY), M.Sc.(FOOD SCI & TEC)(SRI LANKA).'),
 
                     // Quality Cert fields sync
-                    documentReferenceNo: data.certificateReferenceNo || '',
+                    documentReferenceNo: finalCertNo,
                     processingEstablishmentName: data.processingEstablishment || '',
                     processingEstablishmentAuthNumber: data.authorizationNo || '',
                     commercialInvoice: data.invoiceNo || ''
@@ -438,6 +451,11 @@ export class MyCertificateComponent implements OnInit {
                 const isFrozen = !!vetForm.treatmentFrozen || !!vetForm.transportShip;
                 this.viewMode = isFrozen ? 'frozen' : 'fresh';
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                const cleanCertNo = (vetForm.healthCertNo && !dummyValues.includes(vetForm.healthCertNo.trim())) ? vetForm.healthCertNo : 
+                                    (vetForm.newHC && !dummyValues.includes(vetForm.newHC.trim())) ? vetForm.newHC : '';
+                const certNo = this.refNumber || vetForm.referenceNumber || cleanCertNo || '';
+
                 const exporterFull = vetForm.consignorName && vetForm.consignorAddress
                     ? `${vetForm.consignorName}\n${vetForm.consignorAddress}`
                     : (vetForm.consignorName || '');
@@ -448,6 +466,10 @@ export class MyCertificateComponent implements OnInit {
 
                 this.form.patchValue({
                     viewMode: this.viewMode,
+                    certificateReferenceNo: certNo,
+                    certificateReferenceNoPage2: certNo,
+                    certificateReferenceNoPage3: certNo,
+                    documentReferenceNo: certNo,
                     exporterName: exporterFull,
                     importerDetails: importerFull,
                     countryOfOrigin: vetForm.countryOrigin || 'SRI LANKA',
@@ -925,9 +947,22 @@ export class MyCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            certificateReferenceNo: req.referenceNumber,
+                            certificateReferenceNoPage2: req.referenceNumber,
+                            certificateReferenceNoPage3: req.referenceNumber,
+                            documentReferenceNo: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -935,11 +970,11 @@ export class MyCertificateComponent implements OnInit {
     }
 
     print(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

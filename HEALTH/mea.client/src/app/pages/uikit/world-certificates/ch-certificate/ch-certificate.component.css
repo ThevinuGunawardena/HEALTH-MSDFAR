@@ -629,7 +629,8 @@
         margin-left: 2px;
     }
 
-    .ch-stamp-placeholder {
+    .ch-stamp-placeholder,
+    .ch-stamp-box-inner {
         border: none !important;
         background: transparent !important;
         height: auto !important;

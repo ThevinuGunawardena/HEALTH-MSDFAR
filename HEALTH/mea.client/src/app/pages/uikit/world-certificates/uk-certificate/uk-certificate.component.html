@@ -21,12 +21,12 @@
             <span *ngIf="form.get('certificateReferenceNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateReferenceNo')?.value }}</span>
             <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                [disabled]="form.get('signatoryUserId')?.invalid"
                 tooltipPosition="bottom"
                 (onClick)="print()"
             ></p-button>
@@ -61,9 +61,11 @@
         <!-- ════ PAGE 1 — Part 1 Details ════════════════════════════════ -->
         <!-- ════════════════════════════════════════════════════════════ -->
         <div class="uk-page">
-            <div class="uk-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="uk-content">
                 <!-- Header -->
-                <div class="uk-header">
+                
+    <div class="uk-header">
                     <div class="cert-header-top-row mb-1">
                         <div class="cert-header-spacer"></div>
                         <div class="uk-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="uk-logo" /></div>
@@ -225,7 +227,8 @@
         <!-- ════ PAGE 2 — I.15 onwards + Products ═══════════════════════ -->
         <!-- ════════════════════════════════════════════════════════════ -->
         <div class="uk-page">
-            <div class="uk-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="uk-content">
                 <!-- Top bar -->
                 <div class="uk-title-bar">
                     <span>(GBHC401 v1.1 Aug – 23)</span>
@@ -449,7 +452,8 @@
         <!-- ════ PAGE 3 — Part II: Certification (Animal Health) ═════════ -->
         <!-- ════════════════════════════════════════════════════════════ -->
         <div class="uk-page">
-            <div class="uk-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="uk-content">
                 <!-- Top bar -->
                 <div class="uk-title-bar">
                     <span>(GBHC401 v1.1 Aug - 23)</span>
@@ -580,7 +584,8 @@
         <!-- ════ PAGE 4 — Part II: Certification (Public Health) ════════ -->
         <!-- ════════════════════════════════════════════════════════════ -->
         <div class="uk-page" [ngClass]="{'last-page': viewMode === 'withoutAttachment'}">
-            <div class="uk-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="uk-content">
                 <!-- Top bar -->
                 <div class="uk-title-bar">
                     <span>(GBHC401 v1.1 Aug - 23)</span>
@@ -690,15 +695,19 @@
                     </tr>
 
                     <tr>
-                        <td class="uk-sig-td view-hide" colspan="3">
+                        <td class="uk-sig-td" colspan="3">
                             <div class="uk-sig-row">
                                 <div class="uk-sig-section">
                                     <div class="uk-sig-label">Stamp:</div>
-                                    <div class="uk-sig-area">Stamp Area</div>
+                                    <div class="uk-sig-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                    </div>
                                 </div>
                                 <div class="uk-sig-section">
                                     <div class="uk-sig-label">Signature:</div>
-                                    <div class="uk-sig-area">Signature Area</div>
+                                    <div class="uk-sig-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -723,7 +732,8 @@
         <!-- ════════════════════════════════════════════════════════════ -->
         <ng-container *ngIf="viewMode === 'withAttachment'">
             <div class="uk-page uk-attachment-page last-page" id="uk-attachment-page-0">
-                <div class="uk-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="uk-content">
                     <!-- Top Attachment Header (Certificate reference No | Attachment | Date) -->
                     <div class="uk-att-top-row">
                         <div class="uk-att-top-left text-xs">
@@ -837,12 +847,12 @@
             <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
             <div class="flex items-center gap-2">
                 <p-button
+                    *ngIf="isAdmin"
                     label="Print / Export PDF"
                     icon="pi pi-print"
                     severity="secondary"
                     [outlined]="true"
-                    [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
-                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
+                    [disabled]="form.get('signatoryUserId')?.invalid"
                     tooltipPosition="top"
                     (onClick)="print()"
                 ></p-button>

@@ -23,6 +23,7 @@
     </div>
     <!-- Page 1 -->
     <div class="cert-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <!-- Header -->
         <div class="cert-header mb-8">
             <div class="cert-header-top-row">
@@ -43,7 +44,7 @@
                 </div>
             </div>
             <div class="text-right text-sm font-bold mb-2">
-                证书号 Num.Ref: <span class="font-normal">{{ refNumber || 'Ref.CH/20260217' }}</span>
+                证书号 Num.Ref: <span class="font-normal">{{ refNumber || '' }}</span>
             </div>
             <h2 class="text-center font-bold mb-2 text-lg">斯里兰卡民主社会主义共和国向中华人民共和国出口水产品卫生证书</h2>
             <h3 class="text-center font-bold mb-4 text-xl">Health Certificate</h3>
@@ -54,7 +55,7 @@
         </div>
 
         <form [formGroup]="form">
-            <!-- Section I -->
+    <!-- Section I -->
             <h3 class="section-header">I. 主管当局信息 Information of competent authority</h3>
             <table class="form-table">
                 <tr>
@@ -446,7 +447,7 @@
 
             <!-- Page 4 -->
             <div class="attachment-section">
-                <h2 class="text-center font-bold text-lg mb-8">Attachment to the Veterinary certificate number: .............</h2>
+                <h2 class="text-center font-bold text-lg mb-8">Attachment to the Veterinary certificate number: {{ refNumber || '.............' }}</h2>
                 <div class="flex flex-col md:flex-row justify-between mb-4 text-md font-bold uppercase">
                     <div class="mb-4">
                         <label class="block font-bold mb-1">Date :</label>
@@ -499,12 +500,11 @@
             <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
             <div class="flex items-center gap-2">
                 <p-button
+                    *ngIf="isAdmin"
                     label="Print"
                     [outlined]="true"
                     (onClick)="print()"
                     icon="pi pi-print"
-                    [disabled]="isCompany && !isApproved"
-                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print Certificate'"
                     tooltipPosition="top"
                 ></p-button>
                 <p-button label="Submit" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary"></p-button>

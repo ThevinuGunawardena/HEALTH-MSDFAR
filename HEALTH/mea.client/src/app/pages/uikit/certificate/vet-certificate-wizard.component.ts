@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -37,12 +38,14 @@ import { CertificateQrComponent } from '@/shared/components/certificate-qr/certi
 @Component({
     selector: 'app-vet-certificate-wizard',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, FileUploadModule, RadioButton, Checkbox, DatePicker, TextareaModule, InputTextModule, ToastModule, DialogModule, AccordionModule, Select, CertificateQrComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, FileUploadModule, RadioButton, Checkbox, DatePicker, TextareaModule, InputTextModule, ToastModule, DialogModule, AccordionModule, Select, CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './vet-certificate-form.component.html',
     styleUrls: ['./vet-certificate-form.component.css', '../world-certificates/certificate-print.css']
 })
 export class VetCertificateWizardComponent implements OnInit, OnDestroy {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     step = 1;
     form: FormGroup;
     uploadedCertificateFiles: File[] = [];
@@ -189,9 +192,12 @@ export class VetCertificateWizardComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['ref']) {
                 this.referenceNumber = params['ref'];
+                this.form.patchValue({ newHC: params['ref'] });
             }
             this.viewOnly = params['viewOnly'] === true || params['viewOnly'] === 'true';
             if (params['type']) {
@@ -207,12 +213,13 @@ export class VetCertificateWizardComponent implements OnInit, OnDestroy {
                 this.countryId = Number(params['countryId']);
             }
             if (params['country']) {
-                this.form.patchValue({ countryOrigin: params['country'] });
                 if (this.certificateType !== 'EU') {
                     this.certificateTitle = `APPLICATION FOR THE ISSUE OF HEALTH CERTIFICATE TO ${String(params['country']).toUpperCase()}`;
+                    this.form.patchValue({ countryDestinationISO: params['country'] });
                 }
             }
-            if (params['adminEdit'] === 'true') {
+            const userRole = (this.authService.getUserRole() || '').toLowerCase();
+            if (params['adminEdit'] === 'true' && userRole === 'admin') {
                 this.viewOnly = false;
             }
             if (params['requestId']) {
@@ -321,13 +328,32 @@ export class VetCertificateWizardComponent implements OnInit, OnDestroy {
     }
 
     private loadSavedForm(requestId: number) {
+        this.certificateRequestService.getRequestById(requestId).subscribe({
+            next: (r) => {
+                if (r) {
+                    if (r.cancelsAndReplacesRef) this.cancelsAndReplacesRef = r.cancelsAndReplacesRef;
+                    if (r.cancelsAndReplacesDate) this.cancelsAndReplacesDate = r.cancelsAndReplacesDate;
+                    if (!this.referenceNumber && r.referenceNumber) {
+                        this.referenceNumber = r.referenceNumber;
+                        this.form.patchValue({ newHC: r.referenceNumber });
+                    }
+                }
+            }
+        });
+
         this.certificateRequestService.getVetFormByRequestId(requestId).subscribe({
             next: (savedForm) => {
                 if (!savedForm) return;
                 if (!this.referenceNumber && savedForm.referenceNumber) {
                     this.referenceNumber = savedForm.referenceNumber;
                 }
-                this.form.patchValue(this.mapSavedFormToViewModel(savedForm), { emitEvent: false });
+                const mapped = this.mapSavedFormToViewModel(savedForm);
+                const ref = this.referenceNumber || savedForm.referenceNumber || savedForm.newHC;
+                if (ref) {
+                    this.referenceNumber = ref;
+                    mapped['newHC'] = ref;
+                }
+                this.form.patchValue(mapped, { emitEvent: false });
                 this.initializeProductsFromSavedForm(savedForm);
                 this.viewModeAttachments = Array.isArray(savedForm.uploadedCertificateFiles) ? savedForm.uploadedCertificateFiles : [];
                 this.preloadAttachmentThumbnails();
@@ -541,6 +567,9 @@ export class VetCertificateWizardComponent implements OnInit, OnDestroy {
         }
 
         this.isLoading = true;
+        if (this.referenceNumber) {
+            this.form.patchValue({ newHC: this.referenceNumber });
+        }
         this.syncLegacyProductFields();
 
         const existingRequestId = Number(this.form.get('certificateRequestId')?.value);

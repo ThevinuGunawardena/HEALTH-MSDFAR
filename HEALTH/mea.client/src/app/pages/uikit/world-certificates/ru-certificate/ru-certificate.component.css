@@ -466,14 +466,12 @@
     }
 
     .ru-stamp-placeholder,
-    .ru-sig-placeholder {
+    .ru-sig-placeholder,
+    .ru-stamp-box,
+    .ru-sig-box {
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
     }
 
     .ru-preview-container {

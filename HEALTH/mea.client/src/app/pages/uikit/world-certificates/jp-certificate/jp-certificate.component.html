@@ -18,16 +18,14 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <span *ngIf="form.get('myRef')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('myRef')?.value }}</span>
+            <span *ngIf="form.get('myRef')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('myRef')?.value || refNumber }}</span>
             <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="printCertificate()"
             ></p-button>
         </div>
@@ -56,7 +54,8 @@
 
     <!-- ════ SINGLE PAGE ════ -->
         <div class="jp-page last-page">
-            <div class="jp-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="jp-content">
                 <!-- ── TOP HEADER ── -->
                 <div class="jp-header">
                     <div class="cert-header-top-row">
@@ -66,7 +65,7 @@
                         </div>
                         <div class="cert-header-qr-slot">
                             <app-certificate-qr
-                                [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value"
+                                [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || refNumber || ''"
                                 [certificateRequestId]="certificateRequestId"
                                 [consignor]="form.get('consignorName')?.value"
                                 [consignee]="form.get('consigneeName')?.value"
@@ -104,7 +103,7 @@
                             <span>My Ref</span>
                         </div>
                         <div class="jp-ref-brace">&#125;</div>
-                        <input pInputText formControlName="myRef" class="jp-ref-input font-bold" />
+                        <input pInputText formControlName="myRef" class="jp-ref-input font-bold" [readonly]="!!refNumber || !!certificateRequestId" />
                     </div>
                     <div class="jp-ref-block">
                         <div class="jp-ref-labels">
@@ -211,57 +210,14 @@
 
                 <!-- Stamp | Signature -->
                 <div class="jp-sig-section flex justify-between items-start mt-6">
-                    <div style="width: 42%;">
+                    <div style="width: 45%;">
                         <div class="font-bold mb-1">Official stamp:</div>
-                        <div
-                            class="jp-stamp-placeholder"
-                            [class.jp-drop-active]="isDraggingStamp"
-                            [class.has-content]="!!form.get('officialStamp')?.value"
-                            (click)="!viewOnly && stampInputJp.click()"
-                            (dragover)="onStampDragOver($event)"
-                            (dragleave)="onStampDragLeave($event)"
-                            (drop)="onStampDrop($event)"
-                            (paste)="onStampPaste($event)"
-                            tabindex="0"
-                        >
-                            <input type="file" #stampInputJp (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                            <!-- Empty State -->
-                            <div *ngIf="!form.get('officialStamp')?.value" class="jp-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
-                                <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                            </div>
-
-                            <!-- Uploaded Image -->
-                            <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="jp-preview-container">
-                                <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="jp-stamp-img" />
-                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
-                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); stampInputJp.click()" title="Change Stamp">
-                                        <i class="pi pi-pencil text-2xs"></i>
-                                    </button>
-                                    <button type="button" class="jp-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                        <i class="pi pi-trash text-2xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Uploaded PDF -->
-                            <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="jp-preview-container">
-                                <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="jp-pdf-preview"></object>
-                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
-                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); stampInputJp.click()" title="Change Stamp">
-                                        <i class="pi pi-pencil text-2xs"></i>
-                                    </button>
-                                    <button type="button" class="jp-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                        <i class="pi pi-trash text-2xs"></i>
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="jp-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                            <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                         </div>
                     </div>
-                    <div style="width: 55%;" class="text-right">
-                        <div class="font-bold text-left mb-1">Signature of Official Inspector:</div>
+                    <div style="width: 50%;" class="text-left">
+                        <div class="font-bold mb-1">Signature of Official Inspector:</div>
                         <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2 text-left">
                             <p-select
                                 [options]="userOptions"
@@ -273,52 +229,9 @@
                             ></p-select>
                         </div>
 
-                        <!-- Signature Dropzone -->
-                        <div
-                            class="jp-sig-placeholder"
-                            [class.jp-drop-active]="isDraggingSignature"
-                            [class.has-content]="!!form.get('officialSignature')?.value"
-                            (click)="!viewOnly && sigInputJp.click()"
-                            (dragover)="onSignatureDragOver($event)"
-                            (dragleave)="onSignatureDragLeave($event)"
-                            (drop)="onSignatureDrop($event)"
-                            (paste)="onSignaturePaste($event)"
-                            tabindex="0"
-                        >
-                            <input type="file" #sigInputJp (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                            <!-- Empty State -->
-                            <div *ngIf="!form.get('officialSignature')?.value" class="jp-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste signature screenshot / PDF</span>
-                                <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                            </div>
-
-                            <!-- Uploaded Image -->
-                            <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="jp-preview-container">
-                                <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="jp-sig-img" />
-                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
-                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); sigInputJp.click()" title="Change Signature">
-                                        <i class="pi pi-pencil text-2xs"></i>
-                                    </button>
-                                    <button type="button" class="jp-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                        <i class="pi pi-trash text-2xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Uploaded PDF -->
-                            <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="jp-preview-container">
-                                <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="jp-pdf-preview"></object>
-                                <div class="jp-action-overlay print-hide" *ngIf="!viewOnly">
-                                    <button type="button" class="jp-mini-btn" (click)="$event.stopPropagation(); sigInputJp.click()" title="Change Signature">
-                                        <i class="pi pi-pencil text-2xs"></i>
-                                    </button>
-                                    <button type="button" class="jp-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                        <i class="pi pi-trash text-2xs"></i>
-                                    </button>
-                                </div>
-                            </div>
+                        <!-- Signature Space -->
+                        <div class="jp-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                            <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                         </div>
 
                         <div class="text-left font-bold text-xs mt-2">Name: {{ form.get('signatoryName')?.value }}</div>
@@ -364,14 +277,12 @@
             ></p-button>
             <div class="flex items-center gap-3">
                 <p-button
+                    *ngIf="isAdmin"
                     label="Print / Export PDF"
                     [outlined]="true"
                     (onClick)="printCertificate()"
                     icon="pi pi-print"
                     size="small"
-                    [disabled]="isCompany && !isApproved"
-                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                    tooltipPosition="top"
                 ></p-button>
                 <p-button
                     *ngIf="!viewOnly"

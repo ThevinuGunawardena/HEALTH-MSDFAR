@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -45,17 +46,23 @@ export const DEFAULT_AM_PRODUCTS = [
 @Component({
     selector: 'app-am-certificate',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, InputTextModule, TextareaModule, ButtonModule, DatePicker, ToastModule, CheckboxModule, Select, TooltipModule, ConfirmPasswordDialogComponent, CertificateQrComponent],
+    imports: [CommonModule, ReactiveFormsModule, InputTextModule, TextareaModule, ButtonModule, DatePicker, ToastModule, CheckboxModule, Select, TooltipModule, ConfirmPasswordDialogComponent, CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './am-certificate.component.html',
     styleUrls: ['./am-certificate.component.css', '../certificate-print.css']
 })
 export class AmCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     requestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSaving = false;
     userOptions: { label: string; value: string }[] = [];
@@ -68,6 +75,7 @@ export class AmCertificateComponent implements OnInit {
 
     preExportCertificatesRows: any[] = [];
     attachmentRows: any[] = [];
+    refNumber: string = '';
 
     get shouldShowSignatorySelect(): boolean {
         return (!this.viewOnly || !this.form.get('signatoryName')?.value) && !this.isCompany;
@@ -125,7 +133,7 @@ export class AmCertificateComponent implements OnInit {
             transportOther: [false],
             transportId: ['AIR'],
             countryOfTransit: ['NONE'],
-            certificateNo: ['SX 2008'],
+            certificateNo: [''],
             countryOrigin: ['SRI LANKA'],
             countryIssuing: ['SRI LANKA'],
             competentAuthorityExporting: ['DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES'],
@@ -174,6 +182,8 @@ export class AmCertificateComponent implements OnInit {
             this.userOptions = users.filter((u) => u.roleName && (u.roleName.toLowerCase() === 'user' || u.roleName.toLowerCase() === 'admin')).map((u) => ({ label: u.name, value: u.id }));
         });
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -181,6 +191,7 @@ export class AmCertificateComponent implements OnInit {
                 this.viewOnly = params['viewOnly'] === 'true' || params['viewOnly'] === true;
             }
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ certificateNo: params['ref'] });
             }
             if (params['requestId']) {
@@ -254,6 +265,13 @@ export class AmCertificateComponent implements OnInit {
                     this.loadVetFormData(requestId);
                     return;
                 }
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.certificateNo?.startsWith('HC-') || data.certificateNo?.startsWith('*') ? data.certificateNo : '') ||
+                               (data.certRefNumber?.startsWith('HC-') || data.certRefNumber?.startsWith('*') ? data.certRefNumber : '') ||
+                               (data.certificateNo && !['ffff', 'FFFF', 'Draft', 'SX 2008'].includes(data.certificateNo.trim()) ? data.certificateNo : '') ||
+                               this.refNumber || '';
                 this.form.patchValue({
                     consignorName: data.consignorName,
                     consignorAddress: data.consignorAddress,
@@ -266,7 +284,7 @@ export class AmCertificateComponent implements OnInit {
                     transportOther: data.transportOther,
                     transportId: data.transportId || 'AIR',
                     countryOfTransit: data.countryOfTransit || 'NONE',
-                    certificateNo: data.certificateNo || data.certRefNumber || data.healthCertNo || '',
+                    certificateNo: certNo,
                     countryOrigin: data.countryOrigin || 'SRI LANKA',
                     countryIssuing: data.countryIssuing || 'SRI LANKA',
                     competentAuthorityExporting: data.competentAuthorityExporting || 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -353,6 +371,13 @@ export class AmCertificateComponent implements OnInit {
         }
 
         const defaultRegNo = data.approvalNo || 'DFAR/FPE/98/07';
+        const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                       (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                       (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                       (data.healthCertNo?.startsWith('HC-') || data.healthCertNo?.startsWith('*') ? data.healthCertNo : '') ||
+                       (data.newHC?.startsWith('HC-') || data.newHC?.startsWith('*') ? data.newHC : '') ||
+                       (data.healthCertNo && !['ffff', 'FFFF', 'none', 'null'].includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                       this.refNumber || '';
 
         this.form.patchValue({
             consignorName: data.consignorName || '',
@@ -361,7 +386,7 @@ export class AmCertificateComponent implements OnInit {
             consigneeName: data.consigneeName || '',
             consigneeAddress: data.consigneeAddress || '',
 
-            certificateNo: data.healthCertNo || data.newHC || '',
+            certificateNo: certNo,
             countryOrigin: data.countryOrigin || 'SRI LANKA',
             countryIssuing: 'SRI LANKA',
             competentAuthorityExporting: 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -654,8 +679,16 @@ export class AmCertificateComponent implements OnInit {
         this.certificateRequestService.getRequestById(requestId).subscribe({
             next: (req) => {
                 if (req) {
+                    if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                    if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                }
+                if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ certificateNo: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -663,11 +696,11 @@ export class AmCertificateComponent implements OnInit {
     }
 
     print(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

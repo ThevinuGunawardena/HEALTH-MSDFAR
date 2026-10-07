@@ -30,13 +30,11 @@
                 (onClick)="onSubmit()"
             ></p-button>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="printCertificate()"
             ></p-button>
         </div>
@@ -72,7 +70,8 @@
         <ng-container *ngIf="viewMode === 'attachment'">
             <!-- ═══ PAGE 1/4 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <div class="ch-top-meta flex items-center justify-between">
                         <div class="ch-ref-block">
                             <span class="ch-ref-label">证书号 Num.Ref:</span>
@@ -88,7 +87,8 @@
                             [viewOnly]="viewOnly"
                             [size]="46">
                         </app-certificate-qr>
-                        <div class="ch-page-num-top">1/4</div>
+                        <div class="ch-page-num-top">
+        1/4</div>
                     </div>
 
                     <div class="ch-header-titles">
@@ -249,10 +249,12 @@
 
             <!-- ═══ PAGE 2/4 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <div class="ch-top-meta">
                         <div></div>
-                        <div class="ch-page-num-top">2/4</div>
+                        <div class="ch-page-num-top">
+        2/4</div>
                     </div>
 
                     <table class="ch-grid-table">
@@ -357,10 +359,12 @@
 
             <!-- ═══ PAGE 3/4 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <div class="ch-top-meta">
                         <div></div>
-                        <div class="ch-page-num-top">3/4</div>
+                        <div class="ch-page-num-top">
+        3/4</div>
                     </div>
 
                     <table class="ch-grid-table">
@@ -387,51 +391,8 @@
                         <tr>
                             <td class="ch-stamp-box">
                                 <div class="ch-stamp-label">官方印章 Official Stamp</div>
-                                <div
-                                    class="ch-stamp-placeholder"
-                                    [class.ch-drop-active]="isDraggingStamp"
-                                    [class.has-content]="!!form.get('officialStamp')?.value"
-                                    (click)="!viewOnly && stampInputAttachment.click()"
-                                    (dragover)="onStampDragOver($event)"
-                                    (dragleave)="onStampDragLeave($event)"
-                                    (drop)="onStampDrop($event)"
-                                    (paste)="onStampPaste($event)"
-                                    tabindex="0"
-                                >
-                                    <input type="file" #stampInputAttachment (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <!-- Empty State -->
-                                    <div *ngIf="!form.get('officialStamp')?.value" class="ch-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                        <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                                    </div>
-
-                                    <!-- Uploaded Image -->
-                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
-                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ch-stamp-img" />
-                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInputAttachment.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Uploaded PDF -->
-                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
-                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ch-pdf-preview"></object>
-                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInputAttachment.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="ch-stamp-box-inner" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                                 </div>
                             </td>
                             <td class="ch-signature-box">
@@ -472,7 +433,8 @@
 
             <!-- ═══ PAGE 4/4 (ATTACHMENT) ═══ -->
             <div class="ch-page ch-attach-page">
-                <div class="ch-content ch-attach-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content ch-attach-content">
                     <div class="ch-att-heading-block">
                         <div class="ch-att-title font-bold text-center">
                             Attachment to the Veterinary certificate number {{ form.get('refNumber')?.value || 'TC 4643' }}
@@ -541,7 +503,8 @@
         <ng-container *ngIf="viewMode === 'single'">
             <!-- ═══ PAGE 1/3 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <div class="ch-top-meta flex items-center justify-between">
                         <div class="ch-ref-block">
                             <span class="ch-ref-label">证书号 Num.Ref:</span>
@@ -557,7 +520,8 @@
                             [viewOnly]="viewOnly"
                             [size]="46">
                         </app-certificate-qr>
-                        <div class="ch-page-num-top">1/3</div>
+                        <div class="ch-page-num-top">
+        1/3</div>
                     </div>
 
                     <div class="ch-header-titles">
@@ -722,10 +686,12 @@
 
             <!-- ═══ PAGE 2/3 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <div class="ch-top-meta">
                         <div></div>
-                        <div class="ch-page-num-top">2/3</div>
+                        <div class="ch-page-num-top">
+        2/3</div>
                     </div>
 
                     <table class="ch-grid-table">
@@ -829,10 +795,12 @@
 
             <!-- ═══ PAGE 3/3 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <div class="ch-top-meta">
                         <div></div>
-                        <div class="ch-page-num-top">3/3</div>
+                        <div class="ch-page-num-top">
+        3/3</div>
                     </div>
 
                     <table class="ch-grid-table">
@@ -856,51 +824,8 @@
                         <tr>
                             <td class="ch-stamp-box">
                                 <div class="ch-stamp-label">官方印章 Official Stamp</div>
-                                <div
-                                    class="ch-stamp-placeholder"
-                                    [class.ch-drop-active]="isDraggingStamp"
-                                    [class.has-content]="!!form.get('officialStamp')?.value"
-                                    (click)="!viewOnly && stampInputSingle.click()"
-                                    (dragover)="onStampDragOver($event)"
-                                    (dragleave)="onStampDragLeave($event)"
-                                    (drop)="onStampDrop($event)"
-                                    (paste)="onStampPaste($event)"
-                                    tabindex="0"
-                                >
-                                    <input type="file" #stampInputSingle (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <!-- Empty State -->
-                                    <div *ngIf="!form.get('officialStamp')?.value" class="ch-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                        <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                                    </div>
-
-                                    <!-- Uploaded Image -->
-                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
-                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ch-stamp-img" />
-                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInputSingle.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Uploaded PDF -->
-                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
-                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ch-pdf-preview"></object>
-                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInputSingle.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="ch-stamp-box-inner" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                                 </div>
                             </td>
                             <td class="ch-signature-box">
@@ -946,7 +871,8 @@
         <ng-container *ngIf="viewMode === 'live'">
             <!-- ═══ PAGE 1/2 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <div class="ch-top-meta flex items-center justify-between">
                         <app-certificate-qr
                             [refNumber]="form.get('refNumber')?.value"
@@ -1088,7 +1014,8 @@
 
             <!-- ═══ PAGE 2/2 ═══ -->
             <div class="ch-page">
-                <div class="ch-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
                     <table class="ch-grid-table" style="margin-top: 10px;">
                         <!-- Section 4 -->
                         <tr class="ch-sec-header">
@@ -1149,51 +1076,8 @@
                         <tr>
                             <td class="ch-stamp-box">
                                 <div class="ch-stamp-label">官方印章 Official Stamp</div>
-                                <div
-                                    class="ch-stamp-placeholder"
-                                    [class.ch-drop-active]="isDraggingStamp"
-                                    [class.has-content]="!!form.get('officialStamp')?.value"
-                                    (click)="!viewOnly && stampInputLive.click()"
-                                    (dragover)="onStampDragOver($event)"
-                                    (dragleave)="onStampDragLeave($event)"
-                                    (drop)="onStampDrop($event)"
-                                    (paste)="onStampPaste($event)"
-                                    tabindex="0"
-                                >
-                                    <input type="file" #stampInputLive (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <!-- Empty State -->
-                                    <div *ngIf="!form.get('officialStamp')?.value" class="ch-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                        <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                                    </div>
-
-                                    <!-- Uploaded Image -->
-                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
-                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ch-stamp-img" />
-                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Uploaded PDF -->
-                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ch-preview-container">
-                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ch-pdf-preview"></object>
-                                        <div class="ch-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ch-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ch-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="ch-stamp-box-inner" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                                 </div>
                             </td>
                             <td class="ch-signature-box">

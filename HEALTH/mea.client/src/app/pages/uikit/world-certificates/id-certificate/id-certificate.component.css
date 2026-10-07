@@ -443,14 +443,16 @@ textarea.id-input {
 }
 .id-stamp-box,
 .id-signature-box {
-    border: 1px dashed #bbb;
-    height: 80px;
+    border: 1px dashed #94a3b8;
+    border-radius: 4px;
+    min-height: 105px;
+    height: 105px;
     width: 100%;
     margin-top: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #bbb;
+    color: #94a3b8;
     font-style: italic;
     font-size: 8pt;
     -webkit-print-color-adjust: exact;
@@ -1113,11 +1115,16 @@ body {
     }
     .id-stamp-box,
     .id-signature-box {
-        border: 1px dashed #bbb !important;
-        height: 80px !important;
+        border: 1px dashed #94a3b8 !important;
+        border-radius: 4px !important;
+        min-height: 105px !important;
+        height: 105px !important;
         width: 100% !important;
         margin-top: 4px !important;
         display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #94a3b8 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }

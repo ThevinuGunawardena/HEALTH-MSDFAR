@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -66,8 +67,7 @@ export interface NzDeletions {
 @Component({
     selector: 'app-nz-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -79,13 +79,14 @@ export interface NzDeletions {
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './nz-certificate.component.html',
     styleUrls: ['./nz-certificate.component.css', '../certificate-print.css']
 })
 export class NzCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     products: FormArray;
     certificateRequestId: number | null = null;
@@ -144,6 +145,7 @@ export class NzCertificateComponent implements OnInit {
     previousSignatoryUserId: string | null = null;
     isCompany = false;
     isApproved = false;
+    refNumber: string = '';
 
     isDraggingSignature = false;
     isDraggingStamp = false;
@@ -192,7 +194,7 @@ export class NzCertificateComponent implements OnInit {
         this.form = this.fb.group({
             consignorName: ['CEYLON FRESH SEAFOOD (PVT) LTD', Validators.required],
             consignorAddress: ['71, KUDAHAKAPOLA ROAD, THUDELLA,\nJA-ELA, SRI LANKA.', Validators.required],
-            certificateRefNumber: ['TB 9530', Validators.required],
+            certificateRefNumber: ['', Validators.required],
             consigneeName: ['SERANDIB NEW ZEALAND LTD', Validators.required],
             consigneeAddress: ['3 - 875 DOMINION ROAD, BALMORAL,\nAUCKLAND, NEW ZEALAND', Validators.required],
             countryOfOrigin: ['SRI LANKA', Validators.required],
@@ -235,6 +237,8 @@ export class NzCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -243,6 +247,7 @@ export class NzCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ certificateRefNumber: params['ref'] });
             }
 
@@ -269,9 +274,17 @@ export class NzCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ certificateRefNumber: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -507,10 +520,14 @@ export class NzCertificateComponent implements OnInit {
                     }
                 }
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530'];
+                const cleanCertNo = (data.certificateRefNumber && !dummyValues.includes(data.certificateRefNumber.trim())) ? data.certificateRefNumber : '';
+                const finalCertNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
+
                 this.form.patchValue({
                     consignorName: data.consignorName || 'CEYLON FRESH SEAFOOD (PVT) LTD',
                     consignorAddress: data.consignorAddress || '71, KUDAHAKAPOLA ROAD, THUDELLA,\nJA-ELA, SRI LANKA.',
-                    certificateRefNumber: data.certificateRefNumber || 'TB 9530',
+                    certificateRefNumber: finalCertNo,
                     consigneeName: data.consigneeName || 'SERANDIB NEW ZEALAND LTD',
                     consigneeAddress: data.consigneeAddress || '3 - 875 DOMINION ROAD, BALMORAL,\nAUCKLAND, NEW ZEALAND',
                     countryOfOrigin: data.countryOfOrigin || 'SRI LANKA',
@@ -600,10 +617,15 @@ export class NzCertificateComponent implements OnInit {
                   }
               ];
 
+        const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530'];
+        const cleanCertNo = (data.healthCertNo && !dummyValues.includes(data.healthCertNo.trim())) ? data.healthCertNo : 
+                            (data.newHC && !dummyValues.includes(data.newHC.trim())) ? data.newHC : '';
+        const certNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
+
         this.form.patchValue({
             consignorName: data.consignorName || 'CEYLON FRESH SEAFOOD (PVT) LTD',
             consignorAddress: data.consignorAddress || '71, KUDAHAKAPOLA ROAD, THUDELLA,\nJA-ELA, SRI LANKA.',
-            certificateRefNumber: data.healthCertNo || data.newHC || 'TB 9530',
+            certificateRefNumber: certNo,
             consigneeName: data.consigneeName || 'SERANDIB NEW ZEALAND LTD',
             consigneeAddress: data.consigneeAddress || '3 - 875 DOMINION ROAD, BALMORAL,\nAUCKLAND, NEW ZEALAND',
             countryOfOrigin: data.countryOrigin || 'SRI LANKA',
@@ -821,11 +843,11 @@ export class NzCertificateComponent implements OnInit {
     }
 
     print(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

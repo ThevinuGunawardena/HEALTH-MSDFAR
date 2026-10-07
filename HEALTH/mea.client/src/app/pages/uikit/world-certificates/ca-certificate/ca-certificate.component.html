@@ -54,6 +54,7 @@
     <!-- FORMAT: OFFICIAL LETTERHEAD - LIVE ANIMALS (SX 1691 / TB 5820)   -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="ca-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'live'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="ca-content">
             <!-- ── TOP HEADER ── -->
             <div class="ca-header">
@@ -96,7 +97,7 @@
                         <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
                     </div>
                     <div class="ca-ref-brace">&#125;</div>
-                    <input pInputText formControlName="myRef" class="ca-ref-input uppercase-text font-bold" placeholder="e.g. SX 1691 / TB 5820" />
+                    <input pInputText formControlName="myRef" class="ca-ref-input uppercase-text font-bold" placeholder="e.g. SX 1691 / TB 5820" [readonly]="!!refNumber || !!certificateRequestId" />
                 </div>
                 <div class="ca-ref-block">
                     <div class="ca-ref-labels">
@@ -204,100 +205,14 @@
             <div class="ca-stamp-sig-section mt-4 pt-2">
                 <div class="ca-stamp-col">
                     <div class="ca-lbl-bold font-bold text-xs">Official stamp:</div>
-                    <div
-                        class="ca-stamp-placeholder"
-                        [class.ca-drop-active]="isDraggingStamp"
-                        [class.has-content]="!!form.get('officialStamp')?.value"
-                        (click)="!viewOnly && stampInputLive.click()"
-                        (dragover)="onStampDragOver($event)"
-                        (dragleave)="onStampDragLeave($event)"
-                        (drop)="onStampDrop($event)"
-                        (paste)="onStampPaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #stampInputLive (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialStamp')?.value" class="ca-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ca-preview-container">
-                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ca-stamp-img" />
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ca-preview-container">
-                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ca-pdf-preview"></object>
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); stampInputLive.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="ca-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                     </div>
                 </div>
                 <div class="ca-sig-col">
                     <div class="ca-lbl-bold font-bold text-xs">Signature of Official Inspector:</div>
-                    <div
-                        class="ca-sig-placeholder"
-                        [class.ca-drop-active]="isDraggingSignature"
-                        [class.has-content]="!!form.get('officialSignature')?.value"
-                        (click)="!viewOnly && sigInputLive.click()"
-                        (dragover)="onSignatureDragOver($event)"
-                        (dragleave)="onSignatureDragLeave($event)"
-                        (drop)="onSignatureDrop($event)"
-                        (paste)="onSignaturePaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #sigInputLive (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialSignature')?.value" class="ca-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="ca-preview-container">
-                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="ca-sig-img" />
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); sigInputLive.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="ca-preview-container">
-                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="ca-pdf-preview"></object>
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); sigInputLive.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="ca-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                     </div>
 
                     <!-- Officer Credentials Info -->
@@ -375,6 +290,7 @@
     <!-- FORMAT 1: OFFICIAL LETTERHEAD HEALTH CERTIFICATE (TB 3688)       -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="ca-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letter'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="ca-content">
             <!-- ── TOP HEADER ── -->
             <div class="ca-header">
@@ -423,7 +339,7 @@
                         <span>My Ref</span>
                     </div>
                     <div class="ca-ref-brace">&#125;</div>
-                    <input pInputText formControlName="myRef" class="ca-ref-input uppercase-text font-bold" placeholder="e.g. TB 3688" />
+                    <input pInputText formControlName="myRef" class="ca-ref-input uppercase-text font-bold" placeholder="e.g. TB 3688" [readonly]="!!refNumber || !!certificateRequestId" />
                 </div>
                 <div class="ca-ref-block">
                     <div class="ca-ref-labels">
@@ -526,100 +442,14 @@
             <div class="ca-stamp-sig-section mt-4 pt-2">
                 <div class="ca-stamp-col">
                     <div class="ca-lbl-bold font-bold text-xs">Official stamp:</div>
-                    <div
-                        class="ca-stamp-placeholder"
-                        [class.ca-drop-active]="isDraggingStamp"
-                        [class.has-content]="!!form.get('officialStamp')?.value"
-                        (click)="!viewOnly && stampInputLetter.click()"
-                        (dragover)="onStampDragOver($event)"
-                        (dragleave)="onStampDragLeave($event)"
-                        (drop)="onStampDrop($event)"
-                        (paste)="onStampPaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #stampInputLetter (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialStamp')?.value" class="ca-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ca-preview-container">
-                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ca-stamp-img" />
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ca-preview-container">
-                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ca-pdf-preview"></object>
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); stampInputLetter.click()" title="Change Stamp">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="ca-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                     </div>
                 </div>
                 <div class="ca-sig-col">
                     <div class="ca-lbl-bold font-bold text-xs">Signature of Official Inspector:</div>
-                    <div
-                        class="ca-sig-placeholder"
-                        [class.ca-drop-active]="isDraggingSignature"
-                        [class.has-content]="!!form.get('officialSignature')?.value"
-                        (click)="!viewOnly && sigInputLetter.click()"
-                        (dragover)="onSignatureDragOver($event)"
-                        (dragleave)="onSignatureDragLeave($event)"
-                        (drop)="onSignatureDrop($event)"
-                        (paste)="onSignaturePaste($event)"
-                        tabindex="0"
-                    >
-                        <input type="file" #sigInputLetter (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                        <!-- Empty State -->
-                        <div *ngIf="!form.get('officialSignature')?.value" class="ca-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                        </div>
-
-                        <!-- Uploaded Image -->
-                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="ca-preview-container">
-                            <img [src]="form.get('officialSignature')?.value" alt="Signature" class="ca-sig-img" />
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded PDF -->
-                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="ca-preview-container">
-                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="ca-pdf-preview"></object>
-                            <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); sigInputLetter.click()" title="Change Signature">
-                                    <i class="pi pi-pencil text-2xs"></i>
-                                </button>
-                                <button type="button" class="ca-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                    <i class="pi pi-trash text-2xs"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div class="ca-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                     </div>
 
                     <!-- Officer Credentials Info -->
@@ -697,6 +527,7 @@
     <!-- FORMAT 2: GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)      -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="ca-page generic-page mt-4" *ngIf="(form.get('viewMode')?.value || viewMode) === 'generic'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="ca-content">
             <div class="generic-header text-center mb-3">
                 <div class="font-bold text-sm uppercase underline">MODEL OFFICIAL CERTIFICATE FOR ENTRY INTO CANADA OF FISHERY PRODUCTS</div>
@@ -719,7 +550,7 @@
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex-1">
                                 <span class="font-bold block">2. Certificate Reference No:</span>
-                                <input pInputText formControlName="myRef" class="w-full font-bold uppercase-text" placeholder="Certificate No" />
+                                <input pInputText formControlName="myRef" class="w-full font-bold uppercase-text" placeholder="Certificate No" [readonly]="!!refNumber || !!certificateRequestId" />
                             </div>
                             <app-certificate-qr
                                 [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value"
@@ -809,102 +640,16 @@
                             <!-- Official Stamp Area -->
                             <div>
                                 <div class="ca-lbl-bold font-bold text-xs mb-1">Official stamp:</div>
-                                <div
-                                    class="ca-stamp-placeholder"
-                                    [class.ca-drop-active]="isDraggingStamp"
-                                    [class.has-content]="!!form.get('officialStamp')?.value"
-                                    (click)="!viewOnly && stampInputGeneric.click()"
-                                    (dragover)="onStampDragOver($event)"
-                                    (dragleave)="onStampDragLeave($event)"
-                                    (drop)="onStampDrop($event)"
-                                    (paste)="onStampPaste($event)"
-                                    tabindex="0"
-                                >
-                                    <input type="file" #stampInputGeneric (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <!-- Empty State -->
-                                    <div *ngIf="!form.get('officialStamp')?.value" class="ca-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                        <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                                    </div>
-
-                                    <!-- Uploaded Image -->
-                                    <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="ca-preview-container">
-                                        <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="ca-stamp-img" />
-                                        <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); stampInputGeneric.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ca-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Uploaded PDF -->
-                                    <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="ca-preview-container">
-                                        <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="ca-pdf-preview"></object>
-                                        <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); stampInputGeneric.click()" title="Change Stamp">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ca-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="ca-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                                 </div>
                             </div>
 
                             <!-- Official Inspector Signature & Info -->
                             <div>
                                 <div class="ca-lbl-bold font-bold text-xs mb-1">Signature of Official Inspector:</div>
-                                <div
-                                    class="ca-sig-placeholder"
-                                    [class.ca-drop-active]="isDraggingSignature"
-                                    [class.has-content]="!!form.get('officialSignature')?.value"
-                                    (click)="!viewOnly && sigInputGeneric.click()"
-                                    (dragover)="onSignatureDragOver($event)"
-                                    (dragleave)="onSignatureDragLeave($event)"
-                                    (drop)="onSignatureDrop($event)"
-                                    (paste)="onSignaturePaste($event)"
-                                    tabindex="0"
-                                >
-                                    <input type="file" #sigInputGeneric (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                    <!-- Empty State -->
-                                    <div *ngIf="!form.get('officialSignature')?.value" class="ca-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                        <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                        <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                        <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                                    </div>
-
-                                    <!-- Uploaded Image -->
-                                    <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="ca-preview-container">
-                                        <img [src]="form.get('officialSignature')?.value" alt="Signature" class="ca-sig-img" />
-                                        <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); sigInputGeneric.click()" title="Change Signature">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ca-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Uploaded PDF -->
-                                    <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="ca-preview-container">
-                                        <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="ca-pdf-preview"></object>
-                                        <div class="ca-action-overlay print-hide" *ngIf="!viewOnly">
-                                            <button type="button" class="ca-mini-btn" (click)="$event.stopPropagation(); sigInputGeneric.click()" title="Change Signature">
-                                                <i class="pi pi-pencil text-2xs"></i>
-                                            </button>
-                                            <button type="button" class="ca-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                <i class="pi pi-trash text-2xs"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="ca-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                                 </div>
 
                                 <div class="ca-officer-info text-xs space-y-1 mt-2">
@@ -948,12 +693,12 @@
         <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
         <div class="flex items-center gap-2 ml-auto">
             <p-button
+                *ngIf="isAdmin"
                 label="Print Certificate"
                 icon="pi pi-print"
                 [outlined]="true"
                 (onClick)="print()"
-                [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print Certificate'"
+                [disabled]="form.get('signatoryUserId')?.invalid"
                 tooltipPosition="top"
             ></p-button>
             <p-button label="Submit &amp; Save" icon="pi pi-check" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>

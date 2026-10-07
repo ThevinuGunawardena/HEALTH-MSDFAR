@@ -1,0 +1,489 @@
+<div class="card replacement-requests-card">
+    <p-toast></p-toast>
+
+    <!-- Header & Action Bar -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 border-b border-slate-200 pb-5">
+        <div>
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shadow-xs border border-blue-100">
+                    <i class="pi pi-refresh text-xl font-bold"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800 m-0 leading-tight">Replacement Certificate Requests</h2>
+                    <p class="text-xs text-slate-500 mt-1 mb-0">Manage amendments, corrections, and replacement certificate issuances</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <p-button
+                label="New Replacement Request"
+                icon="pi pi-plus"
+                severity="primary"
+                (onClick)="openCreateDialog()"
+            ></p-button>
+            <p-button
+                icon="pi pi-refresh"
+                severity="secondary"
+                [outlined]="true"
+                pTooltip="Refresh List"
+                [loading]="isLoading"
+                (onClick)="loadRequests()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <!-- Search Input -->
+        <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Search Requests</label>
+            <p-iconfield class="w-full">
+                <p-inputicon class="pi pi-search"></p-inputicon>
+                <input
+                    pInputText
+                    [(ngModel)]="searchTerm"
+                    (input)="onSearch()"
+                    type="text"
+                    placeholder="Search by Original Ref, Replacement Ref, Company, or Country..."
+                    class="w-full text-sm bg-white search-input"
+                />
+            </p-iconfield>
+        </div>
+
+        <!-- Status Filter -->
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">Filter by Status</label>
+            <p-select
+                [(ngModel)]="selectedStatusFilter"
+                [options]="statusFilterOptions"
+                optionLabel="label"
+                optionValue="value"
+                (onChange)="onStatusFilterChange()"
+                class="w-full"
+            ></p-select>
+        </div>
+    </div>
+
+    <!-- Requests Table -->
+    <p-table
+        [value]="filteredRequests"
+        [paginator]="true"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        responsiveLayout="scroll"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} replacement requests"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-striped replacement-table"
+    >
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 70px" class="text-center">#</th>
+                <th>Original Ref No</th>
+                <th>Replacement Ref</th>
+                <th>Exporter / Company</th>
+                <th>Country</th>
+                <th>Reason for Replacement</th>
+                <th style="width: 120px" class="text-center">Status</th>
+                <th style="width: 140px">Requested Date</th>
+                <th style="width: 180px" class="text-center">Actions</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-req let-i="rowIndex">
+            <tr class="hover:bg-blue-50/40 transition-colors">
+                <td class="text-center font-mono text-xs text-slate-400">{{ i + 1 }}</td>
+                <td>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-800 font-mono text-sm">{{ req.originalReferenceNumber }}</span>
+                        <button
+                            *ngIf="req.originalCertificateRequestId"
+                            (click)="viewOriginalCertificate(req)"
+                            class="text-blue-600 hover:text-blue-800 text-xs p-1 rounded hover:bg-blue-100 transition-colors inline-flex items-center"
+                            title="View Original Certificate"
+                        >
+                            <i class="pi pi-external-link text-xs"></i>
+                        </button>
+                    </div>
+                    <span class="text-3xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold uppercase tracking-wider">{{ req.certificateType }}</span>
+                </td>
+                <td>
+                    <span *ngIf="req.replacementReferenceNumber" class="font-bold text-emerald-700 font-mono text-sm bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        {{ req.replacementReferenceNumber }}
+                    </span>
+                    <span *ngIf="!req.replacementReferenceNumber" class="text-xs text-slate-400 italic">
+                        Pending Approval
+                    </span>
+                </td>
+                <td>
+                    <div class="font-medium text-slate-800 text-sm">{{ req.companyName }}</div>
+                </td>
+                <td>
+                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                        <i class="pi pi-globe text-slate-400 text-xs"></i>
+                        {{ req.country }}
+                    </span>
+                </td>
+                <td>
+                    <div class="text-xs text-slate-700 max-w-xs truncate" [title]="req.reason">
+                        {{ req.reason }}
+                    </div>
+                    <div *ngIf="req.remarks" class="text-3xs text-slate-400 italic max-w-xs truncate" [title]="req.remarks">
+                        Note: {{ req.remarks }}
+                    </div>
+                </td>
+                <td class="text-center">
+                    <p-tag
+                        [value]="getStatusLabel(req.status)"
+                        [severity]="getStatusSeverity(req.status)"
+                        [rounded]="true"
+                        class="text-xs font-semibold"
+                    ></p-tag>
+                </td>
+                <td>
+                    <div class="text-xs text-slate-700 font-medium">{{ req.createdAt | date: 'dd/MM/yyyy' }}</div>
+                    <div class="text-3xs text-slate-400">{{ req.createdAt | date: 'HH:mm' }}</div>
+                </td>
+                <td>
+                    <div class="flex items-center justify-center gap-1.5">
+                        <p-button
+                            *ngIf="req.replacementReferenceNumber"
+                            icon="pi pi-pencil"
+                            size="small"
+                            severity="warn"
+                            [outlined]="true"
+                            pTooltip="Open & Edit Replacement Certificate"
+                            tooltipPosition="top"
+                            (onClick)="openReplacementCertificate(req)"
+                        ></p-button>
+                        <p-button
+                            icon="pi pi-eye"
+                            size="small"
+                            severity="secondary"
+                            [outlined]="true"
+                            pTooltip="View Details"
+                            tooltipPosition="top"
+                            (onClick)="viewDetails(req)"
+                        ></p-button>
+
+                        <!-- Admin Actions for Pending Requests -->
+                        <ng-container *ngIf="isAdmin && (req.status === 0 || req.status === 'Pending')">
+                            <p-button
+                                icon="pi pi-check"
+                                size="small"
+                                severity="success"
+                                [outlined]="true"
+                                pTooltip="Approve Replacement"
+                                tooltipPosition="top"
+                                (onClick)="openApproveDialog(req)"
+                            ></p-button>
+                            <p-button
+                                icon="pi pi-times"
+                                size="small"
+                                severity="danger"
+                                [outlined]="true"
+                                pTooltip="Reject Request"
+                                tooltipPosition="top"
+                                (onClick)="openRejectDialog(req)"
+                            ></p-button>
+                        </ng-container>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="9" class="text-center py-10">
+                    <div class="flex flex-col items-center justify-center text-slate-400">
+                        <i class="pi pi-inbox text-4xl mb-3 text-slate-300"></i>
+                        <span class="text-base font-medium text-slate-600">No replacement requests found</span>
+                        <span class="text-xs text-slate-400 mt-1">Submit a new replacement request or change your search filters</span>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<!-- ════ CREATE REPLACEMENT REQUEST DIALOG ════ -->
+<p-dialog
+    [(visible)]="createDialogVisible"
+    header="Create Replacement Certificate Request"
+    [modal]="true"
+    [style]="{ width: '600px', maxWidth: '95vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <div class="space-y-4 py-2">
+        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 leading-relaxed flex items-start gap-2.5">
+            <i class="pi pi-info-circle text-blue-600 mt-0.5 text-sm shrink-0"></i>
+            <div>
+                <strong>DFAR Health Certificate Replacement Protocol:</strong> A replacement certificate cancels and supersedes the original health certificate. Please provide accurate details regarding the required amendments.
+            </div>
+        </div>
+
+        <!-- Select from Existing Certificates -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                Select Original Certificate <span class="text-red-500">*</span>
+            </label>
+            <p-select
+                [(ngModel)]="newRequest.selectedCert"
+                [options]="eligibleCertificates"
+                optionLabel="referenceNumber"
+                placeholder="Choose an existing issued certificate..."
+                [filter]="true"
+                filterBy="referenceNumber,country,companyName"
+                class="w-full"
+                [showClear]="true"
+            >
+                <ng-template pTemplate="item" let-item>
+                    <div class="flex items-center justify-between gap-2 py-1 w-full">
+                        <div>
+                            <div class="font-bold text-slate-800 font-mono text-sm">{{ item.referenceNumber }}</div>
+                            <div class="text-xs text-slate-500">{{ item.country }} &bull; {{ item.companyName }}</div>
+                        </div>
+                        <span class="text-3xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">{{ item.certificateType }}</span>
+                    </div>
+                </ng-template>
+            </p-select>
+        </div>
+
+        <!-- Manual Ref Number if not in list -->
+        <div *ngIf="!newRequest.selectedCert">
+            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                Or Type Original Reference Number
+            </label>
+            <input
+                pInputText
+                [(ngModel)]="newRequest.manualRefNumber"
+                type="text"
+                placeholder="e.g. HC-2026-EU-001"
+                class="w-full font-mono text-sm"
+            />
+        </div>
+
+        <!-- Selected Certificate Info Card -->
+        <div *ngIf="newRequest.selectedCert" class="p-3 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-2 gap-2 text-xs">
+            <div><span class="text-slate-500">Destination:</span> <strong>{{ newRequest.selectedCert.country }}</strong></div>
+            <div><span class="text-slate-500">Type:</span> <strong>{{ newRequest.selectedCert.certificateType }}</strong></div>
+            <div class="col-span-2"><span class="text-slate-500">Exporter:</span> <strong>{{ newRequest.selectedCert.companyName }}</strong></div>
+        </div>
+
+        <!-- Reason Type -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                Primary Reason for Replacement <span class="text-red-500">*</span>
+            </label>
+            <p-select
+                [(ngModel)]="newRequest.reasonType"
+                [options]="commonReasons"
+                optionLabel="label"
+                optionValue="value"
+                class="w-full"
+            ></p-select>
+        </div>
+
+        <!-- Detailed Description of Changes -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                Specific Amendments / Change Details
+            </label>
+            <textarea
+                pTextarea
+                [(ngModel)]="newRequest.reasonDetails"
+                rows="3"
+                placeholder="Specify exact corrections needed (e.g., Vessel name changed from MV Oceanic to MV Horizon)..."
+                class="w-full text-sm"
+            ></textarea>
+        </div>
+
+        <!-- Additional Remarks -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                Additional Notes / Priority Remarks
+            </label>
+            <input
+                pInputText
+                [(ngModel)]="newRequest.remarks"
+                type="text"
+                placeholder="e.g. Flight scheduled tomorrow 10:00 AM..."
+                class="w-full text-sm"
+            />
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="createDialogVisible = false"></p-button>
+            <p-button
+                label="Submit Replacement Request"
+                icon="pi pi-check"
+                severity="primary"
+                [loading]="isSubmitting"
+                (onClick)="submitNewRequest()"
+            ></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- ════ APPROVE REPLACEMENT DIALOG ════ -->
+<p-dialog
+    [(visible)]="approveDialogVisible"
+    header="Approve & Issue Replacement Certificate"
+    [modal]="true"
+    [style]="{ width: '480px' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <div class="py-2 text-sm text-slate-700 space-y-3" *ngIf="selectedRequestForApprove">
+        <div class="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900">
+            <i class="pi pi-check-circle text-emerald-600 text-2xl"></i>
+            <div>
+                <div class="font-bold text-emerald-950">Issue Official Replacement</div>
+                <div class="text-xs text-emerald-800">The original certificate will be superseded.</div>
+            </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5 text-xs">
+            <div><span class="text-slate-500">Original Ref:</span> <strong class="font-mono">{{ selectedRequestForApprove.originalReferenceNumber }}</strong></div>
+            <div><span class="text-slate-500">Exporter:</span> <strong>{{ selectedRequestForApprove.companyName }}</strong></div>
+            <div><span class="text-slate-500">Country:</span> <strong>{{ selectedRequestForApprove.country }}</strong></div>
+            <div><span class="text-slate-500">Reason:</span> <span>{{ selectedRequestForApprove.reason }}</span></div>
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed mb-0">
+            Approving this request will automatically generate a new official replacement reference number (e.g. <code>{{ selectedRequestForApprove.originalReferenceNumber }}-R1</code>) and authorize the replacement health certificate.
+        </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="approveDialogVisible = false"></p-button>
+            <p-button
+                label="Confirm & Issue Replacement"
+                icon="pi pi-check"
+                severity="success"
+                [loading]="isApproving"
+                (onClick)="confirmApprove()"
+            ></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- ════ REJECT REPLACEMENT DIALOG ════ -->
+<p-dialog
+    [(visible)]="rejectDialogVisible"
+    header="Reject Replacement Request"
+    [modal]="true"
+    [style]="{ width: '480px' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <div class="py-2 text-sm text-slate-700 space-y-3" *ngIf="selectedRequestForReject">
+        <div class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-900">
+            <i class="pi pi-exclamation-triangle text-red-600 text-2xl"></i>
+            <div>
+                <div class="font-bold text-red-950">Reject Replacement</div>
+                <div class="text-xs text-red-800">Original Ref: {{ selectedRequestForReject.originalReferenceNumber }}</div>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                Rejection Reason <span class="text-red-500">*</span>
+            </label>
+            <textarea
+                pTextarea
+                [(ngModel)]="rejectionReasonText"
+                rows="3"
+                placeholder="Explain why this replacement request is rejected..."
+                class="w-full text-sm"
+            ></textarea>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="rejectDialogVisible = false"></p-button>
+            <p-button
+                label="Confirm Rejection"
+                icon="pi pi-times"
+                severity="danger"
+                [loading]="isRejecting"
+                (onClick)="confirmReject()"
+            ></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- ════ DETAILS MODAL ════ -->
+<p-dialog
+    [(visible)]="detailsDialogVisible"
+    header="Replacement Request Summary"
+    [modal]="true"
+    [style]="{ width: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <div class="py-2 space-y-4 text-sm" *ngIf="selectedRequestDetails">
+        <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <div>
+                <span class="text-xs text-slate-500 block">Status</span>
+                <p-tag
+                    [value]="getStatusLabel(selectedRequestDetails.status)"
+                    [severity]="getStatusSeverity(selectedRequestDetails.status)"
+                    [rounded]="true"
+                    class="mt-1"
+                ></p-tag>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-slate-500 block">Requested Date</span>
+                <span class="font-semibold text-slate-800 text-xs">{{ selectedRequestDetails.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+            <div>
+                <span class="text-slate-500 block">Original Reference</span>
+                <span class="font-bold font-mono text-slate-800 text-sm">{{ selectedRequestDetails.originalReferenceNumber }}</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block">Replacement Reference</span>
+                <span class="font-bold font-mono text-emerald-700 text-sm">
+                    {{ selectedRequestDetails.replacementReferenceNumber || 'None (Pending)' }}
+                </span>
+            </div>
+            <div>
+                <span class="text-slate-500 block">Destination</span>
+                <span class="font-semibold text-slate-800">{{ selectedRequestDetails.country }} ({{ selectedRequestDetails.certificateType }})</span>
+            </div>
+            <div>
+                <span class="text-slate-500 block">Exporter / Company</span>
+                <span class="font-semibold text-slate-800">{{ selectedRequestDetails.companyName }}</span>
+            </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2">
+            <div>
+                <span class="text-slate-500 block font-semibold mb-1">Reason for Replacement</span>
+                <p class="text-slate-800 leading-relaxed mb-0">{{ selectedRequestDetails.reason }}</p>
+            </div>
+            <div *ngIf="selectedRequestDetails.remarks">
+                <span class="text-slate-500 block font-semibold mb-1">Remarks</span>
+                <p class="text-slate-800 leading-relaxed mb-0">{{ selectedRequestDetails.remarks }}</p>
+            </div>
+            <div *ngIf="selectedRequestDetails.rejectionReason" class="text-red-700 bg-red-50 p-2 rounded border border-red-200">
+                <span class="font-bold block mb-0.5">Rejection Reason:</span>
+                <p class="mb-0">{{ selectedRequestDetails.rejectionReason }}</p>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex items-center justify-end pt-3 border-t border-slate-200">
+            <p-button label="Close" severity="secondary" [outlined]="true" (onClick)="detailsDialogVisible = false"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>

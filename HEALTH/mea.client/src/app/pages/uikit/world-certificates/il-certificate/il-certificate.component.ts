@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -324,8 +325,7 @@ export const DEFAULT_ISRAEL_ATTACHMENT_PRODUCTS = [
 @Component({
     selector: 'app-il-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -339,19 +339,25 @@ export const DEFAULT_ISRAEL_ATTACHMENT_PRODUCTS = [
         RadioButton,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './il-certificate.component.html',
     styleUrls: ['./il-certificate.component.css', '../certificate-print.css']
 })
 export class IlCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
+    refNumber: string = '';
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSubmitted = false;
 
@@ -762,6 +768,8 @@ export class IlCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -770,6 +778,7 @@ export class IlCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ certificationNo: params['ref'] });
             }
 
@@ -818,9 +827,17 @@ export class IlCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                let certNo = this.refNumber ||
+                    (data.certificationNo?.startsWith('HC-') || data.certificationNo?.startsWith('*') ? data.certificationNo : '') ||
+                    (data.certificationNo && !dummyValues.includes(data.certificationNo.trim()) ? data.certificationNo : '') ||
+                    this.refNumber || '';
+                if (!certNo) certNo = this.refNumber || '';
+                this.refNumber = certNo;
+
                 this.form.patchValue({
                     viewMode: mode,
-                    certificationNo: data.certificationNo || '',
+                    certificationNo: certNo,
                     centralCompetentAuthority: data.centralCompetentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     centralCompetentAuthorityEmail: data.centralCompetentAuthorityEmail || 'dgdfar@gmail.com',
                     localCompetentAuthority: data.localCompetentAuthority || 'NONE',
@@ -914,7 +931,14 @@ export class IlCertificateComponent implements OnInit {
                 const defaultRegNo = data.approvalNo || 'DFAR/FPE/98/107';
                 const isShip = data.transportShip ?? false;
                 const isPlane = data.transportAeroPlane ?? false;
-                const certNo = data.healthCertNo || data.newHC || '';
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                let certNo = this.refNumber ||
+                    (data.referenceNumber?.startsWith('HC-') || data.referenceNumber?.startsWith('*') ? data.referenceNumber : '') ||
+                    (data.healthCertNo && !dummyValues.includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                    (data.newHC && !dummyValues.includes(data.newHC.trim()) ? data.newHC : '') ||
+                    this.refNumber || '';
+                if (!certNo) certNo = this.refNumber || '';
+                this.refNumber = certNo;
 
                 this.form.patchValue({
                     certificationNo: certNo,
@@ -1326,9 +1350,17 @@ export class IlCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ certificationNo: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -1336,11 +1368,11 @@ export class IlCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

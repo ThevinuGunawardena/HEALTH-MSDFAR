@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
@@ -37,8 +38,7 @@ export const DEFAULT_CH_PRODUCTS = [
 @Component({
     selector: 'app-ch-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         ButtonModule,
@@ -50,13 +50,14 @@ export const DEFAULT_CH_PRODUCTS = [
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './ch-certificate.component.html',
     styleUrls: ['./ch-certificate.component.css', '../certificate-print.css']
 })
 export class ChCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     refNumber: string = '';
     certificateRequestId: number | null = null;
@@ -64,6 +65,10 @@ export class ChCertificateComponent implements OnInit {
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSubmitted = false;
 
@@ -282,6 +287,8 @@ export class ChCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -334,9 +341,16 @@ export class ChCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.refNumber?.startsWith('HC-') || data.refNumber?.startsWith('*') ? data.refNumber : '') ||
+                               (data.refNumber && !['ffff', 'FFFF', 'Draft'].includes(data.refNumber.trim()) ? data.refNumber : '') ||
+                               this.refNumber || '';
+
                 this.form.patchValue({
                     viewMode: mode,
-                    refNumber: data.refNumber || this.refNumber || '',
+                    refNumber: certNo,
                     countryOfExport: data.countryOfExport || 'SRI LANKA',
                     countryOfProduction: data.countryOfProduction || 'SRI LANKA',
                     competentAuthority: data.competentAuthority || 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -446,8 +460,16 @@ export class ChCertificateComponent implements OnInit {
                 const isShip = data.transportShip ?? false;
                 const meansTransport = isShip ? 'SEA FREIGHT' : 'AIR FREIGHT';
 
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.healthCertNo?.startsWith('HC-') || data.healthCertNo?.startsWith('*') ? data.healthCertNo : '') ||
+                               (data.newHC?.startsWith('HC-') || data.newHC?.startsWith('*') ? data.newHC : '') ||
+                               (data.healthCertNo && !['ffff', 'FFFF'].includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                               this.refNumber || '';
+
                 this.form.patchValue({
-                    refNumber: data.healthCertNo || data.newHC || this.refNumber || '',
+                    refNumber: certNo,
                     countryOfExport: data.countryOrigin || 'SRI LANKA',
                     countryOfProduction: data.countryOrigin || 'SRI LANKA',
                     originRawMaterialsCountry: data.countryOrigin || 'SRI LANKA',
@@ -689,8 +711,16 @@ export class ChCertificateComponent implements OnInit {
         this.certificateRequestService.getRequestById(requestId).subscribe({
             next: (req) => {
                 if (req) {
+                    if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                    if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                }
+                if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ refNumber: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -698,11 +728,11 @@ export class ChCertificateComponent implements OnInit {
     }
 
     printCertificate() {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

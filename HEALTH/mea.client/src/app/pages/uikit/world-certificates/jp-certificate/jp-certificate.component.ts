@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -27,8 +28,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-jp-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -40,13 +40,14 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './jp-certificate.component.html',
     styleUrls: ['./jp-certificate.component.css', '../certificate-print.css']
 })
 export class JpCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
@@ -54,10 +55,15 @@ export class JpCertificateComponent implements OnInit {
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
 
     // View mode: 'vibrio' (Vibrio cholerae negative) vs 'cholera' (Cholera germs free)
     viewMode: 'vibrio' | 'cholera' = 'vibrio';
+    refNumber: string = '';
 
     userOptions: { label: string; value: string }[] = [];
     users: User[] = [];
@@ -154,6 +160,8 @@ export class JpCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -162,6 +170,7 @@ export class JpCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ myRef: params['ref'] });
             }
 
@@ -201,9 +210,13 @@ export class JpCertificateComponent implements OnInit {
                 const mode: 'vibrio' | 'cholera' = rawMode === 'cholera' ? 'cholera' : 'vibrio';
                 this.viewMode = mode;
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                const cleanMyRef = (data.myRef && !dummyValues.includes(data.myRef.trim())) ? data.myRef : '';
+                const finalRef = this.refNumber || data.referenceNumber || cleanMyRef || '';
+
                 this.form.patchValue({
                     viewMode: mode,
-                    myRef: data.myRef || '',
+                    myRef: finalRef,
                     yourRef: data.yourRef || '',
                     date: data.date ? new Date(data.date) : new Date(),
                     itemName: data.itemName || '',
@@ -252,7 +265,10 @@ export class JpCertificateComponent implements OnInit {
                 const plantAddress = `${data.processingEstAddress || data.consignorAddress || '68, CANAL ROAD, HENDALA,'}\n${data.consignorPostal || 'WATTALA, SRI LANKA.'}`.trim();
                 const isShip = data.transportShip ?? true;
                 const meansTransport = isShip ? 'BY SEA FREIGHT' : 'BY AIR FREIGHT';
-                const certNo = data.healthCertNo || data.newHC || '';
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                const cleanCertNo = (data.healthCertNo && !dummyValues.includes(data.healthCertNo.trim())) ? data.healthCertNo : 
+                                    (data.newHC && !dummyValues.includes(data.newHC.trim())) ? data.newHC : '';
+                const certNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
 
                 let itemDesc = '';
                 if (data.descCommon) {
@@ -565,9 +581,17 @@ export class JpCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ myRef: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -575,11 +599,11 @@ export class JpCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

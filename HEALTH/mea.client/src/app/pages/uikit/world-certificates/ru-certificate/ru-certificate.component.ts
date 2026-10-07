@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -72,8 +73,7 @@ export const DEFAULT_RU_PRODUCTS = [
 @Component({
     selector: 'app-ru-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -85,19 +85,24 @@ export const DEFAULT_RU_PRODUCTS = [
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './ru-certificate.component.html',
     styleUrls: ['./ru-certificate.component.css', '../certificate-print.css']
 })
 export class RuCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isSubmitted = false;
     isApproved = false;
 
@@ -116,6 +121,7 @@ export class RuCertificateComponent implements OnInit {
     isDraggingStamp = false;
     safeSignaturePdfUrl: SafeResourceUrl | null = null;
     safeStampPdfUrl: SafeResourceUrl | null = null;
+    refNumber: string = '';
 
     onlyDigits(event: KeyboardEvent): boolean {
         const charCode = event.which ? event.which : event.keyCode;
@@ -330,6 +336,8 @@ export class RuCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -342,6 +350,7 @@ export class RuCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({
                     certificateNo: params['ref']
                 });
@@ -368,9 +377,17 @@ export class RuCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ certificateNo: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -447,6 +464,13 @@ export class RuCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.certificateNo?.startsWith('HC-') || data.certificateNo?.startsWith('*') ? data.certificateNo : '') ||
+                               (data.certificateNo && !['ffff', 'FFFF', 'TC 4471', 'Draft'].includes(data.certificateNo.trim()) ? data.certificateNo : '') ||
+                               this.refNumber || 'TC 4471';
+
                 this.form.patchValue({
                     viewMode: mode,
                     includeAttachment: hasMultiple || mode === 'full',
@@ -454,7 +478,7 @@ export class RuCertificateComponent implements OnInit {
                     consigneeNameAddress: consigneeFull || '',
                     meansOfTransport: transport,
                     countryOfTransit: data.countryOfTransit || 'NONE',
-                    certificateNo: data.certificateNo || 'TC 4471',
+                    certificateNo: certNo,
                     countryOrigin: data.countryOrigin || 'SRI LANKA',
                     countryIssuing: data.countryIssuing || 'SRI LANKA',
                     competentAuthorityExporting: data.competentAuthorityExporting || 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -520,7 +544,13 @@ export class RuCertificateComponent implements OnInit {
             next: (data: VetFormFieldResponse) => {
                 if (!data) return;
 
-                const certNo = data.healthCertNo || data.newHC || 'TC 4471';
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.healthCertNo?.startsWith('HC-') || data.healthCertNo?.startsWith('*') ? data.healthCertNo : '') ||
+                               (data.newHC?.startsWith('HC-') || data.newHC?.startsWith('*') ? data.newHC : '') ||
+                               (data.healthCertNo && !['ffff', 'FFFF', 'TC 4471'].includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                               this.refNumber || 'TC 4471';
                 const consignorFull = `${data.consignorName || 'TROPICAL NATURE SEAFOOD'},\n${data.consignorAddress || '41/1, MAHAGEDARA, PATHAMULLA,\nKANATHTHEWEWA'},\nSRI LANKA.`;
                 const consigneeFull = `${data.consigneeName || 'FISHERIES LLC'},\n${data.consigneeAddress || '5TH VERHNIY MIHAILOVSKY PROEZD, 6,\n115419, MOSCOW, RUSSIA'}`;
                 const estFull = `${data.processingEstName || data.consignorName || 'EAST GLOBE LANKA EXPORT COMPANY'}\n${data.processingEstAddress || data.consignorAddress || 'HETTIYAWATHTHA,PANNALA ROAD,\nDANKOTUWA, SRI LANKA.'}\n${data.approvalNo || 'DFAR/FPE/98/25'}`;
@@ -915,11 +945,11 @@ export class RuCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

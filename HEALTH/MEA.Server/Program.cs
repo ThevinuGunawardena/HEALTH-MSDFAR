@@ -50,7 +50,11 @@ catch (Exception ex)
 }
 
 app.ConfigureCORS(builder.Configuration);
-app.UseHttpsRedirection();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.ConfigureSwaggerExplorer()
     .AddIdentityAuthMiddlewares();
 

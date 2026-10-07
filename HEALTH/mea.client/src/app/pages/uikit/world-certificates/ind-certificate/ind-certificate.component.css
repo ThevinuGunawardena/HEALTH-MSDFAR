@@ -523,8 +523,13 @@
         break-after: auto !important;
     }
 
-    .ind-stamp-space-small {
+    .ind-stamp-space-small,
+    .ind-stamp-box,
+    .ind-sig-box,
+    .ind-stamp-placeholder,
+    .ind-sig-placeholder {
         border: none !important;
+        background: transparent !important;
     }
 
     .ind-input,

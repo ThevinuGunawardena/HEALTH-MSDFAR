@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -23,8 +24,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-ca-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         ReactiveFormsModule,
         InputTextModule,
         TextareaModule,
@@ -36,14 +36,16 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './ca-certificate.component.html',
     styleUrls: ['./ca-certificate.component.css', '../certificate-print.css']
 })
 export class CaCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
+    refNumber: string = '';
     certificateRequestId: number | null = null;
     viewOnly = false;
     isSubmitted = false;
@@ -51,6 +53,10 @@ export class CaCertificateComponent implements OnInit {
     viewMode: 'letter' | 'live' | 'generic' = 'letter';
 
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     userOptions: { label: string; value: string }[] = [];
     users: User[] = [];
@@ -219,11 +225,20 @@ export class CaCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
             } else {
                 this.viewOnly = params['viewOnly'] === 'true' || params['viewOnly'] === true;
+            }
+            if (params['ref']) {
+                this.refNumber = params['ref'];
+                this.form.patchValue({
+                    myRef: params['ref'],
+                    certificateNumber: params['ref']
+                });
             }
             if (params['requestId']) {
                 this.certificateRequestId = +params['requestId'];
@@ -314,13 +329,23 @@ export class CaCertificateComponent implements OnInit {
                 } else {
                     this.viewMode = 'letter';
                 }
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812'];
+                let certNo = this.refNumber ||
+                    (cert.certificateNumber?.startsWith('HC-') || cert.certificateNumber?.startsWith('*') ? cert.certificateNumber : '') ||
+                    (cert.myRef?.startsWith('HC-') || cert.myRef?.startsWith('*') ? cert.myRef : '') ||
+                    (cert.certificateNumber && !dummyValues.includes(cert.certificateNumber.trim()) ? cert.certificateNumber : '') ||
+                    (cert.myRef && !dummyValues.includes(cert.myRef.trim()) ? cert.myRef : '') ||
+                    this.refNumber || '';
+                if (!certNo) certNo = this.refNumber || '';
+                this.refNumber = certNo;
+
                 this.form.patchValue({
                     viewMode: this.viewMode,
                     certificateType: this.viewMode,
-                    myRef: cert.myRef || '',
+                    myRef: certNo || cert.myRef || '',
                     yourRef: cert.yourRef || '',
                     date: cert.date ? new Date(cert.date) : new Date(),
-                    certificateNumber: cert.certificateNumber || '',
+                    certificateNumber: certNo || cert.certificateNumber || '',
                     competentAuthority: cert.competentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     certifyingBody: cert.certifyingBody || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     consignorName: cert.consignorName || '',
@@ -388,6 +413,15 @@ export class CaCertificateComponent implements OnInit {
                 // Try load from VetForm (Company submitted form data)
                 this.certificateService.getVetFormByRequestId(requestId).subscribe((vetForm: any) => {
                     if (vetForm) {
+                        const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812'];
+                        let certNo = this.refNumber ||
+                            (vetForm.referenceNumber?.startsWith('HC-') || vetForm.referenceNumber?.startsWith('*') ? vetForm.referenceNumber : '') ||
+                            (vetForm.healthCertNo && !dummyValues.includes(vetForm.healthCertNo.trim()) ? vetForm.healthCertNo : '') ||
+                            (vetForm.newHC && !dummyValues.includes(vetForm.newHC.trim()) ? vetForm.newHC : '') ||
+                            this.refNumber || '';
+                        if (!certNo) certNo = this.refNumber || '';
+                        this.refNumber = certNo;
+
                         const consignorName = vetForm.consignorName || '';
                         const consignorAddress = [vetForm.consignorAddress, vetForm.consignorPostal, vetForm.consignorTel].filter(Boolean).join(', ') || vetForm.consignorAddress || '';
                         const consigneeName = vetForm.consigneeName || '';
@@ -404,6 +438,8 @@ export class CaCertificateComponent implements OnInit {
                         const isShip = !!vetForm.transportShip;
 
                         this.form.patchValue({
+                            myRef: certNo,
+                            certificateNumber: certNo,
                             consignorName: consignorName,
                             consignorAddress: consignorAddress,
                             consigneeName: consigneeName,
@@ -725,9 +761,20 @@ export class CaCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            myRef: req.referenceNumber,
+                            certificateNumber: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -735,11 +782,11 @@ export class CaCertificateComponent implements OnInit {
     }
 
     print() {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

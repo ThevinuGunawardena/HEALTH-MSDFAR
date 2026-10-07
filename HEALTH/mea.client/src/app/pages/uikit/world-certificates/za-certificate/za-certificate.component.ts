@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -23,8 +24,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-za-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         ReactiveFormsModule,
         InputTextModule,
         TextareaModule,
@@ -36,23 +36,29 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './za-certificate.component.html',
     styleUrls: ['./za-certificate.component.css', '../certificate-print.css']
 })
 export class ZaCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     isApproved = false;
     viewOnly = false;
     isSubmitted = false;
     isEmbedded = false;
+    refNumber: string = '';
     viewMode: 'letter' | 'live' | 'generic' | 'attachment' = 'letter';
     isSaving = false;
 
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     userOptions: { label: string; value: string }[] = [];
     users: User[] = [];
     selectedUserQualification: string | null = null;
@@ -226,11 +232,20 @@ export class ZaCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
             } else {
                 this.viewOnly = params['viewOnly'] === 'true' || params['viewOnly'] === true;
+            }
+            if (params['ref']) {
+                this.refNumber = params['ref'];
+                this.form.patchValue({
+                    myRef: params['ref'],
+                    certificateNumber: params['ref']
+                });
             }
             if (params['requestId']) {
                 this.certificateRequestId = +params['requestId'];
@@ -252,9 +267,20 @@ export class ZaCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            myRef: req.referenceNumber,
+                            certificateNumber: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -333,13 +359,22 @@ export class ZaCertificateComponent implements OnInit {
                 } else {
                     this.viewMode = 'letter';
                 }
+
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530', 'TC 4359', 'TC 4035', 'SX 1691', 'TC 4361', 'TA 6894', 'TA 9637', 'SY 7511', 'TB 5820', 'TB 3688'];
+                const cleanMyRef = (cert.myRef && !dummyValues.includes(cert.myRef.trim())) ? cert.myRef : '';
+                const cleanCertNo = (cert.certificateNumber && !dummyValues.includes(cert.certificateNumber.trim())) ? cert.certificateNumber : '';
+                const finalCertNo = this.refNumber || cert.referenceNumber || cleanMyRef || cleanCertNo || '';
+                if (finalCertNo && !this.refNumber) {
+                    this.refNumber = finalCertNo;
+                }
+
                 this.form.patchValue({
                     viewMode: this.viewMode,
                     certificateType: this.viewMode,
-                    myRef: cert.myRef || '',
+                    myRef: finalCertNo,
                     yourRef: cert.yourRef || '',
                     date: cert.date ? new Date(cert.date) : new Date(),
-                    certificateNumber: cert.certificateNumber || '',
+                    certificateNumber: finalCertNo,
                     competentAuthority: cert.competentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     certifyingBody: cert.certifyingBody || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     consignorName: cert.consignorName || '',
@@ -407,6 +442,14 @@ export class ZaCertificateComponent implements OnInit {
                 // Try load from VetForm (Company submitted form data)
                 this.certificateService.getVetFormByRequestId(requestId).subscribe((vetForm: any) => {
                     if (vetForm) {
+                        const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530', 'TC 4359', 'TC 4035', 'SX 1691', 'TC 4361', 'TA 6894', 'TA 9637', 'SY 7511', 'TB 5820', 'TB 3688'];
+                        const rawNo = vetForm.healthCertNo || vetForm.newHC || '';
+                        const cleanCertNo = (rawNo && !dummyValues.includes(rawNo.trim())) ? rawNo : '';
+                        const finalCertNo = this.refNumber || vetForm.referenceNumber || cleanCertNo || '';
+                        if (finalCertNo && !this.refNumber) {
+                            this.refNumber = finalCertNo;
+                        }
+
                         const consignorName = vetForm.consignorName || '';
                         const consignorAddress = [vetForm.consignorAddress, vetForm.consignorPostal, vetForm.consignorTel].filter(Boolean).join(', ') || vetForm.consignorAddress || '';
                         const consigneeName = vetForm.consigneeName || '';
@@ -423,6 +466,8 @@ export class ZaCertificateComponent implements OnInit {
                         const isShip = !!vetForm.transportShip;
 
                         this.form.patchValue({
+                            myRef: finalCertNo,
+                            certificateNumber: finalCertNo,
                             consignorName: consignorName,
                             consignorAddress: consignorAddress,
                             consigneeName: consigneeName,
@@ -741,11 +786,11 @@ export class ZaCertificateComponent implements OnInit {
     }
 
     print() {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

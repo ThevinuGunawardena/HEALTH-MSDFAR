@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -23,8 +24,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-sa-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         ReactiveFormsModule,
         InputTextModule,
         TextareaModule,
@@ -36,13 +36,14 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './sa-certificate.component.html',
     styleUrls: ['./sa-certificate.component.css', '../certificate-print.css']
 })
 export class SaCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
@@ -50,8 +51,13 @@ export class SaCertificateComponent implements OnInit {
     isEmbedded = false;
     viewMode: 'letter' | 'live' | 'generic' | 'attachment' = 'letter';
     isSaving = false;
-    isCompany = false;
     isApproved = false;
+    isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
+    refNumber: string = '';
     userOptions: { label: string; value: string }[] = [];
     users: User[] = [];
     selectedUserQualification: string | null = null;
@@ -104,10 +110,10 @@ export class SaCertificateComponent implements OnInit {
     ) {
         this.form = this.fb.group({
             viewMode: ['letter'],
-            myRef: ['TC 4359'],
+            myRef: [''],
             yourRef: [''],
             date: [new Date(), Validators.required],
-            certificateNumber: ['TC 4359'],
+            certificateNumber: [''],
             competentAuthority: ['DEPARTMENT OF FISHERIES & AQUATIC RESOURCES'],
             certifyingBody: ['DEPARTMENT OF FISHERIES & AQUATIC RESOURCES'],
             consignorName: ['', Validators.required],
@@ -225,11 +231,20 @@ export class SaCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
             } else {
                 this.viewOnly = params['viewOnly'] === 'true' || params['viewOnly'] === true;
+            }
+            if (params['ref']) {
+                this.refNumber = params['ref'];
+                this.form.patchValue({
+                    myRef: params['ref'],
+                    certificateNumber: params['ref']
+                });
             }
             if (params['requestId']) {
                 this.certificateRequestId = +params['requestId'];
@@ -251,9 +266,20 @@ export class SaCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            myRef: req.referenceNumber,
+                            certificateNumber: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -332,13 +358,19 @@ export class SaCertificateComponent implements OnInit {
                 } else {
                     this.viewMode = 'letter';
                 }
+
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TC 4359', 'TC 4035', 'SX 1691'];
+                const cleanMyRef = (cert.myRef && !dummyValues.includes(cert.myRef.trim())) ? cert.myRef : '';
+                const cleanCertNo = (cert.certificateNumber && !dummyValues.includes(cert.certificateNumber.trim())) ? cert.certificateNumber : '';
+                const finalRef = this.refNumber || cert.referenceNumber || cleanMyRef || cleanCertNo || '';
+
                 this.form.patchValue({
                     viewMode: this.viewMode,
                     certificateType: this.viewMode,
-                    myRef: cert.myRef || cert.certificateNumber || 'TC 4359',
+                    myRef: finalRef,
                     yourRef: cert.yourRef || '',
                     date: cert.date ? new Date(cert.date) : new Date(),
-                    certificateNumber: cert.certificateNumber || cert.myRef || 'TC 4359',
+                    certificateNumber: finalRef,
                     competentAuthority: cert.competentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     certifyingBody: cert.certifyingBody || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     consignorName: cert.consignorName || '',
@@ -406,6 +438,11 @@ export class SaCertificateComponent implements OnInit {
                 // Try load from VetForm (Company submitted form data)
                 this.certificateService.getVetFormByRequestId(requestId).subscribe((vetForm: any) => {
                     if (vetForm) {
+                        const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TC 4359', 'TC 4035', 'SX 1691'];
+                        const cleanCertNo = (vetForm.healthCertNo && !dummyValues.includes(vetForm.healthCertNo.trim())) ? vetForm.healthCertNo : 
+                                            (vetForm.newHC && !dummyValues.includes(vetForm.newHC.trim())) ? vetForm.newHC : '';
+                        const certNo = this.refNumber || vetForm.referenceNumber || cleanCertNo || '';
+
                         const consignorName = vetForm.consignorName || '';
                         const consignorAddress = [vetForm.consignorAddress, vetForm.consignorPostal, vetForm.consignorTel].filter(Boolean).join(', ') || vetForm.consignorAddress || '';
                         const consigneeName = vetForm.consigneeName || '';
@@ -422,6 +459,8 @@ export class SaCertificateComponent implements OnInit {
                         const isShip = !!vetForm.transportShip;
 
                         this.form.patchValue({
+                            myRef: certNo,
+                            certificateNumber: certNo,
                             consignorName: consignorName,
                             consignorAddress: consignorAddress,
                             consigneeName: consigneeName,
@@ -872,11 +911,11 @@ export class SaCertificateComponent implements OnInit {
     }
 
     print() {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

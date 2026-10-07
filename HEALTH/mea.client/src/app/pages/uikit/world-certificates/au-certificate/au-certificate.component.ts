@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -23,8 +24,7 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
 @Component({
     selector: 'app-au-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -38,19 +38,24 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './au-certificate.component.html',
     styleUrls: ['./au-certificate.component.css', '../certificate-print.css']
 })
 export class AuCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     requestId: number | null = null;
     get certificateRequestId(): number | null { return this.requestId; }
     viewOnly = false;
     isEmbedded = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     isSubmitted = false;
     userOptions: { label: string; value: string }[] = [];
@@ -60,6 +65,7 @@ export class AuCertificateComponent implements OnInit {
     pendingSignatoryUserId: string | null = null;
     pendingSignatoryUserEmail = '';
     previousSignatoryUserId: string | null = null;
+    refNumber = '';
 
     onlyDigits(event: KeyboardEvent): boolean {
         const charCode = event.which ? event.which : event.keyCode;
@@ -190,6 +196,8 @@ export class AuCertificateComponent implements OnInit {
                 .map((u) => ({ label: u.name, value: u.id }));
         });
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -201,7 +209,8 @@ export class AuCertificateComponent implements OnInit {
                 this.checkRequestApproval(this.requestId);
                 this.loadSavedCertificateData(this.requestId);
             }
-            if (params['ref'] && !this.viewOnly) {
+            if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ certificateReferenceNumber: params['ref'], healthAttestationCertRefNumber: params['ref'] });
             }
             if (this.viewOnly) {
@@ -580,12 +589,19 @@ export class AuCertificateComponent implements OnInit {
                     this.loadVetFormData(requestId);
                     return;
                 }
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.certRefNumber?.startsWith('HC-') || data.certRefNumber?.startsWith('*') ? data.certRefNumber : '') ||
+                               (data.certRefNumber && !['ffff', 'FFFF', 'TB 7676', 'Draft'].includes(data.certRefNumber.trim()) ? data.certRefNumber : '') ||
+                               this.refNumber || 'TB 7676';
+
                 this.form.patchValue({
                     consignorName: data.consignorName,
                     consignorAddress: data.consignorAddress,
                     consignorPostalCode: data.consignorPostal,
                     consignorTelNo: data.consignorTel,
-                    certificateReferenceNumber: data.certRefNumber,
+                    certificateReferenceNumber: certNo,
                     certificateReferenceNumberA: data.certRefNumberA,
                     centralCompetentAuthority: data.centralCompetentAuthority || 'DEPARTMENT OF FISHERIES &\nAQUATIC RESOURCES',
                     localCompetentAuthority: data.localCompetentAuthority || 'DEPARTMENT OF FISHERIES &\nAQUATIC RESOURCES',
@@ -735,11 +751,19 @@ export class AuCertificateComponent implements OnInit {
             );
         });
 
-        const firstProduct = vetProducts[0];
+        const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                       (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                       (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                       (data.healthCertNo?.startsWith('HC-') || data.healthCertNo?.startsWith('*') ? data.healthCertNo : '') ||
+                       (data.newHC?.startsWith('HC-') || data.newHC?.startsWith('*') ? data.newHC : '') ||
+                       (data.healthCertNo && !['ffff', 'FFFF', 'TB 7676'].includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                       this.refNumber || 'TB 7676';
+
+        const firstProduct = data.products && data.products.length > 0 ? data.products[0] : null;
 
         this.form.patchValue({
-            certificateReferenceNumber: data.healthCertNo || 'TB 7676',
-            healthAttestationCertRefNumber: data.healthCertNo || 'TB 7676',
+            certificateReferenceNumber: certNo,
+            healthAttestationCertRefNumber: certNo,
             consignorName: data.consignorName,
             consignorAddress: data.consignorAddress,
             consignorPostalCode: data.consignorPostal,
@@ -958,8 +982,19 @@ export class AuCertificateComponent implements OnInit {
         this.certificateRequestService.getRequestById(requestId).subscribe({
             next: (req) => {
                 if (req) {
+                    if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                    if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                }
+                if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            certificateReferenceNumber: req.referenceNumber,
+                            healthAttestationCertRefNumber: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -967,11 +1002,11 @@ export class AuCertificateComponent implements OnInit {
     }
 
     onPrint(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

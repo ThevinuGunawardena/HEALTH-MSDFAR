@@ -40,13 +40,11 @@
                 (onClick)="onSubmit()"
             ></p-button>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="printCertificate()"
             ></p-button>
         </div>
@@ -86,6 +84,7 @@
     <!-- ════ PAGE 1 — SHIPMENT DETAILS & EEU CERTIFICATION ══════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="kz-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="kz-content">
             <!-- Header -->
             <div class="kz-hdr">
@@ -145,7 +144,7 @@
 
                     <!-- Right Main: 1.5 to 1.10 -->
                     <td class="kz-td" style="width: 50%;">
-                        <div class="font-bold text-xs">1.5 Сертификат № / Certificate №: <span class="font-bold">{{ form.get('certificateNo')?.value }}</span></div>
+                        <div class="font-bold text-xs">1.5 Сертификат № / Certificate №: <span class="font-bold">{{ form.get('certificateNo')?.value || refNumber || '' }}</span></div>
                         <div class="kz-eeu-banner text-center font-bold text-red-600 italic my-2 leading-tight" style="font-size: 7pt;">
                             Ветеринарный сертификат на экспортируемую на таможенную территорию Евразийского экономического союза пищевую продукцию из рыбы, ракообразных, моллюсков, других объектов промысла и продуктов их переработки/ Veterinary certificate for fish, crustacean, mollusks, other fishery products and products of their processing, exported into the customs territory of Eurasian economic union
                         </div>
@@ -183,6 +182,7 @@
     <!-- ════ PAGE 2 — IDENTIFICATION, ORIGIN & SUITABILITY ══════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="kz-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="kz-content">
             <table class="kz-tbl w-full border border-black flex-1">
                 <!-- Section 2: Identification -->
@@ -305,6 +305,7 @@
     <!-- ════ PAGE 3 — ATTESTATIONS & SIGNATORY BLOCK ════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="kz-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="kz-content">
             <table class="kz-tbl w-full border border-black flex-1">
                 <tr>
@@ -338,51 +339,8 @@
                             <div class="flex justify-between items-start mt-4">
                                 <div style="width: 42%;">
                                     <div class="font-bold mb-1">Печать / Stamp</div>
-                                    <div
-                                        class="kz-stamp-placeholder"
-                                        [class.kz-drop-active]="isDraggingStamp"
-                                        [class.has-content]="!!form.get('officialStamp')?.value"
-                                        (click)="!viewOnly && stampInputKz.click()"
-                                        (dragover)="onStampDragOver($event)"
-                                        (dragleave)="onStampDragLeave($event)"
-                                        (drop)="onStampDrop($event)"
-                                        (paste)="onStampPaste($event)"
-                                        tabindex="0"
-                                    >
-                                        <input type="file" #stampInputKz (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                        <!-- Empty State -->
-                                        <div *ngIf="!form.get('officialStamp')?.value" class="kz-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                            <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste stamp screenshot / PDF</span>
-                                            <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                                        </div>
-
-                                        <!-- Uploaded Image -->
-                                        <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="kz-preview-container">
-                                            <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="kz-stamp-img" />
-                                            <div class="kz-action-overlay print-hide" *ngIf="!viewOnly">
-                                                <button type="button" class="kz-mini-btn" (click)="$event.stopPropagation(); stampInputKz.click()" title="Change Stamp">
-                                                    <i class="pi pi-pencil text-2xs"></i>
-                                                </button>
-                                                <button type="button" class="kz-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                    <i class="pi pi-trash text-2xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <!-- Uploaded PDF -->
-                                        <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="kz-preview-container">
-                                            <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="kz-pdf-preview"></object>
-                                            <div class="kz-action-overlay print-hide" *ngIf="!viewOnly">
-                                                <button type="button" class="kz-mini-btn" (click)="$event.stopPropagation(); stampInputKz.click()" title="Change Stamp">
-                                                    <i class="pi pi-pencil text-2xs"></i>
-                                                </button>
-                                                <button type="button" class="kz-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                                    <i class="pi pi-trash text-2xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="kz-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                                     </div>
                                 </div>
                                 <div style="width: 55%;" class="text-right">
@@ -400,52 +358,9 @@
                                         ></p-select>
                                     </div>
 
-                                    <!-- Signature Dropzone -->
-                                    <div
-                                        class="kz-sig-placeholder"
-                                        [class.kz-drop-active]="isDraggingSignature"
-                                        [class.has-content]="!!form.get('officialSignature')?.value"
-                                        (click)="!viewOnly && sigInputKz.click()"
-                                        (dragover)="onSignatureDragOver($event)"
-                                        (dragleave)="onSignatureDragLeave($event)"
-                                        (drop)="onSignatureDrop($event)"
-                                        (paste)="onSignaturePaste($event)"
-                                        tabindex="0"
-                                    >
-                                        <input type="file" #sigInputKz (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                        <!-- Empty State -->
-                                        <div *ngIf="!form.get('officialSignature')?.value" class="kz-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                            <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                            <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste signature screenshot / PDF</span>
-                                            <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                                        </div>
-
-                                        <!-- Uploaded Image -->
-                                        <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="kz-preview-container">
-                                            <img [src]="form.get('officialSignature')?.value" alt="Official Signature" class="kz-sig-img" />
-                                            <div class="kz-action-overlay print-hide" *ngIf="!viewOnly">
-                                                <button type="button" class="kz-mini-btn" (click)="$event.stopPropagation(); sigInputKz.click()" title="Change Signature">
-                                                    <i class="pi pi-pencil text-2xs"></i>
-                                                </button>
-                                                <button type="button" class="kz-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                    <i class="pi pi-trash text-2xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <!-- Uploaded PDF -->
-                                        <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="kz-preview-container">
-                                            <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="kz-pdf-preview"></object>
-                                            <div class="kz-action-overlay print-hide" *ngIf="!viewOnly">
-                                                <button type="button" class="kz-mini-btn" (click)="$event.stopPropagation(); sigInputKz.click()" title="Change Signature">
-                                                    <i class="pi pi-pencil text-2xs"></i>
-                                                </button>
-                                                <button type="button" class="kz-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                                    <i class="pi pi-trash text-2xs"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <!-- Signature Space -->
+                                    <div class="kz-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                                     </div>
 
                                     <div class="text-left font-bold uppercase mt-2">NAME: {{ form.get('signatoryName')?.value }}</div>
@@ -477,6 +392,7 @@
     </div>
 
     <div class="kz-page kz-attach-page" *ngIf="viewMode === 'attachment_only' || (viewMode === 'full' && form.get('includeAttachment')?.value)">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <!-- Watermark -->
         <div class="kz-watermark" aria-hidden="true">ORIGINAL</div>
 
@@ -571,14 +487,12 @@
         ></p-button>
         <div class="flex items-center gap-3">
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 [outlined]="true"
                 (onClick)="printCertificate()"
                 icon="pi pi-print"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="top"
             ></p-button>
             <p-button
                 *ngIf="!viewOnly"

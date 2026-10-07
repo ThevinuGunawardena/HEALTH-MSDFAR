@@ -4,84 +4,32 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TabsModule } from 'primeng/tabs';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { AuthService } from '@/pages/service/auth.service';
+import { CertificateRequestService } from '@/pages/service/certificate-request.service';
+
+import {
+    CertificateTemplateOption,
+    getCertificateTemplates,
+    hasMultipleTemplates,
+    getCertificatePath
+} from '@/shared/country-certificate-templates';
 
 interface CertificatePreviewTab {
-    value: 'country' | 'vet';
+    value: string;
     title: string;
     src: SafeResourceUrl | null;
     emptyMessage: string;
-}
-
-const COUNTRY_CERTIFICATE_MAP: Record<string, string> = {
-    Australia: '/uikit/world-certificates/au-certificate',
-    Brazil: '/uikit/world-certificates/br-certificate',
-    China: '/uikit/world-certificates/ch-certificate',
-    Armenia: '/uikit/world-certificates/am-certificate',
-    'Hong Kong': '/uikit/world-certificates/hk-certificate',
-    India: '/uikit/world-certificates/in-certificate',
-    Indonesia: '/uikit/world-certificates/id-certificate',
-    Malaysia: '/uikit/world-certificates/my-certificate',
-    Kuwait: '/uikit/world-certificates/kw-certificate',
-    Taiwan: '/uikit/world-certificates/tw-certificate',
-    Ukraine: '/uikit/world-certificates/ua-certificate',
-    Russia: '/uikit/world-certificates/ru-certificate',
-    Kazakhstan: '/uikit/world-certificates/kz-certificate',
-    Japan: '/uikit/world-certificates/jp-certificate',
-    'New Zealand': '/uikit/world-certificates/nz-certificate',
-    USA: '/uikit/world-certificates/usa-certificate',
-    'United States of America': '/uikit/world-certificates/usa-certificate',
-    'United States': '/uikit/world-certificates/usa-certificate',
-    UK: '/uikit/world-certificates/uk-certificate',
-    'United Kingdom': '/uikit/world-certificates/uk-certificate',
-    'Great Britain': '/uikit/world-certificates/uk-certificate',
-    Israel: '/uikit/world-certificates/il-certificate',
-    Maldives: '/uikit/world-certificates/mv-certificate',
-    Canada: '/uikit/world-certificates/ca-certificate',
-    'Saudi Arabia': '/uikit/world-certificates/sa-certificate',
-    'South Africa': '/uikit/world-certificates/za-certificate',
-    'European Union': '/uikit/certificate',
-    EU: '/uikit/certificate'
-};
-
-function getCertificatePath(countryName?: string | null): string | null {
-    if (!countryName) return null;
-    const normalized = countryName.trim().toLowerCase();
-    
-    if (normalized === 'european union' || normalized === 'eu') return '/uikit/certificate';
-    if (normalized === 'australia') return '/uikit/world-certificates/au-certificate';
-    if (normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') return '/uikit/world-certificates/usa-certificate';
-    if (normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') return '/uikit/world-certificates/uk-certificate';
-    if (normalized === 'brazil') return '/uikit/world-certificates/br-certificate';
-    if (normalized === 'china') return '/uikit/world-certificates/ch-certificate';
-    if (normalized === 'armenia') return '/uikit/world-certificates/am-certificate';
-    if (normalized === 'hong kong') return '/uikit/world-certificates/hk-certificate';
-    if (normalized === 'india') return '/uikit/world-certificates/in-certificate';
-    if (normalized === 'indonesia') return '/uikit/world-certificates/id-certificate';
-    if (normalized === 'malaysia') return '/uikit/world-certificates/my-certificate';
-    if (normalized === 'kuwait') return '/uikit/world-certificates/kw-certificate';
-    if (normalized === 'taiwan') return '/uikit/world-certificates/tw-certificate';
-    if (normalized === 'ukraine') return '/uikit/world-certificates/ua-certificate';
-    if (normalized === 'russia') return '/uikit/world-certificates/ru-certificate';
-    if (normalized === 'kazakhstan' || normalized === 'republic of kazakhstan') return '/uikit/world-certificates/kz-certificate';
-    if (normalized === 'japan') return '/uikit/world-certificates/jp-certificate';
-    if (normalized === 'new zealand') return '/uikit/world-certificates/nz-certificate';
-    if (normalized === 'israel') return '/uikit/world-certificates/il-certificate';
-    if (normalized === 'maldives') return '/uikit/world-certificates/mv-certificate';
-    if (normalized === 'canada') return '/uikit/world-certificates/ca-certificate';
-    if (normalized === 'saudi arabia') return '/uikit/world-certificates/sa-certificate';
-    if (normalized === 'south africa') return '/uikit/world-certificates/za-certificate';
-
-    const matchKey = Object.keys(COUNTRY_CERTIFICATE_MAP).find(
-        (k) => k.toLowerCase().trim() === normalized
-    );
-    return matchKey ? COUNTRY_CERTIFICATE_MAP[matchKey] : null;
+    path?: string;
+    badge?: string;
 }
 
 @Component({
     selector: 'app-certificate-requests-view',
     standalone: true,
-    imports: [CommonModule, ButtonModule, TabsModule],
+    imports: [CommonModule, ButtonModule, TabsModule, ToastModule],
+    providers: [MessageService],
     templateUrl: './certificate-requests-view.component.html',
     styleUrls: ['./certificate-requests-view.component.css']
 })
@@ -90,15 +38,30 @@ export class CertificateRequestsViewComponent implements OnInit {
     requestRef = 'N/A';
     requestType = 'N/A';
     requestCountry: string | null = null;
-    activeTab: 'country' | 'vet' = 'vet';
-    countryPreviewTab: CertificatePreviewTab | null = null;
+    activeTab: string = 'vet';
+    countryPreviewTabs: CertificatePreviewTab[] = [];
     vetPreviewTab: CertificatePreviewTab | null = null;
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
+    isProcessing = false;
+
+    onTabChange(val: string | number | undefined): void {
+        if (val != null) {
+            this.activeTab = String(val);
+        }
+    }
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
 
     constructor(
         private route: ActivatedRoute,
         private router: Router,
         private sanitizer: DomSanitizer,
-        private authService: AuthService
+        private authService: AuthService,
+        private certificateRequestService: CertificateRequestService,
+        private messageService: MessageService
     ) {}
 
     ngOnInit(): void {
@@ -107,40 +70,154 @@ export class CertificateRequestsViewComponent implements OnInit {
             this.requestRef = params['ref'] || 'N/A';
             this.requestType = params['type'] || 'N/A';
             this.requestCountry = params['country'] || null;
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
 
-            this.countryPreviewTab = this.buildCountryPreviewTab();
-            this.vetPreviewTab = this.buildVetPreviewTab();
-            this.activeTab = this.countryPreviewTab?.src ? 'country' : 'vet';
+            if (this.requestId) {
+                this.certificateRequestService.getRequestById(this.requestId).subscribe({
+                    next: (req) => {
+                        if (req) {
+                            if (req.referenceNumber) this.requestRef = req.referenceNumber;
+                            if (req.certificateType) this.requestType = req.certificateType;
+                            if (req.country) this.requestCountry = req.country;
+                            if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                            if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                        }
+                        this.setupPreviewTabs();
+                    },
+                    error: () => {
+                        this.setupPreviewTabs();
+                    }
+                });
+            } else {
+                this.setupPreviewTabs();
+            }
         });
     }
 
+    private setupPreviewTabs(): void {
+        if (this.isAdmin) {
+            this.countryPreviewTabs = this.buildCountryPreviewTabs();
+            this.vetPreviewTab = this.buildVetPreviewTab();
+            if (this.countryPreviewTabs.length > 0 && this.countryPreviewTabs[0].src) {
+                this.activeTab = this.countryPreviewTabs[0].value;
+            } else {
+                this.activeTab = 'vet';
+            }
+        } else {
+            this.countryPreviewTabs = [];
+            this.vetPreviewTab = this.buildVetPreviewTab();
+            this.activeTab = 'vet';
+        }
+    }
+
     goBack(): void {
-        const role = this.authService.getUserRole().toLowerCase();
+        const role = (this.authService.getUserRole() || '').toLowerCase();
         if (role === 'company') {
-            this.router.navigate(['/company-request-history']);
+            this.router.navigate(['/uikit/company-request']);
         } else {
             this.router.navigate(['/uikit/admin/certificate-requests']);
         }
     }
 
-    onEditCurrentForm(): void {
-        if (!this.requestId) return;
+    onConfirmRequest(): void {
+        if (!this.isAdmin || !this.requestId || this.isProcessing) return;
 
-        if (this.activeTab === 'country' && this.requestCountry) {
-            const certPath = getCertificatePath(this.requestCountry);
-            if (certPath) {
-                this.router.navigate([certPath], {
-                    queryParams: {
-                        requestId: this.requestId,
-                        ref: this.requestRef,
-                        adminEdit: 'true'
-                    }
+        this.isProcessing = true;
+        this.certificateRequestService.confirmRequest(this.requestId).subscribe({
+            next: () => {
+                this.isProcessing = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Confirmed',
+                    detail: `Request ${this.requestRef} confirmed successfully.`
                 });
+                setTimeout(() => {
+                    this.goBack();
+                }, 1200);
+            },
+            error: () => {
+                this.isProcessing = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: `Failed to confirm ${this.requestRef}.`
+                });
+            }
+        });
+    }
+
+    onRejectRequest(): void {
+        if (!this.isAdmin || !this.requestId || this.isProcessing) return;
+
+        this.isProcessing = true;
+        this.certificateRequestService.rejectRequest(this.requestId).subscribe({
+            next: () => {
+                this.isProcessing = false;
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Rejected',
+                    detail: `Request ${this.requestRef} has been rejected.`
+                });
+                setTimeout(() => {
+                    this.goBack();
+                }, 1200);
+            },
+            error: () => {
+                this.isProcessing = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: `Failed to reject ${this.requestRef}.`
+                });
+            }
+        });
+    }
+
+    onEditCurrentForm(): void {
+        if (!this.isAdmin || !this.requestId) return;
+
+        if (this.activeTab === 'vet') {
+            this.router.navigate(['/uikit/certificate'], {
+                queryParams: {
+                    requestId: this.requestId,
+                    ref: this.requestRef,
+                    type: this.requestType,
+                    adminEdit: 'true'
+                }
+            });
+            return;
+        }
+
+        const currentTab = this.countryPreviewTabs.find((t) => t.value === this.activeTab);
+        if (currentTab && currentTab.path) {
+            const queryParams: Record<string, string | number> = {
+                requestId: this.requestId,
+                ref: this.requestRef,
+                adminEdit: 'true'
+            };
+            if (this.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = this.cancelsAndReplacesRef;
+            if (this.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = typeof this.cancelsAndReplacesDate === 'string' ? this.cancelsAndReplacesDate : (this.cancelsAndReplacesDate as Date).toISOString();
+            this.router.navigate([currentTab.path], { queryParams });
+            return;
+        }
+
+        if (this.requestCountry) {
+            const templates = getCertificateTemplates(this.requestCountry, this.requestType);
+            if (templates.length > 0) {
+                const queryParams: Record<string, string | number> = {
+                    requestId: this.requestId,
+                    ref: this.requestRef,
+                    adminEdit: 'true'
+                };
+                if (this.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = this.cancelsAndReplacesRef;
+                if (this.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = typeof this.cancelsAndReplacesDate === 'string' ? this.cancelsAndReplacesDate : (this.cancelsAndReplacesDate as Date).toISOString();
+                this.router.navigate([templates[0].path], { queryParams });
                 return;
             }
         }
 
-        // Edit Application / Vet Certificate
+        // Fallback to Vet Certificate
         this.router.navigate(['/uikit/certificate'], {
             queryParams: {
                 requestId: this.requestId,
@@ -151,13 +228,87 @@ export class CertificateRequestsViewComponent implements OnInit {
         });
     }
 
-    private buildCountryPreviewTab(): CertificatePreviewTab {
-        return {
-            value: 'country',
-            title: 'Country Certificate',
-            src: this.getCountryCertificateUrl(),
-            emptyMessage: this.requestCountry ? `The certificate form for ${this.requestCountry} is not available yet.` : 'No country certificate is linked to this request.'
-        };
+    onReplacementRequest(): void {
+        if (!this.isAdmin || !this.requestId || this.isProcessing) return;
+
+        if (!confirm(`Are you sure you want to create a Replacement Certificate for ${this.requestRef}? This will issue a new reference number and clone all certificate details.`)) {
+            return;
+        }
+
+        this.isProcessing = true;
+        this.certificateRequestService.createReplacement(this.requestId).subscribe({
+            next: (res) => {
+                this.isProcessing = false;
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Replacement Created',
+                    detail: `New replacement certificate ${res.newReferenceNumber} created successfully.`
+                });
+
+                if (res.certificateType === 'EU' && (!res.countryName || res.countryName.toLowerCase() === 'european union')) {
+                    this.router.navigate(['/uikit/certificate'], {
+                        queryParams: {
+                            requestId: res.newRequestId,
+                            ref: res.newReferenceNumber,
+                            type: 'EU',
+                            adminEdit: 'true'
+                        }
+                    });
+                    return;
+                }
+
+                if (res.countryName) {
+                    const templates = getCertificateTemplates(res.countryName, res.certificateType);
+                    if (templates.length > 0) {
+                        this.router.navigate([templates[0].path], {
+                            queryParams: {
+                                requestId: res.newRequestId,
+                                ref: res.newReferenceNumber,
+                                adminEdit: 'true'
+                            }
+                        });
+                        return;
+                    }
+                }
+
+                this.router.navigate(['/uikit/certificate'], {
+                    queryParams: {
+                        requestId: res.newRequestId,
+                        ref: res.newReferenceNumber,
+                        adminEdit: 'true'
+                    }
+                });
+            },
+            error: (err) => {
+                this.isProcessing = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: err?.error?.message || `Failed to create replacement for ${this.requestRef}.`
+                });
+            }
+        });
+    }
+
+    private buildCountryPreviewTabs(): CertificatePreviewTab[] {
+        if (!this.requestCountry || !this.requestId) {
+            return [];
+        }
+
+        const templates = getCertificateTemplates(this.requestCountry, this.requestType);
+        return templates.map((tmpl) => ({
+            value: tmpl.id,
+            title: tmpl.label,
+            path: tmpl.path,
+            badge: tmpl.badge,
+            src: this.createSafePreviewUrl(tmpl.path, {
+                requestId: String(this.requestId),
+                ref: this.requestRef,
+                type: this.requestType,
+                country: this.requestCountry || ''
+            }),
+            emptyMessage: `The certificate form for ${tmpl.label} is not available yet.`
+        }));
     }
 
     private buildVetPreviewTab(): CertificatePreviewTab {
@@ -169,23 +320,6 @@ export class CertificateRequestsViewComponent implements OnInit {
         };
     }
 
-    private getCountryCertificateUrl(): SafeResourceUrl | null {
-        if (!this.requestCountry || !this.requestId) {
-            return null;
-        }
-
-        const certificatePath = getCertificatePath(this.requestCountry);
-        if (!certificatePath) {
-            return null;
-        }
-
-        return this.createSafePreviewUrl(certificatePath, {
-            requestId: String(this.requestId),
-            ref: this.requestRef,
-            type: this.requestType,
-            country: this.requestCountry || ''
-        });
-    }
 
     private getVetCertificateUrl(): SafeResourceUrl | null {
         if (!this.requestId) {
@@ -206,6 +340,12 @@ export class CertificateRequestsViewComponent implements OnInit {
             embedded: 'true',
             ...extraQueryParams
         });
+        if (this.cancelsAndReplacesRef) {
+            queryParams.set('cancelsAndReplacesRef', this.cancelsAndReplacesRef);
+        }
+        if (this.cancelsAndReplacesDate) {
+            queryParams.set('cancelsAndReplacesDate', typeof this.cancelsAndReplacesDate === 'string' ? this.cancelsAndReplacesDate : (this.cancelsAndReplacesDate as Date).toISOString());
+        }
 
         return this.sanitizer.bypassSecurityTrustResourceUrl(`${path}?${queryParams.toString()}`);
     }

@@ -541,12 +541,14 @@ textarea.uk-uline { resize: none; }
     margin-bottom: 4px;
 }
 .uk-sig-area {
-    border: 1px dashed #aaa;
-    height: 70px;
+    border: 1px dashed #94a3b8;
+    border-radius: 4px;
+    min-height: 105px;
+    height: 105px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #bbb;
+    color: #94a3b8;
     font-style: italic;
     font-size: 8pt;
     -webkit-print-color-adjust: exact;
@@ -809,7 +811,7 @@ body { margin: 0 !important; padding: 0 !important; }
     .uk-sig-row { display: flex !important; gap: 16px !important; align-items: flex-start !important; }
     .uk-sig-section { flex: 1 !important; }
     .uk-sig-label { font-size: 9pt !important; font-weight: 600 !important; margin-bottom: 4px !important; }
-    .uk-sig-area { border: 1px dashed #aaa !important; height: 60px !important; display: flex !important; align-items: center !important; justify-content: center !important; color: #bbb !important; font-style: italic !important; font-size: 8pt !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .uk-sig-area { border: 1px dashed #94a3b8 !important; border-radius: 4px !important; min-height: 105px !important; height: 105px !important; display: flex !important; align-items: center !important; justify-content: center !important; color: #94a3b8 !important; font-style: italic !important; font-size: 8pt !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
     .uk-dep-row { display: flex !important; align-items: center !important; gap: 10px !important; }
     .uk-time-input { width: 80px !important; display: inline-block !important; }

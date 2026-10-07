@@ -194,13 +194,13 @@
 
 .cert-area {
     flex: 1;
-    border: 1px dashed #aaa;
-    border-radius: 3px;
-    max-height: 80px;
+    border: 1px dashed #94a3b8;
+    border-radius: 4px;
+    min-height: 105px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #bbb;
+    color: #94a3b8;
     font-style: italic;
     font-size: 9pt;
 }

@@ -581,14 +581,12 @@
     }
 
     .mv-stamp-placeholder,
-    .mv-sig-placeholder {
+    .mv-sig-placeholder,
+    .mv-stamp-box,
+    .mv-sig-box {
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
     }
 
     .mv-preview-container {

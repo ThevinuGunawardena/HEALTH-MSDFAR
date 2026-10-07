@@ -1,0 +1,64 @@
+:host {
+    display: block;
+}
+
+.replacement-requests-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+.replacement-table ::ng-deep .p-datatable-thead > tr > th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.replacement-table ::ng-deep .p-datatable-tbody > tr > td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.replacement-table ::ng-deep .p-datatable-tbody > tr:hover {
+    background-color: #f0f7ff !important;
+}
+
+.text-3xs {
+    font-size: 0.65rem;
+}
+
+:host ::ng-deep .p-iconfield {
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+:host ::ng-deep .p-iconfield .p-inputicon {
+    position: absolute;
+    top: 50% !important;
+    left: 0.875rem !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #94a3b8 !important;
+    font-size: 0.9rem !important;
+    line-height: 1 !important;
+    height: 1rem !important;
+    width: 1rem !important;
+    z-index: 2;
+    pointer-events: none;
+}
+
+:host ::ng-deep .p-iconfield .p-inputtext,
+:host ::ng-deep input.search-input {
+    padding-left: 2.5rem !important;
+}

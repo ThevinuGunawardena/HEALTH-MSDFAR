@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -72,8 +73,7 @@ export const DEFAULT_UK_ATTACHMENT_SPECIES = [
 @Component({
     selector: 'app-uk-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         ReactiveFormsModule,
         InputTextModule,
         TextareaModule,
@@ -86,13 +86,14 @@ export const DEFAULT_UK_ATTACHMENT_SPECIES = [
         FormsModule,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './uk-certificate.component.html',
     styleUrls: ['./uk-certificate.component.css', '../certificate-print.css']
 })
 export class UkCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     isApproved = false;
@@ -100,6 +101,10 @@ export class UkCertificateComponent implements OnInit {
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isSubmitted = false;
     viewMode: 'withoutAttachment' | 'withAttachment' = 'withoutAttachment';
     users: User[] = [];
@@ -110,6 +115,7 @@ export class UkCertificateComponent implements OnInit {
     selectedUserQualification: string | null = null;
     previousSignatoryUserId: string | null = null;
     readonly maxStandardProducts = 6;
+    refNumber = '';
 
     onlyDigits(event: KeyboardEvent): boolean {
         const charCode = event.which ? event.which : event.keyCode;
@@ -467,11 +473,18 @@ export class UkCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params: any) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
             } else {
                 this.viewOnly = params['viewOnly'] === 'true' || params['viewOnly'] === true;
+            }
+
+            if (params['ref']) {
+                this.refNumber = params['ref'];
+                this.form.patchValue({ certificateReferenceNo: params['ref'] });
             }
 
             if (params['requestId']) {
@@ -495,9 +508,17 @@ export class UkCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({ certificateReferenceNo: req.referenceNumber });
+                    }
                 }
             },
             error: () => {}
@@ -528,8 +549,16 @@ export class UkCertificateComponent implements OnInit {
                 const totalPackages = vetProducts.reduce((sum: number, product: any) => sum + (parseInt(product?.numPackages || '0', 10) || 0), 0);
                 const totalNetWeight = vetProducts.reduce((sum: number, product: any) => sum + (parseFloat(product?.netWeight || '0') || 0), 0);
 
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.healthCertNo?.startsWith('HC-') || data.healthCertNo?.startsWith('*') ? data.healthCertNo : '') ||
+                               (data.newHC?.startsWith('HC-') || data.newHC?.startsWith('*') ? data.newHC : '') ||
+                               (data.healthCertNo && !['ffff', 'FFFF'].includes(data.healthCertNo.trim()) ? data.healthCertNo : '') ||
+                               this.refNumber || '';
+
                 this.form.patchValue({
-                    certificateReferenceNo: data.docReferences || '',
+                    certificateReferenceNo: certNo,
                     consignorName: data.consignorName || '',
                     consignorAddress: data.consignorAddress || '',
                     consignorTel: data.consignorTel || '',
@@ -600,11 +629,18 @@ export class UkCertificateComponent implements OnInit {
                     this.isSubmitted = true;
                 }
 
+                const certNo = (this.refNumber && this.refNumber !== 'N/A' ? this.refNumber : '') ||
+                               (this.route.snapshot.queryParams['ref'] && this.route.snapshot.queryParams['ref'] !== 'N/A' ? this.route.snapshot.queryParams['ref'] : '') ||
+                               (data.referenceNumber && data.referenceNumber !== 'N/A' ? data.referenceNumber : '') ||
+                               (data.certificateReferenceNo?.startsWith('HC-') || data.certificateReferenceNo?.startsWith('*') ? data.certificateReferenceNo : '') ||
+                               (data.certificateReferenceNo && !['ffff', 'FFFF', 'Draft'].includes(data.certificateReferenceNo.trim()) ? data.certificateReferenceNo : '') ||
+                               this.refNumber || '';
+
                 this.form.patchValue({
                     viewMode: loadedViewMode,
                     commodityNo: loadedViewMode === 'withAttachment' ? '0302, 0304, 0306, 0307' : '1604',
                     codeCNTitle: loadedViewMode === 'withAttachment' ? 'SEE THE ATTACHMENT' : '1604 : Food preparations not elsewhere specified or included',
-                    certificateReferenceNo: data.certificateReferenceNo || '',
+                    certificateReferenceNo: certNo,
                     consignorName: data.consignorName || '',
                     consignorAddress: data.consignorAddress || '',
                     consignorTel: data.consignorTel || '',
@@ -826,11 +862,11 @@ export class UkCertificateComponent implements OnInit {
     }
 
     print(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

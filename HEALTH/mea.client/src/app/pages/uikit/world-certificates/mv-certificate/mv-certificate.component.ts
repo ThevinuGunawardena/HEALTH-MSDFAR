@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -16,14 +17,13 @@ import { Select } from 'primeng/select';
 import { ConfirmPasswordDialogComponent } from '@/shared/components/confirm-password-dialog/confirm-password-dialog.component';
 import { UserService, User } from '@/pages/service/user.service';
 import { CertificateQrComponent } from '@/shared/components/certificate-qr/certificate-qr.component';
-import { CertificateRequestService, CreateMvCertificatePayload, MvCertificateView } from 'src/app/pages/service/certificate-request.service';
+import { CertificateRequestService, CreateMvCertificatePayload, MvCertificateView, VetFormFieldResponse } from 'src/app/pages/service/certificate-request.service';
 import { toLocalISOString } from '@/shared/utils/date-utils';
 
 @Component({
     selector: 'app-mv-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         ButtonModule,
@@ -35,21 +35,27 @@ import { toLocalISOString } from '@/shared/utils/date-utils';
         RadioButton,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './mv-certificate.component.html',
     styleUrls: ['./mv-certificate.component.css', '../certificate-print.css']
 })
 export class MvCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     viewMode: 'generic' | 'letterhead' = 'generic';
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
+    refNumber: string = '';
 
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
     users: User[] = [];
     userOptions: { label: string; value: string }[] = [];
@@ -104,8 +110,8 @@ export class MvCertificateComponent implements OnInit {
         this.form = this.fb.group({
             viewMode: ['generic'],
             consignorExporter: [''],
-            certificateNumber: ['TC 4683'],
-            myRef: ['TC 4683'],
+            certificateNumber: [''],
+            myRef: [''],
             yourRef: [''],
             competentAuthority: ['DEPARTMENT OF FISHERIES & AQUATIC RESOURCES'],
             certifyingBody: ['DEPARTMENT OF FISHERIES & AQUATIC RESOURCES'],
@@ -169,6 +175,8 @@ export class MvCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -176,6 +184,7 @@ export class MvCertificateComponent implements OnInit {
                 this.viewOnly = params['viewOnly'] === 'true' || params['viewOnly'] === true;
             }
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({ certificateNumber: params['ref'], myRef: params['ref'] });
             }
             if (params['requestId']) {
@@ -345,10 +354,15 @@ export class MvCertificateComponent implements OnInit {
         });
     }
 
-    loadVetFormData(requestId: number) {
+    private loadVetFormData(requestId: number): void {
         this.certificateRequestService.getVetFormByRequestId(requestId).subscribe({
-            next: (data) => {
+            next: (data: VetFormFieldResponse) => {
                 if (!data) return;
+
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TC 4683', 'TC 4522'];
+                const cleanCertNo = (data.healthCertNo && !dummyValues.includes(data.healthCertNo.trim())) ? data.healthCertNo : 
+                                    (data.newHC && !dummyValues.includes(data.newHC.trim())) ? data.newHC : '';
+                const certNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
 
                 const consignorFull = data.consignorName && data.consignorAddress
                     ? `${data.consignorName}\n${data.consignorAddress}`
@@ -366,6 +380,8 @@ export class MvCertificateComponent implements OnInit {
                 const transportMode = data.transportAeroPlane ? 'AIR FREIGHT' : (data.transportShip ? 'SEA FREIGHT' : 'AIR FREIGHT');
 
                 this.form.patchValue({
+                    certificateNumber: certNo,
+                    myRef: certNo,
                     consignorExporter: consignorFull,
                     consigneeImporter: consigneeFull,
                     countryOfOrigin: data.countryOrigin || 'INDIA',
@@ -450,10 +466,15 @@ export class MvCertificateComponent implements OnInit {
                 const mode: 'generic' | 'letterhead' = (data.certificateType === 'letterhead' || data.certificateType === 'letter') ? 'letterhead' : 'generic';
                 this.viewMode = mode;
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TC 4683', 'TC 4522'];
+                const cleanCertNo = (data.certificateNumber && !dummyValues.includes(data.certificateNumber.trim())) ? data.certificateNumber : '';
+                const finalCertNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
+
                 this.form.patchValue({
                     ...data,
                     viewMode: mode,
-                    myRef: data.certificateNumber || '',
+                    certificateNumber: finalCertNo,
+                    myRef: finalCertNo || (data as any).myRef || '',
                     itemName: data.descriptionOfCommodity || '',
                     packagesCountDesc: data.totalNumberOfPackages || (data.numberOfPackages ? `${data.numberOfPackages}` : ''),
                     netWeightDesc: data.totalQuantity || (data.netWeight ? `${data.netWeight} kg` : ''),
@@ -550,8 +571,19 @@ export class MvCertificateComponent implements OnInit {
         this.certificateRequestService.getRequestById(requestId).subscribe({
             next: (req) => {
                 if (req) {
+                    if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                    if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                }
+                if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            certificateNumber: req.referenceNumber,
+                            myRef: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -559,11 +591,11 @@ export class MvCertificateComponent implements OnInit {
     }
 
     print() {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

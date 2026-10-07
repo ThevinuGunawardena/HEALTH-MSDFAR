@@ -11,7 +11,7 @@ import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { AuthService } from '@/pages/service/auth.service';
 import { CertificateRequestResponse, CertificateRequestService, PaymentSlipPreview } from 'src/app/pages/service/certificate-request.service';
-import { catchError, forkJoin, map, Observable, of } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 
 interface CertificateRequestPaymentSlip {
     mimeType: string;
@@ -32,69 +32,16 @@ interface CertificateRequest {
     status: 'Pending' | 'Confirmed' | 'Rejected';
     paymentSlip: CertificateRequestPaymentSlip | null;
     hasSubmittedCertificate: boolean | null;
+    cancelsAndReplacesRef?: string | null;
+    cancelsAndReplacesDate?: string | Date | null;
 }
 
-const COUNTRY_CERTIFICATE_MAP: Record<string, string> = {
-    Australia: '/uikit/world-certificates/au-certificate',
-    Brazil: '/uikit/world-certificates/br-certificate',
-    China: '/uikit/world-certificates/ch-certificate',
-    Armenia: '/uikit/world-certificates/am-certificate',
-    'Hong Kong': '/uikit/world-certificates/hk-certificate',
-    India: '/uikit/world-certificates/in-certificate',
-    Indonesia: '/uikit/world-certificates/id-certificate',
-    Malaysia: '/uikit/world-certificates/my-certificate',
-    Kuwait: '/uikit/world-certificates/kw-certificate',
-    Taiwan: '/uikit/world-certificates/tw-certificate',
-    Ukraine: '/uikit/world-certificates/ua-certificate',
-    Russia: '/uikit/world-certificates/ru-certificate',
-    Kazakhstan: '/uikit/world-certificates/kz-certificate',
-    Japan: '/uikit/world-certificates/jp-certificate',
-    'New Zealand': '/uikit/world-certificates/nz-certificate',
-    USA: '/uikit/world-certificates/usa-certificate',
-    'United States of America': '/uikit/world-certificates/usa-certificate',
-    'United States': '/uikit/world-certificates/usa-certificate',
-    UK: '/uikit/world-certificates/uk-certificate',
-    'United Kingdom': '/uikit/world-certificates/uk-certificate',
-    'Great Britain': '/uikit/world-certificates/uk-certificate',
-    Israel: '/uikit/world-certificates/il-certificate',
-    Maldives: '/uikit/world-certificates/mv-certificate',
-    Canada: '/uikit/world-certificates/ca-certificate',
-    'Saudi Arabia': '/uikit/world-certificates/sa-certificate',
-    'South Africa': '/uikit/world-certificates/za-certificate'
-};
-
-function getCertificatePath(countryName?: string | null): string | null {
-    if (!countryName) return null;
-    const normalized = countryName.trim().toLowerCase();
-    
-    if (normalized === 'australia') return '/uikit/world-certificates/au-certificate';
-    if (normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') return '/uikit/world-certificates/usa-certificate';
-    if (normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') return '/uikit/world-certificates/uk-certificate';
-    if (normalized === 'brazil') return '/uikit/world-certificates/br-certificate';
-    if (normalized === 'china') return '/uikit/world-certificates/ch-certificate';
-    if (normalized === 'armenia') return '/uikit/world-certificates/am-certificate';
-    if (normalized === 'hong kong') return '/uikit/world-certificates/hk-certificate';
-    if (normalized === 'india') return '/uikit/world-certificates/in-certificate';
-    if (normalized === 'indonesia') return '/uikit/world-certificates/id-certificate';
-    if (normalized === 'malaysia') return '/uikit/world-certificates/my-certificate';
-    if (normalized === 'kuwait') return '/uikit/world-certificates/kw-certificate';
-    if (normalized === 'taiwan') return '/uikit/world-certificates/tw-certificate';
-    if (normalized === 'ukraine') return '/uikit/world-certificates/ua-certificate';
-    if (normalized === 'russia') return '/uikit/world-certificates/ru-certificate';
-    if (normalized === 'kazakhstan' || normalized === 'republic of kazakhstan') return '/uikit/world-certificates/kz-certificate';
-    if (normalized === 'japan') return '/uikit/world-certificates/jp-certificate';
-    if (normalized === 'new zealand') return '/uikit/world-certificates/nz-certificate';
-    if (normalized === 'israel') return '/uikit/world-certificates/il-certificate';
-    if (normalized === 'maldives') return '/uikit/world-certificates/mv-certificate';
-    if (normalized === 'canada') return '/uikit/world-certificates/ca-certificate';
-    if (normalized === 'saudi arabia') return '/uikit/world-certificates/sa-certificate';
-    if (normalized === 'south africa') return '/uikit/world-certificates/za-certificate';
-
-    const matchKey = Object.keys(COUNTRY_CERTIFICATE_MAP).find(
-        (k) => k.toLowerCase().trim() === normalized
-    );
-    return matchKey ? COUNTRY_CERTIFICATE_MAP[matchKey] : null;
-}
+import {
+    CertificateTemplateOption,
+    getCertificateTemplates,
+    hasMultipleTemplates,
+    getCertificatePath
+} from '@/shared/country-certificate-templates';
 
 @Component({
     selector: 'app-certificate-requests',
@@ -117,6 +64,12 @@ export class CertificateRequestsComponent implements OnInit {
     rejectingRequest = false;
     selectedRejectRequest: CertificateRequest | null = null;
     isCompanyUser = false;
+
+    // Template selection dialog state (Option B)
+    templateDialogVisible = false;
+    templateOptions: CertificateTemplateOption[] = [];
+    selectedRequestForTemplate: CertificateRequest | null = null;
+    templateDialogAction: 'continue' | 'edit' = 'continue';
 
     constructor(
         private messageService: MessageService,
@@ -162,7 +115,9 @@ export class CertificateRequestsComponent implements OnInit {
             amount: this.fixedAmount,
             status: this.normalizeStatus(item.status),
             paymentSlip: this.toPaymentSlip(item.paymentSlip),
-            hasSubmittedCertificate: item.hasFormSubmitted ?? null
+            hasSubmittedCertificate: item.hasFormSubmitted ?? null,
+            cancelsAndReplacesRef: item.cancelsAndReplacesRef,
+            cancelsAndReplacesDate: item.cancelsAndReplacesDate
         };
     }
 
@@ -200,67 +155,74 @@ export class CertificateRequestsComponent implements OnInit {
             return of(true);
         }
 
-        if (request.type === 'EU') {
-            return this.toExistsResult(this.certificateRequestService.getVetFormByRequestId(request.id));
-        }
+        // Check if VetCertificateForm exists first (the standard form submitted by companies for both EU & NonEU)
+        return this.toExistsResult(this.certificateRequestService.getVetFormByRequestId(request.id)).pipe(
+            switchMap((exists) => {
+                if (exists) return of(true);
 
-        if (!request.country) {
-            return of(false);
-        }
+                if (request.type === 'EU' || !request.country) {
+                    return of(false);
+                }
 
-        switch (request.country.trim().toLowerCase()) {
-            case 'australia':
-                return this.toExistsResult(this.certificateRequestService.getAuCertificateByRequestId(request.id));
-            case 'armenia':
-                return this.toExistsResult(this.certificateRequestService.getAmCertificateByRequestId(request.id));
-            case 'brazil':
-                return this.toExistsResult(this.certificateRequestService.getBrCertificateByRequestId(request.id));
-            case 'china':
-                return this.toExistsResult(this.certificateRequestService.getChCertificateByRequestId(request.id));
-            case 'hong kong':
-                return this.toExistsResult(this.certificateRequestService.getHkCertificateByRequestId(request.id));
-            case 'india':
-                return this.toExistsResult(this.certificateRequestService.getIndCertificateByRequestId(request.id));
-            case 'indonesia':
-                return this.toExistsResult(this.certificateRequestService.getIdCertificateByRequestId(request.id));
-            case 'japan':
-                return this.toExistsResult(this.certificateRequestService.getJpCertificateByRequestId(request.id));
-            case 'kuwait':
-                return this.toExistsResult(this.certificateRequestService.getKwCertificateByRequestId(request.id));
-            case 'malaysia':
-                return this.toExistsResult(this.certificateRequestService.getMyCertificateByRequestId(request.id));
-            case 'maldives':
-                return this.toExistsResult(this.certificateRequestService.getMvCertificateByRequestId(request.id));
-            case 'new zealand':
-                return this.toExistsResult(this.certificateRequestService.getNzCertificateByRequestId(request.id));
-            case 'russia':
-                return this.toExistsResult(this.certificateRequestService.getRuCertificateByRequestId(request.id));
-            case 'kazakhstan':
-            case 'republic of kazakhstan':
-                return this.toExistsResult(this.certificateRequestService.getKzCertificateByRequestId(request.id));
-            case 'taiwan':
-                return this.toExistsResult(this.certificateRequestService.getTwCertificateByRequestId(request.id));
-            case 'ukraine':
-                return this.toExistsResult(this.certificateRequestService.getUaCertificateByRequestId(request.id));
-            case 'uk':
-            case 'united kingdom':
-            case 'great britain':
-                return this.toExistsResult(this.certificateRequestService.getUkCertificateByRequestId(request.id));
-            case 'usa':
-            case 'united states of america':
-            case 'united states':
-                return this.toExistsResult(this.certificateRequestService.getUsaCertificateByRequestId(request.id));
-            case 'canada':
-                return this.toExistsResult(this.certificateRequestService.getCaCertificateByRequestId(request.id));
-            case 'saudi arabia':
-                return this.toExistsResult(this.certificateRequestService.getSaCertificateByRequestId(request.id));
-            case 'south africa':
-                return this.toExistsResult(this.certificateRequestService.getZaCertificateByRequestId(request.id));
-            case 'israel':
-                return this.toExistsResult(this.certificateRequestService.getIlCertificateByRequestId(request.id));
-            default:
-                return of(false);
-        }
+                switch (request.country.trim().toLowerCase()) {
+                    case 'australia':
+                        return this.toExistsResult(this.certificateRequestService.getAuCertificateByRequestId(request.id));
+                    case 'armenia':
+                        return this.toExistsResult(this.certificateRequestService.getAmCertificateByRequestId(request.id));
+                    case 'brazil':
+                        return this.toExistsResult(this.certificateRequestService.getBrCertificateByRequestId(request.id));
+                    case 'china':
+                        return this.toExistsResult(this.certificateRequestService.getChCertificateByRequestId(request.id));
+                    case 'hong kong':
+                    case 'hongkong':
+                        return this.toExistsResult(this.certificateRequestService.getHkCertificateByRequestId(request.id));
+                    case 'india':
+                        return this.toExistsResult(this.certificateRequestService.getIndCertificateByRequestId(request.id));
+                    case 'indonesia':
+                        return this.toExistsResult(this.certificateRequestService.getIdCertificateByRequestId(request.id));
+                    case 'japan':
+                        return this.toExistsResult(this.certificateRequestService.getJpCertificateByRequestId(request.id));
+                    case 'kuwait':
+                        return this.toExistsResult(this.certificateRequestService.getKwCertificateByRequestId(request.id));
+                    case 'malaysia':
+                        return this.toExistsResult(this.certificateRequestService.getMyCertificateByRequestId(request.id));
+                    case 'maldives':
+                        return this.toExistsResult(this.certificateRequestService.getMvCertificateByRequestId(request.id));
+                    case 'new zealand':
+                    case 'newzealand':
+                        return this.toExistsResult(this.certificateRequestService.getNzCertificateByRequestId(request.id));
+                    case 'russia':
+                        return this.toExistsResult(this.certificateRequestService.getRuCertificateByRequestId(request.id));
+                    case 'kazakhstan':
+                    case 'republic of kazakhstan':
+                        return this.toExistsResult(this.certificateRequestService.getKzCertificateByRequestId(request.id));
+                    case 'taiwan':
+                        return this.toExistsResult(this.certificateRequestService.getTwCertificateByRequestId(request.id));
+                    case 'ukraine':
+                        return this.toExistsResult(this.certificateRequestService.getUaCertificateByRequestId(request.id));
+                    case 'uk':
+                    case 'united kingdom':
+                    case 'great britain':
+                        return this.toExistsResult(this.certificateRequestService.getUkCertificateByRequestId(request.id));
+                    case 'usa':
+                    case 'united states of america':
+                    case 'united states':
+                        return this.toExistsResult(this.certificateRequestService.getUsaCertificateByRequestId(request.id));
+                    case 'canada':
+                        return this.toExistsResult(this.certificateRequestService.getCaCertificateByRequestId(request.id));
+                    case 'saudi arabia':
+                    case 'saudi':
+                        return this.toExistsResult(this.certificateRequestService.getSaCertificateByRequestId(request.id));
+                    case 'south africa':
+                    case 'southafrica':
+                        return this.toExistsResult(this.certificateRequestService.getZaCertificateByRequestId(request.id));
+                    case 'israel':
+                        return this.toExistsResult(this.certificateRequestService.getIlCertificateByRequestId(request.id));
+                    default:
+                        return of(false);
+                }
+            })
+        );
     }
 
     private toExistsResult<T>(request$: Observable<T>): Observable<boolean> {
@@ -352,9 +314,9 @@ export class CertificateRequestsComponent implements OnInit {
                 this.hydrateSubmissionStatus();
 
                 if (request.type === 'NONEU' && request.country) {
-                    const certificatePath = getCertificatePath(request.country);
+                    const templates = getCertificateTemplates(request.country, request.type);
 
-                    if (certificatePath) {
+                    if (templates.length === 1) {
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Confirmed',
@@ -363,13 +325,24 @@ export class CertificateRequestsComponent implements OnInit {
                         });
 
                         setTimeout(() => {
-                            this.router.navigate([certificatePath], {
+                            this.router.navigate([templates[0].path], {
                                 queryParams: {
                                     requestId: request.id,
                                     ref: request.refNumber
                                 }
                             });
                         }, 1500);
+                    } else if (templates.length > 1) {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Confirmed',
+                            detail: `Payment of Rs. 500 confirmed for ${request.refNumber}. Please select the certificate template to fill.`,
+                            life: 4000
+                        });
+                        this.selectedRequestForTemplate = request;
+                        this.templateOptions = templates;
+                        this.templateDialogAction = 'continue';
+                        this.templateDialogVisible = true;
                     } else {
                         this.messageService.add({
                             severity: 'warn',
@@ -446,40 +419,81 @@ export class CertificateRequestsComponent implements OnInit {
         });
     }
 
-    onView(request: CertificateRequest) {
-        this.router.navigate(['/uikit/admin/certificate-requests/view'], {
-            queryParams: {
-                requestId: request.id,
-                ref: request.refNumber,
-                type: request.type,
-                country: request.country ?? null
+    onReplacement(request: CertificateRequest) {
+        if (!confirm(`Are you sure you want to create a Replacement Certificate for ${request.refNumber}? This will issue a new reference number and clone the existing certificate details.`)) {
+            return;
+        }
+
+        this.certificateRequestService.createReplacement(request.id).subscribe({
+            next: (res) => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Replacement Created',
+                    detail: `New replacement certificate ${res.newReferenceNumber} created successfully. Loaded into Replacement Requests section.`,
+                    life: 4000
+                });
+
+                this.router.navigate(['/uikit/admin/replacement-requests']);
+            },
+            error: (err) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Replacement Failed',
+                    detail: err?.error?.message || `Failed to create replacement for ${request.refNumber}.`,
+                    life: 4000
+                });
             }
+        });
+    }
+
+    onView(request: CertificateRequest) {
+        const queryParams: Record<string, string | number> = {
+            requestId: request.id,
+            ref: request.refNumber,
+            type: request.type
+        };
+        if (request.country) queryParams['country'] = request.country;
+        if (request.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = request.cancelsAndReplacesRef;
+        if (request.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = typeof request.cancelsAndReplacesDate === 'string' ? request.cancelsAndReplacesDate : request.cancelsAndReplacesDate.toISOString();
+
+        this.router.navigate(['/uikit/admin/certificate-requests/view'], {
+            queryParams
         });
     }
 
     onEdit(request: CertificateRequest) {
         if (request.type === 'EU') {
-            this.router.navigate(['/uikit/certificate'], {
-                queryParams: {
-                    requestId: request.id,
-                    ref: request.refNumber,
-                    type: 'EU',
-                    adminEdit: 'true'
-                }
-            });
+            const queryParams: Record<string, string | number> = {
+                requestId: request.id,
+                ref: request.refNumber,
+                type: 'EU',
+                adminEdit: 'true'
+            };
+            if (request.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = request.cancelsAndReplacesRef;
+            if (request.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = typeof request.cancelsAndReplacesDate === 'string' ? request.cancelsAndReplacesDate : request.cancelsAndReplacesDate.toISOString();
+            this.router.navigate(['/uikit/certificate'], { queryParams });
             return;
         }
 
         if (request.country) {
-            const certificatePath = getCertificatePath(request.country);
-            if (certificatePath) {
-                this.router.navigate([certificatePath], {
-                    queryParams: {
-                        requestId: request.id,
-                        ref: request.refNumber,
-                        adminEdit: 'true'
-                    }
-                });
+            const templates = getCertificateTemplates(request.country, request.type);
+            if (templates.length === 1) {
+                const queryParams: Record<string, string | number> = {
+                    requestId: request.id,
+                    ref: request.refNumber,
+                    adminEdit: 'true'
+                };
+                if (request.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = request.cancelsAndReplacesRef;
+                if (request.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = typeof request.cancelsAndReplacesDate === 'string' ? request.cancelsAndReplacesDate : request.cancelsAndReplacesDate.toISOString();
+                this.router.navigate([templates[0].path], { queryParams });
+                return;
+            }
+
+            if (templates.length > 1) {
+                this.selectedRequestForTemplate = request;
+                this.templateOptions = templates;
+                this.templateDialogAction = 'edit';
+                this.templateDialogVisible = true;
                 return;
             }
         }
@@ -496,13 +510,14 @@ export class CertificateRequestsComponent implements OnInit {
 
     onContinue(request: CertificateRequest) {
         if (request.type === 'EU') {
-            this.router.navigate(['/uikit/certificate'], {
-                queryParams: {
-                    requestId: request.id,
-                    ref: request.refNumber,
-                    type: 'EU'
-                }
-            });
+            const queryParams: Record<string, string | number> = {
+                requestId: request.id,
+                ref: request.refNumber,
+                type: 'EU'
+            };
+            if (request.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = request.cancelsAndReplacesRef;
+            if (request.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = typeof request.cancelsAndReplacesDate === 'string' ? request.cancelsAndReplacesDate : request.cancelsAndReplacesDate.toISOString();
+            this.router.navigate(['/uikit/certificate'], { queryParams });
             return;
         }
 
@@ -516,23 +531,64 @@ export class CertificateRequestsComponent implements OnInit {
             return;
         }
 
-        const certificatePath = getCertificatePath(request.country);
-        if (!certificatePath) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Route Missing',
-                detail: `Certificate form for ${request.country} is not available yet.`,
-                life: 4000
-            });
+        const templates = getCertificateTemplates(request.country, request.type);
+        if (templates.length === 1) {
+            const queryParams: Record<string, string | number> = {
+                requestId: request.id,
+                ref: request.refNumber
+            };
+            if (request.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = request.cancelsAndReplacesRef;
+            if (request.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = typeof request.cancelsAndReplacesDate === 'string' ? request.cancelsAndReplacesDate : request.cancelsAndReplacesDate.toISOString();
+            this.router.navigate([templates[0].path], { queryParams });
             return;
         }
 
-        this.router.navigate([certificatePath], {
-            queryParams: {
-                requestId: request.id,
-                ref: request.refNumber
-            }
+        if (templates.length > 1) {
+            this.selectedRequestForTemplate = request;
+            this.templateOptions = templates;
+            this.templateDialogAction = 'continue';
+            this.templateDialogVisible = true;
+            return;
+        }
+
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Route Missing',
+            detail: `Certificate form for ${request.country} is not available yet.`,
+            life: 4000
         });
+    }
+
+    selectTemplate(template: CertificateTemplateOption) {
+        if (!this.selectedRequestForTemplate) return;
+        const request = this.selectedRequestForTemplate;
+        const queryParams: Record<string, string | number> = {
+            requestId: request.id,
+            ref: request.refNumber
+        };
+        if (this.templateDialogAction === 'edit') {
+            queryParams['adminEdit'] = 'true';
+        }
+        if (request.cancelsAndReplacesRef) {
+            queryParams['cancelsAndReplacesRef'] = request.cancelsAndReplacesRef;
+        }
+        if (request.cancelsAndReplacesDate) {
+            queryParams['cancelsAndReplacesDate'] = typeof request.cancelsAndReplacesDate === 'string'
+                ? request.cancelsAndReplacesDate
+                : request.cancelsAndReplacesDate.toISOString();
+        }
+
+        this.templateDialogVisible = false;
+        this.selectedRequestForTemplate = null;
+        this.templateOptions = [];
+
+        this.router.navigate([template.path], { queryParams });
+    }
+
+    closeTemplateDialog() {
+        this.templateDialogVisible = false;
+        this.selectedRequestForTemplate = null;
+        this.templateOptions = [];
     }
 
     applySearch() {

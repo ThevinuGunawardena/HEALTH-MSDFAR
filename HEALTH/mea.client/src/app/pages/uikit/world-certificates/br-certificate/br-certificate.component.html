@@ -39,21 +39,20 @@
                 (onClick)="onSubmit()"
             ></p-button>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="print()"
             ></p-button>
         </div>
     </div>
     <form [formGroup]="form">
-        <!-- ════ PAGE 1 — PDF 1/2 ════ -->
+    <!-- ════ PAGE 1 — PDF 1/2 ════ -->
         <div class="br-page">
-            <div class="br-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="br-content">
                 <!-- Header -->
                 <div class="br-header">
                     <div class="cert-header-top-row mb-1">
@@ -94,7 +93,7 @@
                         </td>
                         <td class="br-td br-td-right" colspan="2">
                             <div class="br-flabel">2. Certificate No:</div>
-                            <input pInputText formControlName="certificateNo" class="br-input font-bold" placeholder="BR 8812" />
+                            <input pInputText formControlName="certificateNo" class="br-input font-bold" placeholder="Certificate No" [readonly]="!!refNumber || !!certificateRequestId" />
                         </td>
                     </tr>
 
@@ -221,7 +220,8 @@
 
         <!-- ════ PAGE 2 — PDF 2/2 ════ -->
         <div class="br-page last-page">
-            <div class="br-content">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="br-content">
                 <!-- Row 12: Product table — full width -->
                 <table class="br-main-table">
                     <tr>
@@ -264,16 +264,20 @@
                     </tr>
 
                     <!-- Row 13: Official Stamp | Signature -->
-                     <tr class="view-hide">
+                    <tr>
                         <td class="br-td" colspan="3">
                             <div class="grid-row" style="align-items: stretch;">
-                                <div class="grid-cell br" style="min-height: 135px">
+                                <div class="grid-cell br" style="min-height: 110px">
                                     <div class="cell-label mb-1">Stamp</div>
-                                    <div class="cert-area">Stamp Area</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                    </div>
                                 </div>
-                                <div class="grid-cell" style="min-height: 135px">
+                                <div class="grid-cell" style="min-height: 110px">
                                     <div class="cell-label mb-1">Signature:</div>
-                                    <div class="cert-area">Signature Area</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -351,17 +355,21 @@
 
                 <!-- Stamp | Signature row -->
                 <table class="br-main-table br-mt6">
-                    <tr class="view-hide">
+                    <tr>
                         <td class="br-td br-sig-cell">
-                                <div class="grid-cell" style="min-height: 135px">
+                                <div class="grid-cell" style="min-height: 110px">
                                     <div class="cell-label mb-1">Stamp</div>
-                                    <div class="cert-area">Stamp Area</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                    </div>
                                 </div>
                             </td>
                         <td class="br-td br-sig-cell">
-                                <div class="grid-cell" style="min-height: 135px">
+                                <div class="grid-cell" style="min-height: 110px">
                                     <div class="cell-label mb-1">Signature:</div>
-                                    <div class="cert-area">Signature Area</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                    </div>
                                 </div>
                         </td>
                     </tr>
@@ -416,12 +424,12 @@
             <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
             <div class="flex items-center gap-2">
                 <p-button
+                    *ngIf="isAdmin"
                     label="Print"
                     [outlined]="true"
                     (onClick)="print()"
                     icon="pi pi-print"
-                    [disabled]="(isCompany && !isApproved) || (!isCompany && form.get('signatoryUserId')?.invalid)"
-                    [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print Certificate'"
+                    [disabled]="form.get('signatoryUserId')?.invalid"
                     tooltipPosition="top"
                 ></p-button>
                 <p-button label="Submit" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
