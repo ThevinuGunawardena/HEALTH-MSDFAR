@@ -251,6 +251,10 @@ export class AppMenuitem implements OnInit, OnDestroy {
             return;
         }
 
+        if (this.item.items || !this.item.url) {
+            event.preventDefault();
+        }
+
         // navigate with hover
         if ((this.root && this.isSlim()) || this.isHorizontal() || this.isCompact()) {
             this.layoutService.layoutState.update((val) => ({

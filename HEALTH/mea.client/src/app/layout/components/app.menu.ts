@@ -94,7 +94,7 @@ export class AppMenu {
                 {
                     label: 'World Certificates',
                     icon: 'pi pi-fw pi-globe',
-                    data: { roles: ['Admin'] },
+                    data: { roles: ['Admin', 'User'] },
                     items: [
                         {
                             label: 'Armenia Certificate',
