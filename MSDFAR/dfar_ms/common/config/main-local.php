@@ -1,6 +1,6 @@
 <?php
 
-$dbPassword = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '12345';
+$dbPassword = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
 
 return [
     'components' => [
