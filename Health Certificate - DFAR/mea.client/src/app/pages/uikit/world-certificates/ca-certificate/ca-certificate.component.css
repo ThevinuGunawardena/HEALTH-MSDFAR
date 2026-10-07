@@ -1,0 +1,359 @@
+* { box-sizing: border-box; }
+
+.ca-container {
+    width: 100%;
+    max-width: none;
+    margin: 0; padding: 0;
+    font-family: 'InterDisplay', Helvetica, Arial, sans-serif;
+    background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ca-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 0;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ca-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 10mm 14mm 6mm 14mm;
+    display: flex;
+    flex-direction: column;
+}
+
+.ca-header { flex-shrink: 0; margin-bottom: 6px; }
+.ca-logo-row { display: flex; justify-content: center; margin-bottom: 4px; }
+.ca-logo { height: 68px; width: auto; }
+
+.ca-dept-si { text-align: center; font-size: 11pt; font-weight: 700; line-height: 1.3; }
+.ca-dept-ta { text-align: center; font-size: 9.5pt; font-weight: 400; line-height: 1.3; }
+.ca-dept-en { text-align: center; font-size: 11.5pt; font-weight: 700; line-height: 1.4; margin-bottom: 3px; letter-spacing: 0.5px; }
+
+.ca-web-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    font-size: 8pt;
+    margin-bottom: 3px;
+}
+
+.ca-addr-bar {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    font-size: 7.5pt;
+    margin-bottom: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.ca-ref-row {
+    display: flex;
+    gap: 0;
+    border: 1px solid #94a3b8;
+    border-top: none;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+}
+
+.ca-ref-block {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-right: 1px solid #94a3b8;
+}
+.ca-ref-block:last-child { border-right: none; }
+
+.ca-ref-labels {
+    display: flex;
+    flex-direction: column;
+    font-size: 7.5pt;
+    line-height: 1.4;
+    color: #334155;
+    flex-shrink: 0;
+}
+
+.ca-ref-brace {
+    font-size: 26pt;
+    font-weight: 200;
+    color: #475569;
+    line-height: 1;
+    margin-top: -4px;
+    user-select: none;
+}
+
+.ca-ref-input {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    font-size: 8.5pt !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    height: auto !important;
+    flex: 1;
+    color: #0f172a !important;
+}
+
+.ca-cert-title {
+    font-size: 13pt;
+    letter-spacing: 1px;
+    margin: 4px 0 6px 0;
+}
+
+.ca-stmt {
+    color: #0f172a;
+    line-height: 1.45;
+}
+
+.ca-sub-title {
+    font-size: 9.5pt;
+    letter-spacing: 0.5px;
+    margin: 4px 0 6px 0;
+}
+
+.ca-field-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.ca-lbl {
+    font-size: 8.5pt;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ca-lbl-lg {
+    font-size: 8.5pt;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.pl-indent {
+    padding-left: 20px;
+    margin-top: 1px;
+    margin-bottom: 3px;
+}
+
+.ca-line-input {
+    border: none !important;
+    border-bottom: 1px dotted #64748b !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 1px 4px !important;
+    font-size: 8.5pt !important;
+    flex: 1;
+    height: auto !important;
+    color: #0f172a !important;
+}
+
+.ca-line-input:focus {
+    border-bottom: 1.5px solid #2563eb !important;
+}
+
+.ca-textarea {
+    width: 100%;
+    resize: none;
+    line-height: 1.35;
+}
+
+.ca-stamp-sig-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 12px;
+}
+
+.ca-stamp-col, .ca-sig-col {
+    flex: 1;
+}
+
+.ca-stamp-placeholder, .ca-sig-placeholder {
+    min-height: 75px;
+    max-height: 110px;
+    height: auto;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 6px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.ca-stamp-placeholder:hover, .ca-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.ca-stamp-placeholder.ca-drop-active, .ca-sig-placeholder.ca-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.ca-stamp-placeholder.has-content, .ca-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.ca-stamp-placeholder.has-content:hover, .ca-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.ca-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ca-stamp-img, .ca-sig-img {
+    max-height: 80px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.ca-pdf-preview {
+    width: 100%;
+    height: 80px;
+    border: none;
+    pointer-events: none;
+}
+
+.ca-action-overlay {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 4px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.ca-stamp-placeholder:hover .ca-action-overlay,
+.ca-sig-placeholder:hover .ca-action-overlay {
+    opacity: 1;
+}
+
+.ca-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.ca-mini-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.ca-mini-btn.danger:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+.ca-bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #94a3b8;
+    padding-top: 4px;
+    margin-top: auto;
+}
+
+.ca-bottom-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ca-bottom-labels {
+    display: flex;
+    flex-direction: column;
+    font-size: 6.5pt;
+    line-height: 1.3;
+    color: #475569;
+}
+
+.ca-bottom-brace {
+    font-size: 20pt;
+    font-weight: 200;
+    color: #475569;
+    user-select: none;
+}
+
+.ca-bottom-val {
+    font-size: 7.5pt;
+    color: #0f172a;
+}
+
+.uppercase-text {
+    text-transform: uppercase;
+}
+
+@media print {
+    .print-hide { display: none !important; }
+    .print-show { display: block !important; }
+    .ca-stamp-placeholder, .ca-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 0 !important;
+    }
+    .ca-stamp-img, .ca-sig-img {
+        max-height: 85px !important;
+    }
+    .ca-pdf-preview {
+        height: 85px !important;
+    }
+    .ca-page {
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+    }
+}

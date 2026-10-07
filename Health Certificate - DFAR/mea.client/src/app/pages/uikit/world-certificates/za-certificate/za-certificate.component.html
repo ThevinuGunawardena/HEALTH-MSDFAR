@@ -1,0 +1,812 @@
+<div class="za-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">SOUTH AFRICA (ZA)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">
+                Ref: {{ form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber }}
+            </span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="form.get('signatoryUserId')?.invalid"
+                tooltipPosition="bottom"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Radio Buttons Format Selector (Creation / Edit mode) -->
+    <div class="flex flex-wrap items-center gap-4 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Format:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('letter')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="letter" inputId="vm_za_letter" (onClick)="onViewModeChange('letter')"></p-radiobutton>
+            <span>OFFICIAL LETTERHEAD (PROCESSED FISH)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('live')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="live" inputId="vm_za_live" (onClick)="onViewModeChange('live')"></p-radiobutton>
+            <span>OFFICIAL LETTERHEAD (LIVE ANIMALS / EXAMINED SAMPLE)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('generic')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="generic" inputId="vm_za_generic" (onClick)="onViewModeChange('generic')"></p-radiobutton>
+            <span>GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('attachment')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment" inputId="vm_za_attachment" (onClick)="onViewModeChange('attachment')"></p-radiobutton>
+            <span>LIVE ANIMALS / WITH ATTACHMENT TABLE</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode or when Submitted -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'generic' ? 'GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)' : ((form.get('viewMode')?.value || viewMode) === 'attachment' ? 'LIVE ANIMALS / WITH ATTACHMENT TABLE' : ((form.get('viewMode')?.value || viewMode) === 'live' ? 'OFFICIAL LETTERHEAD (LIVE ANIMALS / EXAMINED SAMPLE)' : 'OFFICIAL LETTERHEAD (PROCESSED FISH)')) }}
+        </span>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT: OFFICIAL LETTERHEAD - LIVE ANIMALS (SX 1691 / TB 5820)   -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="za-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'live'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="za-content">
+            <!-- ── TOP HEADER ── -->
+            <div class="za-header">
+                <div class="cert-header-top-row">
+                    <div class="cert-header-spacer"></div>
+                    <div class="za-logo-row flex justify-center">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="za-logo" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || ''"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('itemName')?.value"
+                            [date]="form.get('date')?.value"
+                            [officer]="form.get('signatoryName')?.value"
+                            [destination]="'SOUTH AFRICA'"
+                            [viewOnly]="viewOnly">
+                        </app-certificate-qr>
+                    </div>
+                </div>
+                <div class="za-dept-si">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="za-dept-ta">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                <div class="za-dept-en font-bold">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="za-web-row">
+                    <span>web site : http://www.fisheriesdept.gov.lk</span>
+                    <span class="mx-4">E - mail : info&#64;fisheriesdept.gov.lk</span>
+                </div>
+                <div class="za-addr-bar">
+                    <span class="za-addr-ta">புதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை</span>
+                    <span class="za-addr-si">නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                    <span class="za-addr-en">New Secretariat, Maligawaththa, Colombo 10</span>
+                </div>
+            </div>
+
+            <!-- ── Reference Number & Date Row ── -->
+            <div class="za-ref-row">
+                <div class="za-ref-block">
+                    <div class="za-ref-labels">
+                        <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
+                    </div>
+                    <div class="za-ref-brace">&#125;</div>
+                    <input pInputText formControlName="myRef" class="za-ref-input uppercase-text font-bold" placeholder="e.g. SX 1691 / TB 5820" [readonly]="!!refNumber || !!certificateRequestId" />
+                </div>
+                <div class="za-ref-block">
+                    <div class="za-ref-labels">
+                        <span>ඔබේ අංකය</span><span>உமது இல</span><span>Your Ref</span>
+                    </div>
+                    <div class="za-ref-brace">&#125;</div>
+                    <input pInputText formControlName="yourRef" class="za-ref-input font-bold" />
+                </div>
+                <div class="za-ref-block">
+                    <div class="za-ref-labels">
+                        <span>දිනය</span><span>திகதி</span><span>Date</span>
+                    </div>
+                    <div class="za-ref-brace">&#125;</div>
+                    <div class="print-show font-bold text-xs">
+                        {{ form.get('date')?.value ? (form.get('date')?.value | date: 'dd/MM/yyyy') : ' ' }}
+                    </div>
+                    <div class="print-hide">
+                        <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy"></p-datepicker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── HEALTH CERTIFICATE title ── -->
+            <h2 class="za-cert-title font-bold uppercase underline text-center my-2">HEALTH CERTIFICATE</h2>
+
+            <!-- ── Live Animals Statement paragraph ── -->
+            <p class="za-stmt text-justify text-xs leading-relaxed mb-2 font-serif italic">
+                This is to certify that the undersigned Official Inspector of the Fishery Products Quality Control Unit of the Department of Fisheries &amp; Aquatic Resources, Colombo, Sri Lanka has examined a sample of <span class="font-bold underline not-italic">{{ form.get('liveSampleType')?.value || 'live lobsters / live crabs / live fish' }}</span> today. At the time of examination, this sample of <span class="font-bold underline not-italic">{{ form.get('liveSampleType')?.value || 'live lobsters / live crabs / live fish' }}</span> was found healthy and fit for human consumption.
+            </p>
+
+            <div class="print-hide p-2 bg-slate-100 border border-slate-200 rounded mb-2 flex items-center gap-2 text-xs">
+                <span class="font-semibold text-slate-700">Examined Sample in Statement:</span>
+                <input pInputText formControlName="liveSampleType" placeholder="e.g. live lobsters / live Crabs / live Oysters" class="p-inputtext-sm flex-1 font-bold" />
+            </div>
+
+            <!-- ── Fish and Fishery Products sub-title ── -->
+            <h3 class="za-sub-title text-center font-bold text-xs underline uppercase mb-3">Fish and Fishery Products</h3>
+
+            <!-- ── Product fields ── -->
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">Item:</span>
+                <input pInputText formControlName="itemName" class="za-line-input font-bold uppercase-text" placeholder="WILD CAUGHT- LIVE LOBSTER (Panulirus homarus)" />
+            </div>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">No. of packages:</span>
+                <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="za-line-input font-bold" />
+            </div>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">Net weight:</span>
+                <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="za-line-input font-bold" />
+            </div>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">Date of processing:</span>
+                <input pInputText formControlName="dateOfProcessing" class="za-line-input font-bold uppercase-text" placeholder="e.g. 20th May 2026 (Optional)" />
+            </div>
+
+            <!-- ── Processing Plant ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Name and address of the processing plant:</span>
+                <input pInputText formControlName="processingPlantName" class="za-line-input font-bold uppercase-text" placeholder="Plant Name" />
+            </div>
+            <div class="za-field-row pl-indent">
+                <textarea pTextarea formControlName="processingPlantAddress" rows="2" placeholder="Plant Address" [autoResize]="true" class="za-line-input za-textarea font-bold uppercase-text"></textarea>
+            </div>
+
+            <!-- ── Competent Authority Reg. No. ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Competent Authority Reg. No.:</span>
+                <input pInputText formControlName="competentAuthorityRegNo" class="za-line-input font-bold uppercase-text" placeholder="DFAR/FPE/98/..." />
+            </div>
+
+            <!-- ── Consignor ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Name and address of consignor:</span>
+                <input pInputText formControlName="consignorName" class="za-line-input font-bold uppercase-text" placeholder="Consignor Name" />
+            </div>
+            <div class="za-field-row pl-indent">
+                <textarea pTextarea formControlName="consignorAddress" rows="2" placeholder="Consignor Address" [autoResize]="true" class="za-line-input za-textarea font-bold uppercase-text"></textarea>
+            </div>
+
+            <!-- ── Consignee ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Name and address of consignee:</span>
+                <input pInputText formControlName="consigneeName" class="za-line-input font-bold uppercase-text" placeholder="Consignee Name" />
+            </div>
+            <div class="za-field-row pl-indent">
+                <textarea pTextarea formControlName="consigneeAddress" rows="2" placeholder="Consignee Address" [autoResize]="true" class="za-line-input za-textarea font-bold uppercase-text"></textarea>
+            </div>
+
+            <!-- ── Despatch ── -->
+            <p class="za-despatch-intro font-bold mt-2 mb-1">The above fishery products are to be dispatched</p>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">from:</span>
+                <input pInputText formControlName="despatchFrom" class="za-line-input font-bold uppercase-text" />
+            </div>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">to:</span>
+                <input pInputText formControlName="despatchTo" class="za-line-input font-bold uppercase-text" />
+            </div>
+            <div class="za-field-row">
+                <input pInputText formControlName="despatchByShip" class="za-line-input font-bold uppercase-text" placeholder="BY AIR FREIGHT / BY SEA FREIGHT" />
+            </div>
+
+            <!-- ── Stamp & Signature Section ── -->
+            <div class="za-stamp-sig-section mt-4 pt-2">
+                <div class="za-stamp-col">
+                    <div class="za-lbl-bold font-bold text-xs">Official stamp:</div>
+                    <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                    </div>
+                </div>
+                <div class="za-sig-col">
+                    <div class="za-lbl-bold font-bold text-xs">Signature of Official Inspector:</div>
+                    <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                    </div>
+
+                    <!-- Officer Credentials Info -->
+                    <div class="za-officer-info text-xs space-y-1 mt-2">
+                        <div class="officer-row flex gap-2">
+                            <span class="officer-label font-bold">Name:</span>
+                            <span class="officer-value uppercase-text font-bold">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span>
+                        </div>
+                        <div class="officer-row flex gap-2">
+                            <span class="officer-label font-bold">Designation:</span>
+                            <input pInputText formControlName="designation" class="za-line-input uppercase-text font-bold print-hide" placeholder="QUALITY CONTROL OFFICER (GRADE II)" />
+                            <span class="officer-value uppercase-text font-bold print-show">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span>
+                        </div>
+                        <div class="officer-row" *ngIf="form.get('qualification')?.value">
+                            <span class="officer-value uppercase-text text-2xs">{{ form.get('qualification')?.value }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide mt-3 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+                <div *ngIf="form.controls['signatoryUserId'].invalid && form.controls['signatoryUserId'].touched" class="text-red-500 text-xs mt-1">
+                    Authorized signatory selection and confirmation is required
+                </div>
+            </div>
+
+            <!-- ── BOTTOM BAR ── -->
+            <div class="za-bottom-bar mt-auto">
+                <div class="za-bottom-item">
+                    <div class="za-bottom-labels">
+                        <span>තැ.පෙ.</span><span>த.பெ.ப</span><span>P.O.Box</span>
+                    </div>
+                    <div class="za-bottom-brace">&#125;</div>
+                    <span class="za-bottom-val font-bold">531</span>
+                </div>
+                <div class="za-bottom-item">
+                    <div class="za-bottom-labels">
+                        <span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span>
+                    </div>
+                    <div class="za-bottom-brace">&#125;</div>
+                    <span class="za-bottom-val font-bold">+94(0)112446183 (2 lines)</span>
+                </div>
+                <div class="za-bottom-item">
+                    <div class="za-bottom-labels">
+                        <span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span>
+                    </div>
+                    <div class="za-bottom-brace">&#125;</div>
+                    <span class="za-bottom-val font-bold">+94(0) 112449170</span>
+                </div>
+            </div>
+
+            <div class="za-system-note text-center text-3xs text-slate-500 mt-1">
+                This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 1: OFFICIAL LETTERHEAD HEALTH CERTIFICATE (TB 3688)       -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="za-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letter'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="za-content">
+            <!-- ── TOP HEADER ── -->
+            <div class="za-header">
+                <div class="cert-header-top-row">
+                    <div class="cert-header-spacer"></div>
+                    <div class="za-logo-row flex justify-center">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="za-logo" />
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || ''"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('itemName')?.value"
+                            [date]="form.get('date')?.value"
+                            [officer]="form.get('signatoryName')?.value"
+                            [destination]="'SOUTH AFRICA'"
+                            [viewOnly]="viewOnly">
+                        </app-certificate-qr>
+                    </div>
+                </div>
+                <div class="za-dept-si">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="za-dept-ta">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                <div class="za-dept-en">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+
+                <div class="za-web-row">
+                    <span>web site : http://www.fisheriesdept.gov.lk</span>
+                    <span>E - mail : info&#64;fisheriesdept.gov.lk</span>
+                </div>
+
+                <!-- Multilingual address bar -->
+                <div class="za-addr-bar">
+                    <span class="za-addr-ta">புதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை</span>
+                    <span class="za-addr-si">නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                    <span class="za-addr-en">New Secretariat, Maligawaththa, Colombo 10</span>
+                </div>
+            </div>
+
+            <!-- ── REF / DATE ROW — 3 bracketed fields ── -->
+            <div class="za-ref-row">
+                <div class="za-ref-block">
+                    <div class="za-ref-labels">
+                        <span>මගේ අංකය</span>
+                        <span>எனது இல</span>
+                        <span>My Ref</span>
+                    </div>
+                    <div class="za-ref-brace">&#125;</div>
+                    <input pInputText formControlName="myRef" class="za-ref-input uppercase-text font-bold" placeholder="e.g. TB 3688" [readonly]="!!refNumber || !!certificateRequestId" />
+                </div>
+                <div class="za-ref-block">
+                    <div class="za-ref-labels">
+                        <span>ඔබේ අංකය</span>
+                        <span>உமது இல</span>
+                        <span>Your Ref</span>
+                    </div>
+                    <div class="za-ref-brace">&#125;</div>
+                    <input pInputText formControlName="yourRef" class="za-ref-input font-bold" />
+                </div>
+                <div class="za-ref-block">
+                    <div class="za-ref-labels">
+                        <span>දිනය</span>
+                        <span>திகதி</span>
+                        <span>Date</span>
+                    </div>
+                    <div class="za-ref-brace">&#125;</div>
+                    <div class="print-show font-bold text-xs">
+                        {{ form.get('date')?.value ? (form.get('date')?.value | date: 'dd/MM/yyyy') : ' ' }}
+                    </div>
+                    <div class="print-hide">
+                        <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy"></p-datepicker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── HEALTH CERTIFICATE title ── -->
+            <h2 class="za-cert-title font-bold uppercase underline text-center my-2">HEALTH CERTIFICATE</h2>
+
+            <!-- ── Statement paragraphs ── -->
+            <p class="za-stmt text-justify text-xs leading-relaxed mb-2">
+                The undersigned official inspector hereby certifies that the following consignment of fishery product has been processed in an approved fish processing establishment under the relevant conditions laid down in Fish Products (Export) Regulations, 1998 required for the production of fishery products for human consumption and intended for export market.
+            </p>
+
+            <!-- ── Fish and Fishery Products sub-title ── -->
+            <h3 class="za-sub-title text-center font-bold text-xs underline uppercase mb-3">Fish and Fishery Products</h3>
+
+            <!-- ── Product fields ── -->
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">Item:</span>
+                <input pInputText formControlName="itemName" class="za-line-input font-bold uppercase-text" placeholder="CHILLED YELLOWFIN TUNA G&G" />
+            </div>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">No. of packages:</span>
+                <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="za-line-input font-bold" />
+            </div>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">Net weight:</span>
+                <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="za-line-input font-bold" />
+            </div>
+
+            <!-- ── Processing Plant ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Name and address of the processing plant:</span>
+                <input pInputText formControlName="processingPlantName" class="za-line-input font-bold uppercase-text" placeholder="Plant Name" />
+            </div>
+            <div class="za-field-row pl-indent">
+                <textarea pTextarea formControlName="processingPlantAddress" rows="2" placeholder="Plant Address" [autoResize]="true" class="za-line-input za-textarea font-bold uppercase-text"></textarea>
+            </div>
+
+            <!-- ── Competent Authority Reg. No. ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Competent Authority Reg. No.:</span>
+                <input pInputText formControlName="competentAuthorityRegNo" class="za-line-input font-bold uppercase-text" placeholder="DFAR/FPE/..." />
+            </div>
+
+            <!-- ── Consignor ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Name and address of consignor:</span>
+                <input pInputText formControlName="consignorName" class="za-line-input font-bold uppercase-text" placeholder="Consignor Name" />
+            </div>
+            <div class="za-field-row pl-indent">
+                <textarea pTextarea formControlName="consignorAddress" rows="2" placeholder="Consignor Address" [autoResize]="true" class="za-line-input za-textarea font-bold uppercase-text"></textarea>
+            </div>
+
+            <!-- ── Consignee ── -->
+            <div class="za-field-row">
+                <span class="za-lbl-lg font-bold">Name and address of consignee:</span>
+                <input pInputText formControlName="consigneeName" class="za-line-input font-bold uppercase-text" placeholder="Consignee Name" />
+            </div>
+            <div class="za-field-row pl-indent">
+                <textarea pTextarea formControlName="consigneeAddress" rows="2" placeholder="Consignee Address" [autoResize]="true" class="za-line-input za-textarea font-bold uppercase-text"></textarea>
+            </div>
+
+            <!-- ── Despatch ── -->
+            <p class="za-despatch-intro font-bold mt-2 mb-1">The above fishery products are to be dispatched</p>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">from:</span>
+                <input pInputText formControlName="despatchFrom" class="za-line-input font-bold uppercase-text" />
+            </div>
+            <div class="za-field-row">
+                <span class="za-lbl font-bold">to:</span>
+                <input pInputText formControlName="despatchTo" class="za-line-input font-bold uppercase-text" />
+            </div>
+            <div class="za-field-row">
+                <input pInputText formControlName="despatchByShip" class="za-line-input font-bold uppercase-text" placeholder="BY AIR FREIGHT / BY SEA FREIGHT" />
+            </div>
+
+            <!-- ── Stamp & Signature Section ── -->
+            <div class="za-stamp-sig-section mt-4 pt-2">
+                <div class="za-stamp-col">
+                    <div class="za-lbl-bold font-bold text-xs">Official stamp:</div>
+                    <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                    </div>
+                </div>
+                <div class="za-sig-col">
+                    <div class="za-lbl-bold font-bold text-xs">Signature of Official Inspector:</div>
+                    <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                    </div>
+
+                    <!-- Officer Credentials Info -->
+                    <div class="za-officer-info text-xs space-y-1 mt-2">
+                        <div class="officer-row flex gap-2">
+                            <span class="officer-label font-bold">Name:</span>
+                            <span class="officer-value uppercase-text font-bold">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span>
+                        </div>
+                        <div class="officer-row flex gap-2">
+                            <span class="officer-label font-bold">Designation:</span>
+                            <input pInputText formControlName="designation" class="za-line-input uppercase-text font-bold print-hide" placeholder="QUALITY CONTROL OFFICER (GRADE II)" />
+                            <span class="officer-value uppercase-text font-bold print-show">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span>
+                        </div>
+                        <div class="officer-row" *ngIf="form.get('qualification')?.value">
+                            <span class="officer-value uppercase-text text-2xs">{{ form.get('qualification')?.value }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide mt-3 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+                <div *ngIf="form.controls['signatoryUserId'].invalid && form.controls['signatoryUserId'].touched" class="text-red-500 text-xs mt-1">
+                    Authorized signatory selection and confirmation is required
+                </div>
+            </div>
+
+            <!-- ── BOTTOM BAR ── -->
+            <div class="za-bottom-bar mt-auto">
+                <div class="za-bottom-item">
+                    <div class="za-bottom-labels">
+                        <span>තැ.පෙ.</span><span>த.பெ.ப</span><span>P.O.Box</span>
+                    </div>
+                    <div class="za-bottom-brace">&#125;</div>
+                    <span class="za-bottom-val font-bold">531</span>
+                </div>
+                <div class="za-bottom-item">
+                    <div class="za-bottom-labels">
+                        <span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span>
+                    </div>
+                    <div class="za-bottom-brace">&#125;</div>
+                    <span class="za-bottom-val font-bold">+94(0)112446183 (2 lines)</span>
+                </div>
+                <div class="za-bottom-item">
+                    <div class="za-bottom-labels">
+                        <span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span>
+                    </div>
+                    <div class="za-bottom-brace">&#125;</div>
+                    <span class="za-bottom-val font-bold">+94(0) 112449170</span>
+                </div>
+            </div>
+
+            <div class="za-system-note text-center text-3xs text-slate-500 mt-1">
+                This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 2: GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)      -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="za-page boxed-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'generic' || (form.get('viewMode')?.value || viewMode) === 'attachment'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="za-content">
+            <!-- Header -->
+            <div class="za-boxed-header text-center mb-2">
+                <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="za-logo mx-auto mb-1" />
+                <div class="font-bold text-sm">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="text-xs text-slate-600">HEALTH CERTIFICATE FOR EXPORT OF FISH AND FISHERY PRODUCTS TO SOUTH AFRICA</div>
+                <div class="text-3xs text-slate-500">P.O. Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+            </div>
+
+            <table class="za-grid w-full border-collapse border border-black text-xs">
+                <colgroup>
+                    <col style="width: 50%" />
+                    <col style="width: 25%" />
+                    <col style="width: 25%" />
+                </colgroup>
+                <tr>
+                    <td class="p-2 border border-black align-top" rowspan="2">
+                        <span class="font-bold block">1. Consignor / Exporter:</span>
+                        <input pInputText formControlName="consignorName" class="w-full font-bold uppercase-text mb-1" placeholder="Consignor Name" />
+                        <textarea pTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="w-full font-bold uppercase-text" placeholder="Consignor Address"></textarea>
+                    </td>
+                    <td class="p-2 border border-black align-top" colspan="2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1">
+                                <span class="font-bold block">2. Certificate Reference No:</span>
+                                <input pInputText formControlName="myRef" class="w-full font-bold uppercase-text" placeholder="Certificate No" [readonly]="!!refNumber || !!certificateRequestId" />
+                            </div>
+                            <app-certificate-qr
+                                [refNumber]="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || ''"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorName')?.value"
+                                [consignee]="form.get('consigneeName')?.value"
+                                [item]="form.get('itemName')?.value"
+                                [date]="form.get('date')?.value"
+                                [officer]="form.get('signatoryName')?.value"
+                                [destination]="'SOUTH AFRICA'"
+                                [viewOnly]="viewOnly"
+                                [size]="52">
+                            </app-certificate-qr>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top" colspan="2">
+                        <span class="font-bold block">3. Competent Authority:</span>
+                        <input pInputText formControlName="competentAuthority" class="w-full font-bold uppercase-text text-2xs" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">4. Consignee / Importer:</span>
+                        <input pInputText formControlName="consigneeName" class="w-full font-bold uppercase-text mb-1" placeholder="Consignee Name" />
+                        <textarea pTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="w-full font-bold uppercase-text" placeholder="Consignee Address"></textarea>
+                    </td>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">5. Country of Origin:</span>
+                        <input pInputText formControlName="countryOfOrigin" class="w-full font-bold uppercase-text" />
+                        <span class="text-3xs text-slate-500 font-mono">ISO: {{ form.get('countryOfOriginISO')?.value }}</span>
+                    </td>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">6. Country of Destination:</span>
+                        <input pInputText formControlName="countryOfDestination" class="w-full font-bold uppercase-text" />
+                        <span class="text-3xs text-slate-500 font-mono">ISO: {{ form.get('countryOfDestinationISO')?.value }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">7. Place of Loading / Dispatch:</span>
+                        <input pInputText formControlName="despatchFrom" class="w-full font-bold uppercase-text" />
+                    </td>
+                    <td class="p-2 border border-black align-top" colspan="2">
+                        <span class="font-bold block">8. Means of Transport:</span>
+                        <input pInputText formControlName="despatchByShip" class="w-full font-bold uppercase-text" placeholder="BY AIR FREIGHT / BY SEA FREIGHT" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top" colspan="3">
+                        <span class="font-bold block">9. Identification of Fishery Products:</span>
+                        <div class="grid grid-cols-3 gap-2 mt-1">
+                            <div>
+                                <span class="text-3xs font-semibold block">Description / Commodity:</span>
+                                <input pInputText formControlName="itemName" class="w-full font-bold uppercase-text" />
+                            </div>
+                            <div>
+                                <span class="text-3xs font-semibold block">No. of Packages:</span>
+                                <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="w-full font-bold" />
+                            </div>
+                            <div>
+                                <span class="text-3xs font-semibold block">Net Weight:</span>
+                                <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="w-full font-bold" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <span class="text-3xs font-semibold block">Processing Plant Name &amp; Address:</span>
+                                <input pInputText formControlName="processingPlantName" class="w-full font-bold uppercase-text mb-1" placeholder="Plant Name" />
+                                <textarea pTextarea formControlName="processingPlantAddress" rows="1" [autoResize]="true" class="w-full font-bold uppercase-text" placeholder="Plant Address"></textarea>
+                            </div>
+                            <div>
+                                <span class="text-3xs font-semibold block">Competent Authority Reg. No.:</span>
+                                <input pInputText formControlName="competentAuthorityRegNo" class="w-full font-bold uppercase-text" />
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top" colspan="3">
+                        <span class="font-bold block mb-1">10. Official Attestation &amp; Signatory Block:</span>
+                        <p class="text-2xs text-justify leading-normal mb-2">
+                            The undersigned official inspector certifies that the fish and fishery products described above were handled, prepared, processed, frozen, packaged and stored under hygienic conditions in compliance with official export regulations.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <div>
+                                <span class="font-bold text-3xs uppercase block mb-1">Official Stamp:</span>
+                                <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="font-bold text-3xs uppercase block mb-1">Official Signature:</span>
+                                <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                </div>
+                                <div class="pt-1"><span class="font-bold">Official Inspector:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span></div>
+                                <div><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                                <div *ngIf="form.get('qualification')?.value" class="text-3xs text-slate-600 whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                                <div class="flex items-center gap-2 pt-0.5">
+                                    <span class="font-bold">Date:</span>
+                                    <span class="font-bold">{{ form.get('date')?.value | date: 'dd/MM/yyyy' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide mt-3 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 3: MULTI-ITEM ATTACHMENT TABLE (WHEN ATTACHMENT SELECTED) -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="za-page attachment-page mt-4" *ngIf="(form.get('viewMode')?.value || viewMode) === 'attachment'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="za-content">
+            <div class="attachment-header text-center mb-3">
+                <div class="font-bold text-sm uppercase underline">ATTACHMENT TO HEALTH CERTIFICATE</div>
+                <div class="text-xs font-bold text-slate-700 mt-1">
+                    Reference No: <span class="font-mono">{{ form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || '________________' }}</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-2 print-hide">
+                <span class="text-xs font-bold text-slate-700 uppercase">Product Breakdown Attachment:</span>
+                <p-button label="Add Product Item" icon="pi pi-plus" size="small" (onClick)="addProductAttachment()" *ngIf="!viewOnly"></p-button>
+            </div>
+
+            <table class="attachment-grid w-full border-collapse border border-black text-xs">
+                <thead>
+                    <tr class="bg-slate-100">
+                        <th class="border border-black p-1.5 text-left font-bold">#</th>
+                        <th class="border border-black p-1.5 text-left font-bold">Product / Species</th>
+                        <th class="border border-black p-1.5 text-left font-bold">Lot Identifier / Batch</th>
+                        <th class="border border-black p-1.5 text-left font-bold">Type of Packaging</th>
+                        <th class="border border-black p-1.5 text-center font-bold">No. of Boxes</th>
+                        <th class="border border-black p-1.5 text-right font-bold">Net Weight (KG)</th>
+                        <th class="border border-black p-1.5 text-center font-bold print-hide" *ngIf="!viewOnly">Action</th>
+                    </tr>
+                </thead>
+                <tbody formArrayName="productsAttachment">
+                    <tr *ngFor="let item of productsAttachment.controls; let i = index" [formGroupName]="i">
+                        <td class="border border-black p-1.5 text-center font-bold">{{ i + 1 }}</td>
+                        <td class="border border-black p-1">
+                            <input pInputText formControlName="product" class="w-full font-bold uppercase-text text-xs p-1" placeholder="Product name" />
+                        </td>
+                        <td class="border border-black p-1">
+                            <input pInputText formControlName="lotIdentifier" class="w-full font-bold uppercase-text text-xs p-1" placeholder="Lot ID" />
+                        </td>
+                        <td class="border border-black p-1">
+                            <input pInputText formControlName="typeOfPackaging" class="w-full font-bold uppercase-text text-xs p-1" placeholder="e.g. Master Carton" />
+                        </td>
+                        <td class="border border-black p-1 text-center">
+                            <input pInputText type="number" formControlName="numberOfBoxes" (keypress)="onlyDigits($event)" inputmode="numeric" class="w-full text-center font-bold text-xs p-1" placeholder="0" />
+                        </td>
+                        <td class="border border-black p-1 text-right">
+                            <input pInputText formControlName="numberOfKgs" (keypress)="onlyDecimals($event)" inputmode="decimal" class="w-full text-right font-bold text-xs p-1" placeholder="0.00" />
+                        </td>
+                        <td class="border border-black p-1 text-center print-hide" *ngIf="!viewOnly">
+                            <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small" (onClick)="removeProductAttachment(i)"></p-button>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="bg-slate-100 font-bold">
+                        <td class="border border-black p-1.5 text-right" colspan="4">TOTALS:</td>
+                        <td class="border border-black p-1.5 text-center">{{ getTotalAttachmentBoxes() }}</td>
+                        <td class="border border-black p-1.5 text-right">{{ getTotalAttachmentKgs() | number: '1.2-2' }} KG</td>
+                        <td class="border border-black p-1.5 print-hide" *ngIf="!viewOnly"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Attachment Signatory & Stamp -->
+            <div class="za-stamp-sig-section flex justify-between items-end mt-auto pt-4 border-t border-slate-300">
+                <div class="za-stamp-col">
+                    <div class="font-bold text-xs mb-1">Official stamp:</div>
+                    <div class="za-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                    </div>
+                </div>
+                <div class="za-sig-col">
+                    <div class="font-bold text-xs">Signature of Official Inspector:</div>
+                    <div class="za-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                    </div>
+                    <div class="text-xs pt-1"><span class="font-bold">Name:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span></div>
+                    <div class="text-xs"><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                    <div class="text-xs"><span class="font-bold">Date:</span> <span>{{ form.get('date')?.value | date: 'dd/MM/yyyy' }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Bottom Bar -->
+    <div class="actions-bottom-bar print-hide flex items-center justify-between gap-3 mt-6 p-3 bg-white border border-slate-200 rounded-lg shadow-xs">
+        <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+        <div class="flex items-center gap-2 ml-auto">
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="print()"
+                [disabled]="form.get('signatoryUserId')?.invalid"
+                tooltipPosition="top"
+            ></p-button>
+            <p-button label="Submit &amp; Save" icon="pi pi-check" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+        </div>
+    </div>
+
+    <app-confirm-password-dialog
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

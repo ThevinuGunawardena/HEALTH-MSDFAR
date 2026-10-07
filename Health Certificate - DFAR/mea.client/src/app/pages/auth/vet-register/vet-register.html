@@ -1,0 +1,112 @@
+<section class="flex items-center lg:items-start lg:py-15 px-5 py-15 justify-center animate-fadein animate-duration-300 animate-ease-in max-w-400 mx-auto">
+    <p-toast></p-toast>
+    <div class="flex w-300 h-full border-1 border-blue-500 justify-center gap-12 shadow-xl rounded-3xl">
+        <div class="flex flex-col py-10 px-5 lg:min-w-120">
+            <a routerLink="/" class="flex items-center justify-center lg:justify-start mb-8">
+                <img src="/demo/images/landing/DFAR-Logo.jpg" class="h-20 w-20" alt="Auth Logo" />
+                <p class="w-full text-center font-bold">Department of Fisheries and Aquatic Resources</p>
+            </a>
+            <div class="flex flex-col justify-center grow">
+                <div class="max-w-md mx-auto w-full">
+                    <h5 class="title-h5 text-center lg:text-left">Register</h5>
+                    <p class="body-small mt-3.5 mb-8 text-center lg:text-left">Let's get started</p>
+
+                    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+                        <input type="text" formControlName="fullName" pInputText class="w-full" placeholder="User Name" required />
+                        <div *ngIf="(loginForm.controls['fullName'].invalid) && (loginForm.controls['fullName'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">User Name is required</div>
+
+                        <input type="text" formControlName="email" pInputText class="w-full mt-4" placeholder="Email" required />
+                        <div *ngIf="(loginForm.controls['email'].invalid) && (loginForm.controls['email'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">
+                            <span *ngIf="loginForm.controls['email'].errors?.['required']">Email is required</span>
+                            <span *ngIf="loginForm.controls['email'].errors?.['email']">Enter a valid email</span>
+                        </div>
+
+                        <div class="relative w-full mt-4">
+                            <input [type]="showPassword ? 'text' : 'password'" formControlName="password" pInputText class="w-full pr-10" placeholder="Password" required />
+                            <button type="button" (click)="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                                <svg *ngIf="!showPassword" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                                    />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <svg *ngIf="showPassword" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                        <div *ngIf="loginForm.controls['password'].touched || submitted" class="mt-2 text-sm mx-2 space-y-1">
+                            <div [ngClass]="hasMinLength() ? 'text-green-500' : 'text-red-500'">
+                                <span *ngIf="hasMinLength()">✓</span>
+                                <span *ngIf="!hasMinLength()">✗</span>
+                                At least 8 characters
+                            </div>
+                            <div [ngClass]="hasLowerCase() ? 'text-green-500' : 'text-red-500'">
+                                <span *ngIf="hasLowerCase()">✓</span>
+                                <span *ngIf="!hasLowerCase()">✗</span>
+                                One lowercase letter
+                            </div>
+                            <div [ngClass]="hasUpperCase() ? 'text-green-500' : 'text-red-500'">
+                                <span *ngIf="hasUpperCase()">✓</span>
+                                <span *ngIf="!hasUpperCase()">✗</span>
+                                One uppercase letter
+                            </div>
+                            <div [ngClass]="hasNumber() ? 'text-green-500' : 'text-red-500'">
+                                <span *ngIf="hasNumber()">✓</span>
+                                <span *ngIf="!hasNumber()">✗</span>
+                                One number
+                            </div>
+                            <div [ngClass]="hasSpecialChar() ? 'text-green-500' : 'text-red-500'">
+                                <span *ngIf="hasSpecialChar()">✓</span>
+                                <span *ngIf="!hasSpecialChar()">✗</span>
+                                One special character (@$!%*#?&)
+                            </div>
+                        </div>
+
+                        <div class="relative w-full mt-4">
+                            <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" pInputText class="w-full pr-10" placeholder="Confirm Password" required />
+                            <button type="button" (click)="toggleConfirmPasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                                <svg *ngIf="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                                    />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <svg *ngIf="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                        <div *ngIf="(loginForm.controls['confirmPassword'].invalid) && (loginForm.controls['confirmPassword'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Confirm Password is required</div>
+                        <div *ngIf="loginForm.errors?.['passwordMismatch'] && (submitted || loginForm.controls['confirmPassword'].touched)" class="text-red-500 mt-2 text-sm mx-2">Passwords do not match</div>
+                        <div class="my-8 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <p-checkbox inputId="terms" formControlName="terms" [binary]="true" />
+                                <label for="terms" class="body-small text-color">I have read the <span class="font-bold">Terms and Conditions</span></label>
+                            </div>
+                        </div>
+                        <button type="submit" class="body-button w-full cursor-pointer">Register</button>
+                    </form>
+                    <div class="mt-8 body-small text-center lg:text-left">Already have an account? <a routerLink="/auth/vet-login" class="text-primary-500 hover:underline">Login</a></div>
+                </div>
+            </div>
+        </div>
+        <div class="hidden lg:flex h-full py-10">
+            <div class="h-full w-full lg:max-w-130 xl:max-w-242 mx-auto flex items-center justify-center shadow-[0px_1px_2px_0px_rgba(18,18,23,0.05)] rounded-3xl border border-surface overflow-hidden">
+                <app-lazy-image-widget className="w-150 h-150 object-cover object-left" src="/demo/images/landing/boat.jpeg" alt="Auth Image" />
+            </div>
+        </div>
+    </div>
+</section>

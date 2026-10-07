@@ -1,0 +1,278 @@
+/* Password row for Change Password section */
+.password-row {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    margin-bottom: 0.5rem;
+}
+.password-field {
+    flex: 1 1 0;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+}
+@media (max-width: 768px) {
+    .password-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+.password-card {
+    width: 100%;
+}
+.user-add-wrapper .card .password-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    padding: 24px 20px 18px 20px;
+    margin-bottom: 18px;
+    grid-column: span 2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.user-add-wrapper .card .password-card h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: #22223b;
+}
+.user-add-wrapper .card .password-card p {
+    margin: 0 0 18px 0;
+    color: #6b7280;
+    font-size: 0.97rem;
+}
+.user-add-wrapper .card .password-card .form-group {
+    margin-bottom: 12px;
+}
+.user-add-wrapper .card .password-card .btn-cancel {
+    color: #555;
+    background: none;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-top: 8px;
+    transition: background 0.2s;
+}
+.user-add-wrapper .card .password-card .btn-cancel:hover {
+    background: #e5e7eb;
+}
+.user-add-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.user-add-wrapper .card {
+    width: 100%;
+    max-width: 800px;
+    background: #fff;
+    padding: 30px;
+    border: 1px solid #2563eb;
+    border-radius: 14px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.user-add-wrapper .card .title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    grid-column: span 2;
+}
+
+.user-add-wrapper .card form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.user-add-wrapper .card .form-group {
+    margin-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-add-wrapper .card .form-group label {
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.user-add-wrapper .card .form-group input {
+    padding: 10px 12px;
+}
+
+.user-add-wrapper .card .form-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.user-add-wrapper .card .form-check label {
+    font-size: 14px;
+}
+
+.user-add-wrapper .card .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    grid-column: span 2;
+}
+
+.user-add-wrapper .card .actions .btn-save {
+    background: #2563eb;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.user-add-wrapper .card .actions .btn-cancel {
+    color: #555;
+    text-decoration: none;
+    padding: 10px;
+}
+
+/* Spinner inside button */
+.user-add-wrapper .card .actions .btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-add-wrapper .card .actions .btn-save[disabled] {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.user-add-wrapper .card .actions .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .user-add-wrapper .card {
+        padding: 20px;
+    }
+
+    .user-add-wrapper .card form {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .user-add-wrapper .card .title {
+        grid-column: span 1;
+        font-size: 20px;
+    }
+
+    .user-add-wrapper .card .actions {
+        grid-column: span 1;
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .user-add-wrapper .card .actions .btn-save,
+    .user-add-wrapper .card .actions .btn-cancel {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+/* Password Guidelines Card */
+.password-guidelines-box {
+    grid-column: span 2;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: -4px;
+    margin-bottom: 4px;
+}
+
+.guidelines-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 10px;
+}
+
+.guidelines-header i {
+    color: #3b82f6;
+    font-size: 0.95rem;
+}
+
+.guidelines-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+}
+
+@media (max-width: 640px) {
+    .guidelines-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.guideline-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.guideline-item i {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.guideline-item.met {
+    color: #15803d;
+    font-weight: 500;
+}
+
+.guideline-item.met i {
+    color: #16a34a;
+}
+
+.guideline-item.unmet {
+    color: #b91c1c;
+}
+
+.guideline-item.unmet i {
+    color: #dc2626;
+}
+
+:host ::ng-deep .p-password {
+    width: 100%;
+}
+
+:host ::ng-deep .p-password input {
+    width: 100%;
+}
+

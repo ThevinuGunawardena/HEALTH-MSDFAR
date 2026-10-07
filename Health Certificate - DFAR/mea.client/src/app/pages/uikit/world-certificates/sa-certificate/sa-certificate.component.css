@@ -1,0 +1,480 @@
+* {
+    box-sizing: border-box;
+}
+
+.sa-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, Georgia, serif;
+    background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ── Standard A4 Page Layout ── */
+.sa-page {
+    width: 210mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    padding: 0;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #000;
+}
+
+.sa-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 8mm 12mm 6mm 12mm;
+    display: flex;
+    flex-direction: column;
+}
+
+.letter-layout {
+    font-size: 10pt;
+    line-height: 1.35;
+}
+
+/* ── Official Letterhead ── */
+.letter-header {
+    text-align: center;
+}
+
+.letter-logo {
+    height: 52px;
+    width: auto;
+}
+
+.letter-sinhala-dept {
+    font-size: 12pt;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.letter-tamil-dept {
+    font-size: 9.5pt;
+    line-height: 1.2;
+}
+
+.letter-english-dept {
+    font-size: 12.5pt;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.5px;
+}
+
+.letter-web-email {
+    font-size: 8pt;
+    color: #222;
+}
+
+.letter-addr-line {
+    font-size: 7.5pt;
+    color: #333;
+}
+
+.letter-header-hr {
+    border-top: 2px solid #000;
+    margin-top: 3px;
+    margin-bottom: 2px;
+}
+
+/* ── Reference Bar with Brackets ── */
+.letter-ref-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    padding: 1px 4px;
+}
+
+.letter-ref-tri-label {
+    line-height: 1.1;
+    text-align: right;
+    font-size: 7pt;
+    min-width: 50px;
+}
+
+.letter-bracket {
+    font-size: 16pt;
+    font-weight: 300;
+    line-height: 1;
+    user-select: none;
+    padding: 0 1px;
+}
+
+.letter-bracket-sm {
+    font-size: 13pt;
+    font-weight: 300;
+    line-height: 1;
+    user-select: none;
+    padding: 0 1px;
+}
+
+.letter-ftr-tri-label {
+    line-height: 1.1;
+    text-align: right;
+    font-size: 6.5pt;
+}
+
+/* ── Title & Text ── */
+.letter-title {
+    font-size: 13.5pt;
+    font-weight: 700;
+    text-decoration: underline;
+    letter-spacing: 1px;
+}
+
+.letter-body-p {
+    font-size: 9.5pt;
+    line-height: 1.4;
+}
+
+/* ── Inputs in Letterhead ── */
+.letter-input-inline {
+    border: none;
+    border-bottom: 1px dotted #555;
+    background: transparent;
+    padding: 0 2px;
+    font-family: inherit;
+    font-size: 9.5pt;
+    outline: none;
+}
+
+.letter-input-inline:focus {
+    border-bottom: 1.5px solid #000;
+    background-color: #f0fdf4;
+}
+
+.letter-input-full {
+    width: 100%;
+    border: none;
+    border-bottom: 1px dotted #555;
+    background: transparent;
+    padding: 0 2px;
+    font-family: inherit;
+    font-size: 9.5pt;
+    outline: none;
+}
+
+.letter-input-full:focus {
+    border-bottom: 1.5px solid #000;
+    background-color: #f0fdf4;
+}
+
+.uppercase-text {
+    text-transform: uppercase;
+}
+
+/* ── Details Block ── */
+.letter-details-box {
+    font-size: 9.5pt;
+}
+
+/* ── Stamps & Signature Dropzones ── */
+.sa-stamp-sig-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.sa-stamp-col {
+    width: 175px;
+    flex-shrink: 0;
+}
+
+.sa-sig-col {
+    flex: 1;
+    max-width: 300px;
+}
+
+.sa-stamp-placeholder, .sa-sig-placeholder {
+    width: 100%;
+    min-height: 75px;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    margin-bottom: 4px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.sa-stamp-placeholder:hover, .sa-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.sa-stamp-placeholder.sa-drop-active, .sa-sig-placeholder.sa-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.sa-stamp-placeholder.has-content, .sa-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.sa-stamp-placeholder.has-content:hover, .sa-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.sa-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sa-stamp-img, .sa-sig-img {
+    max-height: 80px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.sa-pdf-preview {
+    width: 100%;
+    height: 80px;
+    border: none;
+    pointer-events: none;
+}
+
+.sa-action-overlay {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 4px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.sa-stamp-placeholder:hover .sa-action-overlay,
+.sa-sig-placeholder:hover .sa-action-overlay {
+    opacity: 1;
+}
+
+.sa-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.sa-mini-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.sa-mini-btn.danger:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+.letter-footer-wrapper {
+    margin-top: auto;
+    padding-top: 2px;
+}
+
+/* ── Boxed Format (Generic Model) ── */
+.sa-boxed-frame {
+    border: 1.5px solid #000;
+    padding: 4px;
+}
+
+.sa-header {
+    text-align: center;
+    border-bottom: 1px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+
+.sa-logo-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+
+.sa-logo {
+    height: 48px;
+    width: auto;
+}
+
+.sa-dept {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.sa-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+}
+
+.sa-td {
+    border: 1px solid #000;
+    padding: 3px 5px;
+    vertical-align: top;
+}
+
+.sa-flbl {
+    display: block;
+    font-weight: 700;
+    font-size: 8pt;
+    margin-bottom: 1px;
+}
+
+.sa-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    padding: 2px 4px;
+    font-size: 8.5pt;
+    font-family: inherit;
+    border-radius: 2px;
+}
+
+.sa-input:focus {
+    border-color: #000;
+}
+
+.sa-stamp-box {
+    width: 100%;
+    min-height: 60px;
+    border: 1px dashed #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sa-boxed-footer-notes {
+    font-size: 7pt;
+    color: #444;
+}
+
+/* ── Attachment Table ── */
+.sa-sub-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+}
+
+.sa-sub-table th {
+    border: 1px solid #000;
+    background: #f1f5f9;
+    padding: 4px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.sa-sub-table td {
+    border: 1px solid #000;
+    padding: 2px 4px;
+    vertical-align: middle;
+}
+
+.sa-tinput {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 2px;
+    font-family: inherit;
+    font-size: 8.5pt;
+}
+
+.sa-tinput:focus {
+    outline: none;
+    background-color: #f0fdf4;
+}
+
+/* ── Print Media Queries ── */
+@media print {
+    .print-hide {
+        display: none !important;
+    }
+
+    .print-show {
+        display: block !important;
+    }
+
+    body, html {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .sa-container {
+        background: white !important;
+        padding: 0 !important;
+    }
+
+    .sa-page {
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+        break-after: page;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        width: 210mm !important;
+        overflow: hidden !important;
+    }
+
+    .letter-input-inline,
+    .letter-input-full,
+    .sa-input,
+    .sa-tinput {
+        border-color: transparent !important;
+        background: transparent !important;
+    }
+
+    .sa-stamp-placeholder, .sa-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 0 !important;
+    }
+
+    .sa-stamp-img, .sa-sig-img {
+        max-height: 85px !important;
+    }
+
+    .sa-empty-upload {
+        display: none !important;
+    }
+}

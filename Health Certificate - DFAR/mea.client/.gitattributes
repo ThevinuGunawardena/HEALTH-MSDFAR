@@ -1,0 +1,4 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+# Ignore line-ending warnings for the Angular/Vite cache directory
+.angular/cache/** text eol=lf

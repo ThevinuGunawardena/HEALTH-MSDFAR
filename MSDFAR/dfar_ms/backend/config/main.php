@@ -32,6 +32,10 @@ return [
     ],
 
     'components' => [
+        'assetManager' => [
+            'linkAssets' => true,
+            'appendTimestamp' => true,
+        ],
         'i18n' => [
             'translations' => [
                 'app' => [

@@ -1,0 +1,142 @@
+.company-add-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.company-add-wrapper .card {
+    width: 100%;
+    max-width: 800px;
+    background: #fff;
+    padding: 30px;
+    border: 1px solid #2563eb;
+    border-radius: 14px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.company-add-wrapper .card .title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    grid-column: span 2;
+}
+
+.company-add-wrapper .card form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.company-add-wrapper .card .form-group {
+    margin-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.company-add-wrapper .card .form-group label {
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.company-add-wrapper .card .form-group input {
+    padding: 10px 12px;
+}
+
+.company-add-wrapper .card .form-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.company-add-wrapper .card .form-check label {
+    font-size: 14px;
+}
+
+.company-add-wrapper .card .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+    grid-column: span 2;
+}
+
+.company-add-wrapper .card .actions .btn-save {
+    background: #2563eb;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.company-add-wrapper .card .actions .btn-cancel {
+    color: #555;
+    text-decoration: none;
+    padding: 10px;
+}
+
+/* Spinner inside button */
+.company-add-wrapper .card .actions .btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.company-add-wrapper .card .actions .btn-save[disabled] {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.company-add-wrapper .card .actions .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .company-add-wrapper .card {
+        padding: 20px;
+    }
+
+    .company-add-wrapper .card form {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .company-add-wrapper .card .title {
+        grid-column: span 1;
+        font-size: 20px;
+    }
+
+    .company-add-wrapper .card .actions {
+        grid-column: span 1;
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .company-add-wrapper .card .actions .btn-save,
+    .company-add-wrapper .card .actions .btn-cancel {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+}

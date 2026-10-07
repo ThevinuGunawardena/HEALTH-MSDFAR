@@ -1,0 +1,65 @@
+<section class="user-list-wrapper">
+    <p-toast></p-toast>
+    <p-confirmdialog [style]="{ width: '450px' }"></p-confirmdialog>
+
+    <div class="header">
+        <h2>User List</h2>
+        <button (click)="openAddModal()" class="btn-add" [disabled]="loading">+ Add User</button>
+    </div>
+
+    <div *ngIf="error" class="error-message" style="padding: 10px; background-color: #fee; color: #c33; margin-bottom: 10px; border-radius: 4px">
+        {{ error }}
+    </div>
+
+    <div class="table-container">
+        <div *ngIf="loading && users.length === 0" style="text-align: center; padding: 20px">Loading users...</div>
+        <table *ngIf="!loading || users.length > 0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>User Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Company</th>
+                    <th>Qualifications</th>
+                    <th class="center">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let user of users; let i = index">
+                    <td>{{ i + 1 }}</td>
+
+                    <td>{{ user.name }}</td>
+
+                    <td>{{ user.email }}</td>
+
+                    <td>{{ user.phone }}</td>
+
+                    <td>{{ user.roleName || '-' }}</td>
+
+                    <td>{{ user.companyName || '-' }}</td>
+
+                    <td>{{ user.qualification || '-' }}</td>
+
+                    <td class="actions center">
+                        <button type="button" class="btn edit" (click)="openEditModal(user)" [disabled]="loading">Edit</button>
+                        <button (click)="deleteUser($event, user.id)" class="btn delete" [disabled]="loading">Delete</button>
+                    </td>
+                </tr>
+                <tr *ngIf="users.length === 0 && !loading">
+                    <td colspan="8" style="text-align: center; padding: 20px">No users found.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add User Modal -->
+    <p-dialog [(visible)]="showAddModal" [modal]="true" [style]="{ width: '60vw' }" [breakpoints]="{ '960px': '75vw', '640px': '90vw' }">
+        <app-user-add (userSaved)="onUserSaved($event)" (userCancelled)="closeAddModal()"></app-user-add>
+        <!-- <ng-template pTemplate="footer">
+            <button type="button" pButton label="Cancel" class="p-button-text" (click)="closeAddModal()"></button>
+        </ng-template> -->
+    </p-dialog>
+</section>

@@ -1,0 +1,65 @@
+<div class="certificate-preview-page">
+    <p-toast></p-toast>
+    <div class="preview-topbar flex justify-between items-center">
+        <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+        <div *ngIf="isAdmin" class="flex gap-2 items-center">
+            <p-button label="Edit Form" icon="pi pi-pencil" severity="warn" (onClick)="onEditCurrentForm()"></p-button>
+            <p-button label="Replacement" icon="pi pi-refresh" severity="help" [outlined]="true" [disabled]="isProcessing" (onClick)="onReplacementRequest()" title="Cancel & Issue Replacement Certificate"></p-button>
+            <p-button label="Confirm Request" icon="pi pi-check" severity="success" [disabled]="isProcessing" (onClick)="onConfirmRequest()"></p-button>
+            <p-button label="Reject Request" icon="pi pi-times" severity="danger" [outlined]="true" [disabled]="isProcessing" (onClick)="onRejectRequest()"></p-button>
+        </div>
+    </div>
+
+    <!-- Admin View: Tabs for each Country Certificate Template & Application Form -->
+    <ng-container *ngIf="isAdmin; else companyOnlyView">
+        <p-tabs [value]="activeTab" (valueChange)="onTabChange($event)" class="certificate-preview-tabs">
+            <p-tablist>
+                <p-tab *ngFor="let tab of countryPreviewTabs" [value]="tab.value">
+                    <span class="tab-item-content">
+                        <span>{{ tab.title }}</span>
+                        <span *ngIf="tab.badge" class="tab-badge">{{ tab.badge }}</span>
+                    </span>
+                </p-tab>
+                <p-tab value="vet">
+                    <span class="tab-item-content">
+                        <span>Application Form</span>
+                    </span>
+                </p-tab>
+            </p-tablist>
+
+            <p-tabpanels>
+                <p-tabpanel *ngFor="let tab of countryPreviewTabs" [value]="tab.value">
+                    <ng-container *ngIf="tab.src; else countryPreviewMissing">
+                        <iframe [src]="tab.src || undefined" class="certificate-preview-frame" [title]="tab.title"></iframe>
+                    </ng-container>
+                    <ng-template #countryPreviewMissing>
+                        <div class="certificate-preview-empty">{{ tab.emptyMessage }}</div>
+                    </ng-template>
+                </p-tabpanel>
+
+                <p-tabpanel value="vet">
+                    <ng-container *ngIf="vetPreviewTab as vetTab">
+                        <ng-container *ngIf="vetTab.src; else vetPreviewMissing">
+                            <iframe [src]="vetTab.src || undefined" class="certificate-preview-frame" title="Vet certificate preview"></iframe>
+                        </ng-container>
+                    </ng-container>
+                    <ng-template #vetPreviewMissing>
+                        <div class="certificate-preview-empty">{{ vetPreviewTab?.emptyMessage }}</div>
+                    </ng-template>
+                </p-tabpanel>
+            </p-tabpanels>
+        </p-tabs>
+    </ng-container>
+
+    <!-- Company View: Directly and exclusively show the Application Request Form -->
+    <ng-template #companyOnlyView>
+        <ng-container *ngIf="vetPreviewTab as vetTab">
+            <ng-container *ngIf="vetTab.src; else vetPreviewMissing">
+                <iframe [src]="vetTab.src || undefined" class="certificate-preview-frame" title="Application form preview"></iframe>
+            </ng-container>
+        </ng-container>
+        <ng-template #vetPreviewMissing>
+            <div class="certificate-preview-empty">{{ vetPreviewTab?.emptyMessage }}</div>
+        </ng-template>
+    </ng-template>
+</div>

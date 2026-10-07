@@ -1,0 +1,87 @@
+<p-toast />
+<section class="company-add-wrapper">
+    <div class="card">
+        <h2 class="title">{{ editMode ? 'Edit Company' : 'Add New Company' }}</h2>
+
+        <form [formGroup]="companyForm" (ngSubmit)="submitForm()">
+            <!-- Company Name -->
+            <div class="form-group">
+                <label>Company Name</label>
+                <input pInputText type="text" formControlName="companyName" placeholder="Enter company name" />
+                <div *ngIf="companyForm.controls['companyName'].invalid && (companyForm.controls['companyName'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Company name is required</div>
+            </div>
+
+            <!-- Company Email -->
+            <div class="form-group">
+                <label>Company Email</label>
+                <input pInputText type="email" formControlName="companyEmail" placeholder="Enter company email" />
+                <div *ngIf="companyForm.controls['companyEmail'].invalid && (companyForm.controls['companyEmail'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">
+                    <span *ngIf="companyForm.controls['companyEmail'].errors?.['required']">Company email is required</span>
+                    <span *ngIf="companyForm.controls['companyEmail'].errors?.['email']">Enter a valid email</span>
+                </div>
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input pInputText type="text" formControlName="companyPhone" placeholder="Enter phone number" maxlength="10" />
+                <div *ngIf="companyForm.controls['companyPhone'].invalid && (companyForm.controls['companyPhone'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Phone number is required</div>
+            </div>
+
+            <!-- Address -->
+            <div class="form-group">
+                <label>Address</label>
+                <input pInputText type="text" formControlName="companyAddress" placeholder="Enter company address" />
+                <div *ngIf="companyForm.controls['companyAddress'].invalid && (companyForm.controls['companyAddress'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Company address is required</div>
+            </div>
+
+            <!-- Registration No -->
+            <div class="form-group">
+                <label>Registration Number</label>
+                <input pInputText type="text" formControlName="registrationNo" placeholder="Enter registration number" />
+                <div *ngIf="companyForm.controls['registrationNo'].invalid && (companyForm.controls['registrationNo'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Registration number is required</div>
+            </div>
+
+            <!-- Product Certificate -->
+            <div class="form-group">
+                <label>Product Certificate</label>
+                <p-select formControlName="productCertificate" [options]="certificateOptions" [virtualScroll]="true" [virtualScrollItemSize]="5" [showClear]="true" optionLabel="label" optionValue="value" placeholder="Select a certificate"></p-select>
+                <div *ngIf="companyForm.controls['productCertificate'].invalid && (companyForm.controls['productCertificate'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Product certificate is required</div>
+            </div>
+
+            <!-- Status -->
+            <div class="form-group">
+                <label>Company Status</label>
+                <p-select formControlName="status" [options]="statusOptions" [showClear]="true" optionLabel="label" optionValue="value" placeholder="Select a status"></p-select>
+                <div *ngIf="companyForm.controls['status'].invalid && (companyForm.controls['status'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Company status is required</div>
+            </div>
+
+            <!-- Listed Country -->
+            <div class="form-group">
+                <label>Listed Country</label>
+                <p-select
+                    formControlName="listedCountry"
+                    [options]="countryOptions"
+                    [filter]="true"
+                    filterBy="label"
+                    [showClear]="true"
+                    [virtualScroll]="true"
+                    [virtualScrollItemSize]="30"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Select a country"
+                ></p-select>
+                <div *ngIf="companyForm.controls['listedCountry'].invalid && (companyForm.controls['listedCountry'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Listed country is required</div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="actions">
+                <button class="btn-save" type="submit" [disabled]="loading">
+                    <span *ngIf="loading" class="spinner" aria-hidden="true"></span>
+                    {{ loading ? 'Saving...' : editMode ? 'Update Company' : 'Save Company' }}
+                </button>
+                <button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</section>

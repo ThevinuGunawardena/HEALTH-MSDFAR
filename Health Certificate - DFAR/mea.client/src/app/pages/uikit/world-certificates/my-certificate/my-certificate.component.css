@@ -1,0 +1,893 @@
+* {
+    box-sizing: border-box;
+}
+
+/* ════ CONTAINER ════ */
+.my-wrap {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ════ A4 PAGES (HEALTH CERTIFICATE) ════ */
+.my-page {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+    padding: 8mm 14mm 6mm 14mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.my-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2mm;
+}
+
+.my-footer {
+    flex: 0 0 5mm;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 9pt;
+    font-weight: 700;
+    font-family: 'Times New Roman', Times, serif;
+}
+.my-footer-page {
+    font-weight: 700;
+    color: #000;
+    font-size: 9pt;
+}
+
+/* ════ A4 SINGLE PAGE (QUALITY CERTIFICATE) ════ */
+.my-q-page {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+    padding: 12mm 16mm 10mm 16mm;
+    margin: 10mm auto;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.my-q-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 2mm;
+}
+
+.my-q-footer {
+    flex: 0 0 5mm;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 2mm;
+    font-size: 9pt;
+    font-weight: 700;
+    font-family: 'Times New Roman', Times, serif;
+}
+.my-q-footer-page {
+    font-weight: 700;
+    color: #000;
+    font-size: 9pt;
+}
+
+/* ════ HEADER ════ */
+.my-hdr {
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom: 2px;
+}
+.my-logo-img {
+    height: 54px;
+    width: auto;
+    display: block;
+    margin: 0 auto 2px;
+}
+.my-dept {
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 2px;
+    letter-spacing: 0.2px;
+}
+.my-addr {
+    font-size: 8pt;
+    line-height: 1.3;
+}
+.my-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    text-decoration: underline;
+    margin: 3px 0 5px;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+/* ════ BOX OUTER & FLEX ROWS ════ */
+.my-box-outer {
+    width: 100%;
+    border: 1px solid #000;
+    flex-shrink: 0;
+}
+
+.my-page-box-flex {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.my-row {
+    display: flex;
+    width: 100%;
+}
+
+.my-subrow {
+    display: flex;
+    width: 100%;
+}
+
+.my-cell {
+    padding: 3px 5px;
+    font-size: 8.5pt;
+    line-height: 1.3;
+    box-sizing: border-box;
+}
+
+.my-cell-col {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.my-border-r { border-right: 1px solid #000; }
+.my-border-l { border-left: 1px solid #000; }
+.my-border-t { border-top: 1px solid #000; }
+.my-border-b { border-bottom: 1px solid #000; }
+
+.my-w12 { width: 12%; flex: 0 0 12%; }
+.my-w14 { width: 14%; flex: 0 0 14%; }
+.my-w18 { width: 18%; flex: 0 0 18%; }
+.my-w23 { width: 23%; flex: 0 0 23%; }
+.my-w25 { width: 25%; flex: 0 0 25%; }
+.my-w30 { width: 30%; flex: 0 0 30%; }
+.my-w33 { width: 33%; flex: 0 0 33%; }
+.my-w35 { width: 35%; flex: 0 0 35%; }
+.my-w37 { width: 37%; flex: 0 0 37%; }
+.my-w40 { width: 40%; flex: 0 0 40%; }
+.my-w45 { width: 45%; flex: 0 0 45%; }
+.my-w50 { width: 50%; flex: 0 0 50%; }
+.my-w55 { width: 55%; flex: 0 0 55%; }
+.my-w60 { width: 60%; flex: 0 0 60%; }
+.my-w100 { width: 100%; flex: 0 0 100%; }
+
+.my-lbl {
+    font-size: 8pt;
+    color: #000;
+    line-height: 1.2;
+    display: block;
+}
+
+.my-mb2 { margin-bottom: 2px; }
+.my-mb4 { margin-bottom: 4px; }
+.my-mt2 { margin-top: 2px; }
+.my-mt3 { margin-top: 3px; }
+.my-mt4 { margin-top: 4px; }
+.my-mt6 { margin-top: 6px; }
+
+.my-inp {
+    display: block;
+    width: 100%;
+    font-size: 8.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.35;
+}
+.my-inp:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.my-inp-inline {
+    display: inline-block;
+    width: 170px;
+    font-size: 8.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+.my-inp-inline:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.my-cb-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.my-cb-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.my-cb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8.5pt;
+    cursor: pointer;
+}
+
+/* ════ PRODUCT TABLE (HEALTH CERTIFICATE) ════ */
+.my-prod-container {
+    flex: 1 1 auto;
+    display: flex;
+}
+.my-prod-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+}
+.my-prod-table th {
+    border: 1px solid #000;
+    padding: 2px 3px;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-align: left;
+    vertical-align: bottom;
+    line-height: 1.2;
+    background: #fafafa;
+}
+.my-prod-table td {
+    border: 1px solid #000;
+    padding: 1px 2px;
+    vertical-align: top;
+    font-size: 8pt;
+}
+.my-tinp {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.3;
+}
+.my-tinp:focus {
+    background: #f0f7ff !important;
+}
+.my-total-row td {
+    border: 1px solid #000;
+    padding: 2px 4px;
+    font-size: 8pt;
+}
+
+/* ════ ATTESTATION CLAUSES ════ */
+.my-attest-intro {
+    font-size: 8.5pt;
+    margin: 2px 0;
+    font-style: normal;
+}
+.my-attest-block {
+    font-size: 8pt;
+}
+.my-attest-p {
+    font-size: 7.6pt;
+    line-height: 1.32;
+    text-align: justify;
+    margin-bottom: 2px;
+    padding-left: 16px;
+    text-indent: -16px;
+}
+.my-alpha {
+    font-weight: 400;
+}
+
+/* ════ SIGNATORY SECTION ════ */
+.my-sig-container {
+    flex: 1 1 auto;
+    display: flex;
+}
+.my-sig-cell {
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.my-sig-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+}
+.my-sig-col {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Stamp & Signature Placeholder Styles */
+.my-stamp-placeholder,
+.my-sig-placeholder {
+    min-height: 65px;
+    max-height: 95px;
+    height: auto;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+}
+
+.my-stamp-placeholder:hover,
+.my-sig-placeholder:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.my-stamp-placeholder.my-drop-active,
+.my-sig-placeholder.my-drop-active {
+    border-color: #2563eb;
+    background-color: #dbeafe;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.my-stamp-placeholder.has-content,
+.my-sig-placeholder.has-content {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 2px;
+}
+
+.my-stamp-placeholder.has-content:hover,
+.my-sig-placeholder.has-content:hover {
+    border-color: #94a3b8;
+}
+
+.my-preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.my-stamp-img,
+.my-sig-img {
+    max-height: 80px;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.my-pdf-preview {
+    width: 100%;
+    height: 80px;
+    border: none;
+    pointer-events: none;
+}
+
+.my-action-overlay {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: flex;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 5;
+}
+
+.my-stamp-placeholder:hover .my-action-overlay,
+.my-sig-placeholder:hover .my-action-overlay {
+    opacity: 1;
+}
+
+.my-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.my-mini-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.my-mini-btn.danger {
+    color: #ef4444;
+}
+
+.my-mini-btn.danger:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.text-2xs {
+    font-size: 0.65rem;
+}
+
+.text-3xs {
+    font-size: 0.55rem;
+}
+
+/* ════ QUALITY CERTIFICATE SPECIFIC STYLES ════ */
+.my-q-hdr {
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom: 4px;
+}
+.my-q-title {
+    font-size: 13pt;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+.my-q-docref-row {
+    font-size: 9pt;
+    text-align: right;
+    padding-right: 15%;
+}
+
+.my-q-statement {
+    font-size: 9pt;
+    line-height: 1.45;
+}
+.my-q-p {
+    font-size: 9pt;
+    line-height: 1.45;
+    text-align: justify;
+}
+
+.my-q-cb {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9pt;
+    cursor: pointer;
+}
+
+.my-q-est-block {
+    font-size: 9pt;
+    line-height: 1.4;
+}
+
+.my-q-meta-block {
+    font-size: 8.5pt;
+    line-height: 1.4;
+}
+
+.my-q-inp {
+    display: block;
+    width: 100%;
+    font-size: 8.5pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.35;
+}
+.my-q-inp:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.my-q-inp-inline {
+    display: inline-block;
+    width: 140px;
+    font-size: 9pt;
+    font-family: inherit;
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+.my-q-inp-inline:focus {
+    border-bottom: 1px solid #2563eb !important;
+    background: #f0f7ff !important;
+}
+
+.my-q-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+    border: 1px solid #000;
+}
+.my-q-table th {
+    border: 1px solid #000;
+    padding: 3px 3px;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.2;
+    background: #fff;
+}
+.my-q-table td {
+    border: 1px solid #000;
+    padding: 1px 2px;
+    vertical-align: top;
+    font-size: 8pt;
+}
+.my-q-tinp {
+    display: block;
+    width: 100%;
+    font-size: 8pt;
+    font-family: inherit;
+    border: none !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.3;
+}
+.my-q-tinp:focus {
+    background: #f0f7ff !important;
+}
+
+.my-q-total-row td {
+    border: 1px solid #000;
+    padding: 3px 4px;
+    font-size: 8.5pt;
+}
+
+/* ════ SCREEN ADJUSTMENTS & CHECKBOXES ════ */
+:host ::ng-deep .p-checkbox .p-checkbox-box {
+    width: 13px !important;
+    height: 13px !important;
+    border: 1px solid #000 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: none !important;
+}
+
+:host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box {
+    background: #fff !important;
+    border-color: #000 !important;
+}
+
+:host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box::after {
+    content: "✕";
+    font-size: 10px;
+    font-weight: 900;
+    color: #000;
+    line-height: 1;
+    display: block;
+}
+
+:host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-icon,
+:host ::ng-deep .p-checkbox.p-checkbox-checked svg {
+    display: none !important;
+}
+
+:host ::ng-deep .p-radiobutton .p-radiobutton-box {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+:host ::ng-deep .p-datepicker {
+    font-family: 'Times New Roman', Times, serif !important;
+}
+
+:host ::ng-deep .p-datepicker-trigger,
+:host ::ng-deep .p-calendar-button,
+:host ::ng-deep .pi-calendar {
+    display: none !important;
+}
+
+:host ::ng-deep .p-datepicker,
+:host ::ng-deep .p-calendar {
+    width: 40mm !important;
+    min-width: 40mm !important;
+}
+
+:host ::ng-deep .p-inputtext.my-inp,
+:host ::ng-deep .p-inputtext.my-q-inp {
+    border: none !important;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.2) !important;
+    border-radius: 0 !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 8.5pt !important;
+    height: auto !important;
+}
+
+:host ::ng-deep .p-inputtext.my-tinp,
+:host ::ng-deep .p-inputtext.my-q-tinp {
+    border: none !important;
+    padding: 1px 2px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    font-size: 8pt !important;
+    height: auto !important;
+}
+
+:host ::ng-deep .signatory-select {
+    font-size: 8.5pt !important;
+}
+
+/* ════ PRINT MEDIA STYLES ════ */
+.print-show {
+    display: none !important;
+}
+
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
+@media print {
+    .print-hide {
+        display: none !important;
+    }
+    .print-show {
+        display: block !important;
+    }
+    .my-actions {
+        display: none !important;
+    }
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+    }
+
+    .my-wrap {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .my-page {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        height: 297mm !important;
+        padding: 8mm 14mm 6mm 14mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+    }
+
+    .my-q-page {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        height: 297mm !important;
+        padding: 12mm 16mm 10mm 16mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        page-break-after: auto !important;
+        break-after: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .my-stamp-placeholder,
+    .my-sig-placeholder {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .my-preview-container {
+        min-height: 0 !important;
+    }
+
+    .my-action-overlay {
+        display: none !important;
+    }
+    .my-page:last-of-type,
+    .my-page.last-page {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .my-content, .my-q-content {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        padding-bottom: 2mm !important;
+    }
+
+    .my-footer, .my-q-footer {
+        flex: 0 0 5mm !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        padding: 0 2mm !important;
+        font-size: 9pt !important;
+        font-weight: 700 !important;
+    }
+
+    .my-box-outer {
+        border: 1px solid #000 !important;
+    }
+    .my-border-r { border-right: 1px solid #000 !important; }
+    .my-border-l { border-left: 1px solid #000 !important; }
+    .my-border-t { border-top: 1px solid #000 !important; }
+    .my-border-b { border-bottom: 1px solid #000 !important; }
+
+    .my-inp, .my-inp-inline, .my-tinp,
+    .my-q-inp, .my-q-inp-inline, .my-q-tinp {
+        border: none !important;
+        border-bottom: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    .my-prod-table th {
+        background: #fff !important;
+        border: 1px solid #000 !important;
+        padding: 2px 3px !important;
+    }
+    .my-prod-table td {
+        border: 1px solid #000 !important;
+        padding: 1px 2px !important;
+    }
+
+    .my-q-table {
+        display: table !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+        border: 1px solid #000 !important;
+    }
+    .my-q-table th {
+        background: #fff !important;
+        border: 1px solid #000 !important;
+        padding: 3px 3px !important;
+    }
+    .my-q-table td {
+        border: 1px solid #000 !important;
+        padding: 1px 2px !important;
+    }
+
+    :host ::ng-deep .p-checkbox .p-checkbox-box {
+        border: 1px solid #000 !important;
+        background: transparent !important;
+        width: 13px !important;
+        height: 13px !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    :host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box {
+        background: transparent !important;
+        border-color: #000 !important;
+    }
+
+    :host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-box::after {
+        content: "✕" !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        color: #000 !important;
+        line-height: 1 !important;
+        display: block !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    :host ::ng-deep .p-checkbox.p-checkbox-checked .p-checkbox-icon,
+    :host ::ng-deep .p-checkbox.p-checkbox-checked svg {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-datepicker-trigger,
+    :host ::ng-deep .p-calendar-button,
+    :host ::ng-deep .pi-calendar {
+        display: none !important;
+    }
+
+    :host ::ng-deep .p-datepicker,
+    :host ::ng-deep .p-calendar {
+        display: block !important;
+        border: none !important;
+        padding: 0 !important;
+        width: auto !important;
+        background: transparent !important;
+    }
+
+    :host ::ng-deep .p-datepicker .p-inputtext,
+    :host ::ng-deep .p-calendar .p-inputtext {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        font-size: 8.5pt !important;
+    }
+}

@@ -1,0 +1,186 @@
+<section class="user-add-wrapper">
+    <div class="card">
+        <h2 class="title">{{ editMode ? 'Edit User' : 'Add New User' }}</h2>
+
+        <form [formGroup]="userForm" (ngSubmit)="submitForm()">
+            <!-- Full Name -->
+            <div class="form-group">
+                <label>Full Name</label>
+                <input pInputText type="text" formControlName="fullName" placeholder="Enter full name" />
+                <div *ngIf="userForm.controls['fullName'].invalid && (userForm.controls['fullName'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Full name is required</div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label>Email</label>
+                <input pInputText type="email" formControlName="email" placeholder="Enter email" />
+                <div *ngIf="userForm.controls['email'].invalid && (userForm.controls['email'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">
+                    <span *ngIf="userForm.controls['email'].errors?.['required']">Email is required</span>
+                    <span *ngIf="userForm.controls['email'].errors?.['email']">Enter a valid email</span>
+                </div>
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input pInputText type="text" formControlName="phone" placeholder="Enter phone number" maxlength="10" required="required" />
+                <div *ngIf="userForm.controls['phone'].invalid && (userForm.controls['phone'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Phone number is required</div>
+            </div>
+
+            <!-- Role -->
+            <div class="form-group">
+                <label>Role</label>
+                <p-select [options]="roles" optionLabel="name" optionValue="id" formControlName="role" placeholder="Select a role" required="required"></p-select>
+                <div *ngIf="userForm.controls['role'].invalid && (userForm.controls['role'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Role is required</div>
+            </div>
+
+            <!-- Company -->
+            <div class="form-group" *ngIf="showCompany">
+                <label>Company</label>
+                <p-select [options]="companies" optionLabel="name" optionValue="id" formControlName="company" [showClear]="true" placeholder="Select a company"></p-select>
+                <div *ngIf="userForm.controls['company'].invalid && (userForm.controls['company'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">Company is required</div>
+            </div>
+
+            <!-- Qualifications -->
+            <div class="form-group" *ngIf="showQualification">
+                <label>Qualifications</label>
+                <textarea pTextarea rows="3" formControlName="qualification" placeholder="Enter qualifications"></textarea>
+            </div>
+
+            <!-- Password Fields -->
+            <ng-container *ngIf="!editMode">
+                <div class="form-group">
+                    <label>Password <span class="text-red-500">*</span></label>
+                    <p-password formControlName="password" placeholder="Enter password" [toggleMask]="true" [feedback]="false" styleClass="w-full" inputStyleClass="w-full" autocomplete="new-password"></p-password>
+                    <div *ngIf="userForm.controls['password'].invalid && (userForm.controls['password'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">
+                        <span *ngIf="userForm.controls['password'].errors?.['required']">Password is required</span>
+                        <span *ngIf="userForm.controls['password'].errors?.['pattern']">Password does not meet the security requirements below</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password <span class="text-red-500">*</span></label>
+                    <p-password formControlName="confirmPassword" placeholder="Confirm password" [toggleMask]="true" [feedback]="false" styleClass="w-full" inputStyleClass="w-full" autocomplete="new-password"></p-password>
+                    <div *ngIf="userForm.controls['confirmPassword'].invalid && (userForm.controls['confirmPassword'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">
+                        <span *ngIf="userForm.controls['confirmPassword'].errors?.['required']">Confirm password is required</span>
+                        <span *ngIf="userForm.controls['confirmPassword'].errors?.['mismatch']">Passwords do not match</span>
+                    </div>
+                </div>
+
+                <!-- Password Requirements Checklist for Add Mode -->
+                <div class="password-guidelines-box">
+                    <div class="guidelines-header">
+                        <i class="pi pi-shield"></i>
+                        <span>Password Requirements</span>
+                    </div>
+                    <div class="guidelines-grid">
+                        <div class="guideline-item" [ngClass]="hasMinLength ? 'met' : (userForm.get('password')?.touched || submitted ? 'unmet' : '')">
+                            <i class="pi" [ngClass]="hasMinLength ? 'pi-check-circle' : 'pi-circle'"></i>
+                            <span>At least 6 characters</span>
+                        </div>
+                        <div class="guideline-item" [ngClass]="hasUppercase ? 'met' : (userForm.get('password')?.touched || submitted ? 'unmet' : '')">
+                            <i class="pi" [ngClass]="hasUppercase ? 'pi-check-circle' : 'pi-circle'"></i>
+                            <span>At least 1 uppercase letter (A-Z)</span>
+                        </div>
+                        <div class="guideline-item" [ngClass]="hasLowercase ? 'met' : (userForm.get('password')?.touched || submitted ? 'unmet' : '')">
+                            <i class="pi" [ngClass]="hasLowercase ? 'pi-check-circle' : 'pi-circle'"></i>
+                            <span>At least 1 lowercase letter (a-z)</span>
+                        </div>
+                        <div class="guideline-item" [ngClass]="hasNumber ? 'met' : (userForm.get('password')?.touched || submitted ? 'unmet' : '')">
+                            <i class="pi" [ngClass]="hasNumber ? 'pi-check-circle' : 'pi-circle'"></i>
+                            <span>At least 1 number (0-9)</span>
+                        </div>
+                        <div class="guideline-item" [ngClass]="hasSpecialChar ? 'met' : (userForm.get('password')?.touched || submitted ? 'unmet' : '')">
+                            <i class="pi" [ngClass]="hasSpecialChar ? 'pi-check-circle' : 'pi-circle'"></i>
+                            <span>At least 1 special character (!@#$%^&*)</span>
+                        </div>
+                        <div class="guideline-item" [ngClass]="passwordsMatch ? 'met' : (userForm.get('confirmPassword')?.touched || submitted ? 'unmet' : '')">
+                            <i class="pi" [ngClass]="passwordsMatch ? 'pi-check-circle' : 'pi-circle'"></i>
+                            <span>Passwords match</span>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- Edit Mode -->
+            <ng-container *ngIf="editMode">
+                <div class="form-group" style="margin-top: 1rem" *ngIf="!showPasswordChange">
+                    <p-button type="button" label="Change Password" icon="pi pi-lock" severity="info" [outlined]="true" (click)="togglePasswordChange()" [disabled]="loading || showPasswordChange"></p-button>
+                </div>
+                <ng-container *ngIf="showPasswordChange">
+                    <div class="password-card">
+                        <div>
+                            <h3>Change Password</h3>
+                            <p>Set a new password for this user account.</p>
+                        </div>
+
+                        <div class="password-row">
+                            <div class="password-field">
+                                <label for="newPassword" class="text-surface-700 dark:text-surface-100 font-medium">New Password <span class="text-red-500">*</span></label>
+                                <p-password id="newPassword" class="w-full" formControlName="newPassword" [feedback]="false" [toggleMask]="true" autocomplete="new-password" inputStyleClass="w-full" placeholder="Enter new password"></p-password>
+                                <div *ngIf="userForm.controls['newPassword'].invalid && (userForm.controls['newPassword'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">
+                                    <span *ngIf="userForm.controls['newPassword'].errors?.['required']">New password is required</span>
+                                    <span *ngIf="userForm.controls['newPassword'].errors?.['pattern']">New password must meet security criteria below</span>
+                                </div>
+                            </div>
+                            <div class="password-field">
+                                <label for="confirmNewPassword" class="text-surface-700 dark:text-surface-100 font-medium">Confirm Password <span class="text-red-500">*</span></label>
+                                <p-password id="confirmNewPassword" class="w-full" formControlName="confirmNewPassword" [feedback]="false" [toggleMask]="true" autocomplete="new-password" inputStyleClass="w-full" placeholder="Confirm new password"></p-password>
+                                <div *ngIf="userForm.controls['confirmNewPassword'].invalid && (userForm.controls['confirmNewPassword'].touched || submitted)" class="text-red-500 mt-2 text-sm mx-2">
+                                    <span *ngIf="userForm.controls['confirmNewPassword'].errors?.['required']">Please confirm new password</span>
+                                    <span *ngIf="userForm.controls['confirmNewPassword'].errors?.['mismatch']">New passwords must match</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Requirements Checklist for Edit Mode -->
+                        <div class="password-guidelines-box mt-3">
+                            <div class="guidelines-header">
+                                <i class="pi pi-shield"></i>
+                                <span>New Password Requirements</span>
+                            </div>
+                            <div class="guidelines-grid">
+                                <div class="guideline-item" [ngClass]="hasNewMinLength ? 'met' : (userForm.get('newPassword')?.touched || submitted ? 'unmet' : '')">
+                                    <i class="pi" [ngClass]="hasNewMinLength ? 'pi-check-circle' : 'pi-circle'"></i>
+                                    <span>At least 6 characters</span>
+                                </div>
+                                <div class="guideline-item" [ngClass]="hasNewUppercase ? 'met' : (userForm.get('newPassword')?.touched || submitted ? 'unmet' : '')">
+                                    <i class="pi" [ngClass]="hasNewUppercase ? 'pi-check-circle' : 'pi-circle'"></i>
+                                    <span>At least 1 uppercase letter (A-Z)</span>
+                                </div>
+                                <div class="guideline-item" [ngClass]="hasNewLowercase ? 'met' : (userForm.get('newPassword')?.touched || submitted ? 'unmet' : '')">
+                                    <i class="pi" [ngClass]="hasNewLowercase ? 'pi-check-circle' : 'pi-circle'"></i>
+                                    <span>At least 1 lowercase letter (a-z)</span>
+                                </div>
+                                <div class="guideline-item" [ngClass]="hasNewNumber ? 'met' : (userForm.get('newPassword')?.touched || submitted ? 'unmet' : '')">
+                                    <i class="pi" [ngClass]="hasNewNumber ? 'pi-check-circle' : 'pi-circle'"></i>
+                                    <span>At least 1 number (0-9)</span>
+                                </div>
+                                <div class="guideline-item" [ngClass]="hasNewSpecialChar ? 'met' : (userForm.get('newPassword')?.touched || submitted ? 'unmet' : '')">
+                                    <i class="pi" [ngClass]="hasNewSpecialChar ? 'pi-check-circle' : 'pi-circle'"></i>
+                                    <span>At least 1 special character (!@#$%^&*)</span>
+                                </div>
+                                <div class="guideline-item" [ngClass]="newPasswordsMatch ? 'met' : (userForm.get('confirmNewPassword')?.touched || submitted ? 'unmet' : '')">
+                                    <i class="pi" [ngClass]="newPasswordsMatch ? 'pi-check-circle' : 'pi-circle'"></i>
+                                    <span>Passwords match</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="text-align: right; margin-top: 1rem">
+                            <p-button type="button" label="Cancel" severity="secondary" (click)="togglePasswordChange()" [outlined]="true"></p-button>
+                        </div>
+                    </div>
+                </ng-container>
+            </ng-container>
+
+            <!-- Buttons -->
+            <div class="actions">
+                <button class="btn-save" type="submit" [disabled]="loading">
+                    <span *ngIf="loading" class="spinner" aria-hidden="true"></span>
+                    {{ loading ? 'Saving...' : editMode ? 'Update User' : 'Save User' }}
+                </button>
+                <button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</section>

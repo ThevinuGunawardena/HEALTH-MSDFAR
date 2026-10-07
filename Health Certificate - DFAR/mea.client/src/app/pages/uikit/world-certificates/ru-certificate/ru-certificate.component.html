@@ -1,0 +1,533 @@
+<div class="ru-wrap" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs w-full max-w-[210mm]" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Russia (RU) — Veterinary Certificate</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <span *ngIf="form.get('certificateNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateNo')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Russia Sample (TC 4471)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleRussia()"
+                pTooltip="Load official Russia Certificate sample (TC 4471 - Tropical Nature Seafood) with 40 Attachment products"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Mode & Attachment Options (print-hide) -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide w-full max-w-[210mm]" *ngIf="!isSubmitted && !viewOnly">
+        <div class="flex flex-wrap items-center gap-6">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Certificate View:</span>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="viewMode" formControlName="viewMode" value="full" inputId="vm_ru_full" (onClick)="onViewModeChange('full')"></p-radiobutton>
+                <span>1. FULL HEALTH CERTIFICATE (4 PAGES)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment_only" inputId="vm_ru_att_only" (onClick)="onViewModeChange('attachment_only')"></p-radiobutton>
+                <span>2. ATTACHMENT ONLY (1 PAGE)</span>
+            </label>
+        </div>
+
+        <div class="flex items-center gap-3 pl-4 border-l border-slate-200" *ngIf="viewMode === 'full'">
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1.5 rounded border border-indigo-200 hover:bg-indigo-100">
+                <p-checkbox formControlName="includeAttachment" [binary]="true"></p-checkbox>
+                <span>Include Product List Attachment (Page 4)</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs w-full max-w-[210mm]" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'attachment_only' ? '2. ATTACHMENT ONLY (1 PAGE)' : '1. FULL HEALTH CERTIFICATE' }}
+        </span>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 1 — SHIPMENT DETAILS & EEU CERTIFICATION ══════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ru-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ru-boxed-frame">
+            <!-- Diagonal ORIGINAL watermark -->
+            <div class="ru-watermark">ORIGINAL</div>
+
+            <div class="ru-content">
+                <!-- Header -->
+                <div class="ru-hdr">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="ru-logo flex justify-center">
+                            <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="ru-logo-img" />
+                        </div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateNo')?.value"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorNameAddress')?.value"
+                                [consignee]="form.get('consigneeNameAddress')?.value"
+                                [destination]="'Russia'"
+                                [viewOnly]="viewOnly"
+                                [size]="64"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="ru-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="ru-addr">P.O. Box 531, New Secretariat, Maligawatta, Colombo 10 Sri Lanka</div>
+                    <div class="ru-addr">Telephone: +94-11-2449170, 2472186, 2472192</div>
+                    <div class="ru-addr">Fax: +94-11-2424086, 2424086</div>
+                    <div class="ru-addr">E-mail: dgdfar&#64;gmail.com</div>
+
+                    <div class="flex justify-between items-center font-bold text-xs mt-3 mb-1 border-t border-b border-black py-1">
+                        <div>COUNTRY: SRI LANKA</div>
+                        <div>VETERINARY CERTIFICATE TO RUSSIA</div>
+                    </div>
+                </div>
+
+                <!-- Boxed Grid Page 1 -->
+                <table class="ru-tbl w-full border border-black flex-1">
+                    <tr>
+                        <!-- Left Main: Section 1 -->
+                        <td class="ru-td" style="width: 50%;">
+                            <div class="font-bold text-xs mb-1">1. Описание поставки/ Shipment details</div>
+                            <div class="ru-sub-sec">
+                                <div class="font-bold text-xs">1.1 Название и адрес грузоотправителя / Name and address of consignor:</div>
+                                <textarea pInputTextarea formControlName="consignorNameAddress" rows="4" [autoResize]="true" class="ru-inp font-bold mt-1 uppercase"></textarea>
+                            </div>
+                            <div class="ru-sub-sec mt-2">
+                                <div class="font-bold text-xs">1.2 Название и адрес грузополучателя / Name and address of consignee:</div>
+                                <textarea pInputTextarea formControlName="consigneeNameAddress" rows="4" [autoResize]="true" class="ru-inp font-bold mt-1 uppercase"></textarea>
+                            </div>
+                            <div class="ru-sub-sec mt-2">
+                                <div class="font-bold text-xs">1.3 Транспорт/ Means of transport:</div>
+                                <div class="text-xs italic" style="font-size: 6.8pt; line-height: 1.15;">(The number of the railway carriage, truck, container, flight number, name of the ship / № вагона, автомашины, контейнера, рейс самолета, название судна):</div>
+                                <input pInputText formControlName="meansOfTransport" class="ru-inp font-bold mt-1 uppercase" />
+                            </div>
+                            <div class="ru-sub-sec mt-2">
+                                <div class="font-bold text-xs">1.4 Страна(ы) транзита / Country of transit :</div>
+                                <input pInputText formControlName="countryOfTransit" class="ru-inp font-bold mt-1 uppercase" />
+                            </div>
+                        </td>
+
+                        <!-- Right Main: 1.5 to 1.10 -->
+                        <td class="ru-td" style="width: 50%;">
+                            <div class="font-bold text-xs">1.5 Сертификат № / Certificate №: <span class="font-bold">{{ form.get('certificateNo')?.value || refNumber || 'TC 4471' }}</span></div>
+                            <div class="ru-eeu-banner text-center font-bold text-red-600 italic my-2 leading-tight" style="font-size: 7.2pt;">
+                                Ветеринарный сертификат на экспортируемую на таможенную территорию Евразийского экономического союза пищевую продукцию из рыбы, ракообразных, моллюсков, других объектов промысла и продуктов их переработки/ Veterinary certificate for fish, crustacean, mollusks, other fishery products and products of their processing, exported into the customs territory of Eurasian economic union
+                            </div>
+                            <div class="ru-sub-sec mt-1">
+                                <div class="font-bold text-xs">1. 6 Страна происхождения товара / Country of origin:</div>
+                                <input pInputText formControlName="countryOrigin" class="ru-inp font-bold mt-1 uppercase" />
+                            </div>
+                            <div class="ru-sub-sec mt-1">
+                                <div class="font-bold text-xs">1.7 Страна выдавшая сертификат /Country issuing this certificate:</div>
+                                <input pInputText formControlName="countryIssuing" class="ru-inp font-bold mt-1 uppercase" />
+                            </div>
+                            <div class="ru-sub-sec mt-1">
+                                <div class="font-bold text-xs">1.8 Компетентное ведомство страны-экспортера / Competent authority of exporting country:</div>
+                                <div class="font-bold text-xs mt-1 uppercase">{{ form.get('competentAuthorityExporting')?.value || 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES' }}</div>
+                            </div>
+                            <div class="ru-sub-sec mt-1">
+                                <div class="font-bold text-xs">1.9 Учреждение страны-экспортера, выдавшее сертификат / Organization issuing this certificate in exporting country:</div>
+                                <div class="font-bold text-xs mt-1 uppercase">{{ form.get('organizationIssuing')?.value || 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES' }}</div>
+                            </div>
+                            <div class="ru-sub-sec mt-1">
+                                <div class="font-bold text-xs">1.10 Пункт пропуска товаров через таможенную границу/ Point of crossing the border</div>
+                                <input pInputText formControlName="pointOfCrossingBorder" class="ru-inp font-bold mt-1 uppercase" />
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="ru-footer">
+            <span class="ru-footer-cert">CERTIFICATE NO {{ form.get('certificateNo')?.value || 'TC 4471' }}</span>
+            <span class="ru-footer-page">1/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 2 — IDENTIFICATION, ORIGIN & SUITABILITY ══════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ru-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ru-boxed-frame">
+            <!-- Diagonal ORIGINAL watermark -->
+            <div class="ru-watermark">ORIGINAL</div>
+
+            <div class="ru-content">
+                <table class="ru-tbl w-full border border-black flex-1">
+                    <!-- Section 2: Identification -->
+                    <tr>
+                        <td class="ru-td" colspan="2">
+                            <div class="font-bold text-xs mb-1">2. Идентификация товара</div>
+                            <div class="text-xs">
+                                <strong>2.1 Наименование товара / Name of product:</strong>
+                                <input pInputText formControlName="productName" class="ru-inline-inp font-bold uppercase" />
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>2.2 Дата выработки товара / Date of production:</strong>
+                                <span class="font-bold ml-1">{{ form.get('productionDate')?.value | date: 'dd/MM/yyyy' }}</span>
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>2.3 Упаковка / Type of package:</strong>
+                                <textarea pInputTextarea formControlName="typeOfPackage" rows="2" [autoResize]="true" class="ru-inp font-bold mt-1 uppercase"></textarea>
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>2 4 Количество мест / Number of packages:</strong>
+                                <span class="font-bold ml-2 uppercase">{{ form.get('numPackages')?.value || 'SEE ATTACHMENT' }}</span>
+                                <div class="dotted-leader">……………………………………………………………………………………………………………..</div>
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>2.5 Вес нетто (кг) / Net weight (kg):</strong>
+                                <span class="font-bold ml-2 uppercase">…………… {{ form.get('netWeight')?.value || 'SEE ATTACHMENT' }}</span>
+                                <div class="dotted-leader">…………………………………………………………………………………………………………..</div>
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>2.6 Номер пломбы / Number of seal:</strong>
+                                <span class="font-bold ml-2 uppercase">………………{{ form.get('numberOfSeal')?.value || 'NONE' }}</span>
+                                <div class="dotted-leader">……………………………………………………………………………………………………………..</div>
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>2.7 Маркировка / Identification marks:</strong>
+                                <span class="font-bold ml-2 uppercase">…… {{ form.get('identificationMarks')?.value || 'DFAR/FPE/98/25' }}</span>
+                                <div class="dotted-leader">………………………………………………………………………………………………………..</div>
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>2.8 Условия хранения и перевозки / Conditions of storage and transport:</strong>
+                                <span class="font-bold ml-2 uppercase">………{{ form.get('storageConditions')?.value || '0/+4 DEGREES CELCIUS' }}…</span>
+                                <div class="dotted-leader">………………………………………………………………………………</div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Section 3: Origin of products -->
+                    <tr>
+                        <td class="ru-td" colspan="2">
+                            <div class="font-bold text-xs mb-1">3. Происхождение товара / Origin of products:</div>
+                            <div class="text-xs">
+                                <strong>3,1Название, регистрационный номер и адрес предприятия / Name, registration number and address of establishment::</strong>
+                                <textarea pInputTextarea formControlName="establishmentNameAddressRegNo" rows="3" [autoResize]="true" class="ru-inp font-bold mt-1 uppercase"></textarea>
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>Плавбаза / Factory vessel:</strong>
+                                <input pInputText formControlName="factoryVessel" class="ru-inline-inp font-bold uppercase" />
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>Холодильник / Cold store:</strong>
+                                <input pInputText formControlName="coldStore" class="ru-inline-inp font-bold uppercase" />
+                            </div>
+                            <div class="text-xs mt-1">
+                                <strong>3.2 Административно-территориальная единица / Administrative – territorial unit:</strong>
+                                <input pInputText formControlName="administrativeUnit" class="ru-inline-inp font-bold uppercase" />
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Section 4: Suitability & Pre-export certs -->
+                    <tr>
+                        <td class="ru-td" colspan="2">
+                            <div class="font-bold text-xs mb-1">4. Свидетельство о пригодности товара в пищу / Certificate on suitability of products in food</div>
+                            <div class="text-xs italic leading-tight" style="font-size: 7pt;">
+                                Я, нижеподписавшийся государственный/официальный ветеринарный врач, настоящим удостоверяю следующее / I, the undersigned official/government inspector, certify hereby that:
+                            </div>
+                            <div class="text-xs italic leading-tight mt-1" style="font-size: 7pt;">
+                                Сертификат выдан на основе следующих до-экспортных сертификатов (при наличии более двух до-экспортных сертификатов прилагается список) / The certificate is based on the following pre-export certificates (see attached list in case more than two):
+                            </div>
+
+                            <table class="ru-pre-tbl w-full border border-black mt-1 text-xs">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 10%;">Дата<br/>/<br/>Date:</th>
+                                        <th style="width: 10%;">Номер<br/>/<br/>Number:</th>
+                                        <th style="width: 18%;">Страна происхождения<br/>/<br/>Country of origin:</th>
+                                        <th style="width: 18%;">Административная территория<br/>/<br/>Administrative territory:</th>
+                                        <th style="width: 22%;">Регистрационный номер предприятия<br/>/<br/>Approval number of the Establishment:</th>
+                                        <th style="width: 22%;">Вид и количество (вес нетто) товара<br/>/<br/>Name and quantity (net weight) of the product:</th>
+                                        <th class="print-hide" style="width: 25px;" *ngIf="!viewOnly"></th>
+                                    </tr>
+                                </thead>
+                                <tbody formArrayName="preExportCertificates">
+                                    <tr *ngFor="let row of preExportCertificates.controls; let i = index" [formGroupName]="i">
+                                        <td><input pInputText formControlName="date" class="ru-cinp font-bold text-center" /></td>
+                                        <td><input pInputText formControlName="number" class="ru-cinp font-bold text-center" /></td>
+                                        <td><input pInputText formControlName="countryOfOrigin" class="ru-cinp font-bold text-center" /></td>
+                                        <td><input pInputText formControlName="administrativeTerritory" class="ru-cinp font-bold text-center" /></td>
+                                        <td><input pInputText formControlName="approvalNumber" class="ru-cinp font-bold text-center" /></td>
+                                        <td><input pInputText formControlName="productNameAndQuantity" class="ru-cinp font-bold text-center" /></td>
+                                        <td class="print-hide text-center" *ngIf="!viewOnly">
+                                            <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removePreExport(i)" *ngIf="preExportCertificates.length > 1"></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="text-xs leading-tight mt-1 text-justify italic" style="font-size: 6.8pt; line-height: 1.2;">
+                                <strong>4.1</strong> Экспортируемая на таможенную территорию Евразийского экономического союза продукция из водных биологических ресурсов (живая, охлаждённая, мороженая рыба, икра, моллюски, млекопитающие и другие водные животные и объекты промысла) (далее - рыбная продукция) выращена и добыта в экологически чистых водоёмах (акваториях), пищевые продукты ее переработки произведены на предприятиях, в отношении которых не были установлены ветеринарно-санитарные ограничения. / Aquatic biological resources (live, chilled and frozen fish, caviar, shellfish, mammals and other sea products) (hereafter fishery products) exported into the Eurasian economic union were grown and harvested in ecologically clean water resources while products of their processing were produced in establishments that were not somehow limited by the veterinary or sanitary authorities.
+                            </div>
+                            <div class="text-xs leading-tight mt-1 text-justify italic" style="font-size: 6.8pt; line-height: 1.2;">
+                                <strong>4.2.</strong> В случае наличия паразитов, в пределах допустимых норм рыбная продукция обезврежена существующими методами / If there are any parasites, in acceptable limits, fishery products are inactivated by
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="ru-footer">
+            <span class="ru-footer-cert">CERTIFICATE NO {{ form.get('certificateNo')?.value || 'TC 4471' }}</span>
+            <span class="ru-footer-page">2/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 3 — ATTESTATIONS & SIGNATORY BLOCK ════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ru-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ru-boxed-frame">
+            <!-- Diagonal ORIGINAL watermark -->
+            <div class="ru-watermark">ORIGINAL</div>
+
+            <div class="ru-content">
+                <table class="ru-tbl w-full border border-black flex-1">
+                    <tr>
+                        <td class="ru-td flex-1 flex flex-col justify-between" style="padding: 4px 6px;">
+                            <div class="text-xs leading-tight text-justify italic" style="font-size: 6.8pt; line-height: 1.2;">
+                                <div>the current methods.</div>
+                                <div class="mt-1"><strong>4.3.</strong> Рыбная продукция, экспортируемая на таможенную территорию Евразийского экономического союза:/ Fishery products exported into the customs territory of the Eurasian economic union:</div>
+                                <div class="pl-2 mt-0.5">- не содержит ядовитых рыб семейств Tetraodontidae, Molidae, Diodontidae и Canthigasteridae, а также рыбной продукции, содержащей биотоксины, опасные для здоровья человека / are free from poisonous fish of the bread Tetraodontidae, Molidae, Diodontidae and Canthigasteridae and fishery products containing biotoxins dangerous for human’s health;</div>
+                                <div class="pl-2 mt-0.5">- исследована на наличие паразитов, бактериальных и вирусных инфекций / tested for parasites, bacterial and virus infections;</div>
+                                <div class="pl-2 mt-0.5">- не содержит натуральных или синтетических эстрогенных, гормональных веществ, тиреостатических препаратов; антибиотиков, других медикаментозных средств и пестицидов / are free from natural, synthetic estrogenic and hormoenlike materials, thyreostatic products; antibiotics, other drugs and pesticides;</div>
+                                <div class="pl-2 mt-0.5">- мороженая рыбная продукция имеет температуру в толще продукта не выше минус 18 градусов Цельсия / the temperature of muscle thickness of frozen fish doesn’t exceed minus 18 degrees Celsius;</div>
+                                <div class="pl-2 mt-0.5">- не контаминирована сальмонеллами и возбудителями других бактериальных инфекций / they are not contaminated with salmonella and other bacterial infectious agents;</div>
+                                <div class="pl-2 mt-0.5">- не обработана красящими веществами, ионизирующим облучением или ультрафиолетовыми лучами / have not been treated with coloring substances, ionizing and ultra-violet rays;</div>
+                                <div class="pl-2 mt-0.5">- не имеет изменений характерных для заразных болезней / do not have any alterations typical for infectious diseases;</div>
+                                <div class="pl-2 mt-0.5">- не имеет недоброкачественных изменений по органолептическим показателям / do not have poor organoleptic quality;</div>
+                                <div class="pl-2 mt-0.5">- не подвергалась дефростации в период хранения / have not been defrosted during the storage period;</div>
+                                <div class="mt-1"><strong>4.4.</strong> Двустворчатые моллюски, иглокожие, оболочники и морские гастроподы прошли необходимую выдержку в центрах очистки / Mussels, echinoderms, tunicates and sea gastropods were kept long enough in special tanks designed for water cleaning;</div>
+                                <div class="mt-1"><strong>4.5.</strong> Микробиологические, химикотоксиологические и радиологические показатели рыбной продукции, содержание фикотоксинов и других загрязнителей (для моллюсков) соответствуют действующим на таможенной территории Евразийского экономического союза ветеринарным и санитарным нормам и правилам / content of noxious substance and other contaminants (for mussels), microbiological, chemical, toxicological and radiological characteristics of fish and seafood correspond to actual veterinary and sanitary rules and requirements that are valid on the customs territory of the Eurasian economic union</div>
+                                <div class="mt-1"><strong>4.6.</strong> Рыбная продукция признана пригодной для употребления в пищу человеком / Fishery products are recognized acceptable for human consumption.</div>
+                                <div class="mt-1"><strong>4.7.</strong> Тара и упаковочный материал одноразовые и соответствуют требованиям Евразийского экономического союза/ Packaging and containers are single-used and correspond to hygienic requirements of the Eurasian economic union.</div>
+                                <div class="mt-1"><strong>4.8.</strong> Транспортное средство обработано и подготовлено в соответствии с правилами, принятыми в стране-экспортере / Means of transport are treated and prepared in accordance with the rules approved in the exporting country.</div>
+                            </div>
+
+                            <!-- Signatory Block matching official scan -->
+                            <div class="mt-3 pt-2 border-t border-black text-xs">
+                                <div class="flex justify-between items-center font-bold">
+                                    <div>Место / Place:___ <span class="font-bold uppercase">{{ form.get('placeOfIssue')?.value || 'COLOMBO, SRI LANKA' }}</span> ____</div>
+                                    <div>Дата / Date_:_<span class="font-bold">{{ form.get('dateOfIssue')?.value | date: 'dd/MM/yyyy' }}</span>_____________________</div>
+                                </div>
+
+                                <div class="flex justify-between items-start mt-3">
+                                    <div style="width: 42%;">
+                                        <div class="font-bold mb-1 italic">Печать / Stamp</div>
+                                        <div class="ru-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                        </div>
+                                    </div>
+                                    <div style="width: 55%;" class="text-right">
+                                        <div class="italic text-left mb-0.5">Подпись государственного ветеринарного врача / Signature of state/official veterinarian.</div>
+                                        <div class="italic text-left mb-1 text-[7pt]">Ф.И.О. и должность / Name and position in capital letters</div>
+
+                                        <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2 text-left">
+                                            <p-select
+                                                [options]="userOptions"
+                                                formControlName="signatoryUserId"
+                                                placeholder="Select Authorized Officer"
+                                                (onChange)="onSignatoryChange($event.value)"
+                                                styleClass="w-full text-xs"
+                                                appendTo="body"
+                                            ></p-select>
+                                        </div>
+
+                                        <!-- Signature Space -->
+                                        <div class="ru-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                        </div>
+
+                                        <div class="text-left text-xs uppercase mt-2">Name: {{ form.get('signatoryName')?.value || 'H.M.U. BANDARA' }}</div>
+                                        <div class="text-left text-xs whitespace-pre-line mt-0.5">Designation:{{ form.get('qualification')?.value || 'QUALITY CONTROL OFFICER (GRADE II)\nB.Sc.(BIOLOGY), M.Sc.(FOOD SCI & TEC)(SRI LANKA).' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="ru-footer">
+            <span class="ru-footer-cert">CERTIFICATE NO {{ form.get('certificateNo')?.value || 'TC 4471' }}</span>
+            <span class="ru-footer-page">3/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 4 (ATTACHMENT TO VETERINARY CERTIFICATE) ═════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ru-page" *ngIf="viewMode === 'attachment_only' || (viewMode === 'full' && form.get('includeAttachment')?.value)">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ru-att-frame">
+            <!-- Diagonal ORIGINAL watermark -->
+            <div class="ru-watermark">ORIGINAL</div>
+
+            <div class="ru-content">
+                <div class="ru-att-title font-bold text-center">
+                    Attachment to the Veterinary certificate number
+                    <span class="ru-att-ref-val">{{ form.get('certificateNo')?.value || 'TC 4471' }}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs font-bold px-1 mb-1.5">
+                    <div class="ru-att-meta">DATE: {{ form.get('dateOfAttachment')?.value | date: 'dd/MM/yyyy' }}</div>
+                    <div class="ru-att-meta">Маркировка / Identification marks: {{ form.get('identificationMarksAttachment')?.value || 'DFAR/FPE/98/25' }}</div>
+                </div>
+
+                <table class="ru-att-tbl w-full border border-black">
+                    <thead>
+                        <tr>
+                            <th style="width: 62%;" class="text-center font-bold px-2 py-0.5">Product</th>
+                            <th style="width: 19%;" class="text-center font-bold px-2 py-0.5">Number of kgs</th>
+                            <th style="width: 19%;" class="text-center font-bold px-2 py-0.5">Number of Boxes</th>
+                            <th *ngIf="!viewOnly" class="print-hide" style="width: 25px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody formArrayName="attachments">
+                        <tr *ngFor="let item of attachments.controls; let i = index" [formGroupName]="i" class="ru-att-row">
+                            <td class="px-1.5 py-0">
+                                <span *ngIf="viewOnly" class="ru-prod-text" [innerHTML]="formatProductName(item.get('product')?.value)"></span>
+                                <input
+                                    *ngIf="!viewOnly"
+                                    pInputText
+                                    formControlName="product"
+                                    class="ru-cinp font-bold uppercase"
+                                    placeholder="Product description"
+                                />
+                            </td>
+                            <td class="px-1 py-0">
+                                <input
+                                    pInputText
+                                    formControlName="numberOfKgs"
+                                    (keypress)="onlyDecimals($event)"
+                                    inputmode="decimal"
+                                    class="ru-cinp text-right font-bold"
+                                    placeholder=""
+                                />
+                            </td>
+                            <td class="px-1 py-0">
+                                <input
+                                    pInputText
+                                    formControlName="numberOfBoxes"
+                                    (keypress)="onlyDigits($event)"
+                                    inputmode="numeric"
+                                    class="ru-cinp text-right font-bold"
+                                    placeholder=""
+                                />
+                            </td>
+                            <td class="print-hide text-center" *ngIf="!viewOnly">
+                                <button
+                                    pButton
+                                    icon="pi pi-trash"
+                                    class="p-button-danger p-button-xs p-button-text"
+                                    (click)="removeAttachment(i)"
+                                    *ngIf="attachments.length > 1"
+                                    pTooltip="Remove Row"
+                                ></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Attachment Toolbar (print-hide) -->
+                <div class="print-hide p-2 flex items-center justify-between gap-2 mt-2 bg-slate-50 border border-slate-200 rounded w-full" *ngIf="!viewOnly">
+                    <div class="flex items-center gap-2">
+                        <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addAttachment()"></p-button>
+                        <p-button label="Load 40 Standard Items (TC 4471)" icon="pi pi-refresh" severity="secondary" size="small" [outlined]="true" (onClick)="loadDefaultProducts()"></p-button>
+                    </div>
+                    <button pButton label="Clear All" icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="clearProducts()"></button>
+                </div>
+            </div>
+        </div>
+        <div class="ru-footer">
+            <span class="ru-footer-cert">CERTIFICATE NO {{ form.get('certificateNo')?.value || 'TC 4471' }}</span>
+            <span class="ru-footer-page">{{ viewMode === 'attachment_only' ? '1/1' : (totalPages + '/' + totalPages) }}</span>
+        </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="ru-actions print-hide flex items-center justify-between gap-3 mt-6 mb-8 w-full max-w-[210mm] mx-auto p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs">
+        <p-button
+            *ngIf="!isEmbedded"
+            label="Back to Forms Queue"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            (onClick)="goBack()"
+        ></p-button>
+        <div class="flex items-center gap-3">
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                [outlined]="true"
+                severity="secondary"
+                (onClick)="printCertificate()"
+                icon="pi pi-print"
+                size="small"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                [disabled]="!isCompany && form.get('signatoryUserId')?.invalid && viewMode !== 'attachment_only'"
+                (onClick)="onSubmit()"
+            ></p-button>
+        </div>
+    </div>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

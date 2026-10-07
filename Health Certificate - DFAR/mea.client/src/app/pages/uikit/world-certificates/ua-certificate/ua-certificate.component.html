@@ -1,0 +1,664 @@
+<div class="ua-wrap" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Ukraine (UA)</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <span *ngIf="form.get('certificateReferenceNumber')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateReferenceNumber')?.value || refNumber }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Ukraine Sample (SY 7511)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleUkraine()"
+                pTooltip="Load official Ukraine Certificate sample (SY 7511 - Lihini Sea Foods) with 10 Attachment products"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Mode & Attachment Options (print-hide) -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!viewOnly">
+        <div class="flex flex-wrap items-center gap-6">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Certificate View:</span>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="viewMode" formControlName="viewMode" value="full" inputId="vm_ua_full" (onClick)="onViewModeChange('full')"></p-radiobutton>
+                <span>1. FULL HEALTH CERTIFICATE</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 hover:text-blue-700">
+                <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment_only" inputId="vm_ua_att_only" (onClick)="onViewModeChange('attachment_only')"></p-radiobutton>
+                <span>2. ATTACHMENT ONLY (1 PAGE)</span>
+            </label>
+        </div>
+
+        <div class="flex items-center gap-3 pl-4 border-l border-slate-200" *ngIf="viewMode === 'full'">
+            <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-indigo-800 bg-indigo-50 px-2.5 py-1.5 rounded border border-indigo-200 hover:bg-indigo-100">
+                <p-checkbox formControlName="includeAttachment" [binary]="true"></p-checkbox>
+                <span>Include Product List Attachment (Page 5)</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'attachment_only' ? '2. ATTACHMENT ONLY (1 PAGE)' : '1. FULL HEALTH CERTIFICATE' }}
+        </span>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 1 — DETAILS OF DISPATCHED CONSIGNMENT ═════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ua-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ua-content">
+            <!-- Header -->
+            <div class="ua-hdr">
+                <div class="cert-header-top-row mb-1">
+                    <div class="cert-header-spacer"></div>
+                    <div class="ua-logo"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="ua-logo-img" /></div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('certificateReferenceNumber')?.value || refNumber || ''"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [destination]="'Ukraine'"
+                            [viewOnly]="viewOnly"
+                            [size]="68"
+                        ></app-certificate-qr>
+                    </div>
+                </div>
+                <div class="ua-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                <div class="ua-addr">P.O.Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka.</div>
+                <div class="ua-addr">Telephone: +94 -11- 2449170, 2472186, 2472192</div>
+                <div class="ua-addr">Fax: +94-11-2449170, 2424086</div>
+                <div class="ua-addr">E-mail: dgdfar&#64;gmail.com</div>
+                <div class="ua-title-ua mt-1">Форма міжнародного сертифіката для ввезення (пересилання) на митну територію України рибних продуктів, призначених для споживання людиною <sup>(1)</sup>/</div>
+                <div class="ua-title-en">Form of International Certificate for introduction (sending) into the customs territory of Ukraine of fishery products, intended for human consumption <sup>(1)</sup></div>
+            </div>
+
+            <div class="font-bold text-xs mb-1">Країна-експортер/Exporting country: <span class="font-bold uppercase">{{ form.get('countryOfOriginName')?.value || 'SRI LANKA' }}</span></div>
+
+            <!-- Main Layout with vertical side label -->
+            <div class="flex border border-black flex-1">
+                <div class="ua-side-label font-bold text-xs p-1 flex items-center justify-center text-center border-r border-black" style="writing-mode: vertical-rl; transform: rotate(180deg); width: 26px;">
+                    Частина I: Детальна інформація щодо відправленого вантажу / Part I: Details of dispatched consignment
+                </div>
+
+                <table class="ua-tbl flex-1">
+                    <!-- Row 1: I.1 Consignor | I.2 to I.4 Authorities -->
+                    <tr>
+                        <td class="ua-td ua-w50">
+                            <div class="font-bold text-xs underline mb-1">I.1. Відправник/Consignor</div>
+                            <div class="ua-sub-row"><span class="ua-rlbl font-bold">Назва/Name :</span><input pInputText formControlName="consignorName" class="ua-inp font-bold uppercase" /></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Адреса/Address:</span><textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="ua-inp font-bold uppercase"></textarea></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Номер телефону /Tel.:</span><input pInputText formControlName="consignorTelNo" class="ua-inp" /></div>
+                        </td>
+                        <td class="ua-td ua-w50">
+                            <div>
+                                <div class="font-bold text-xs">I.2. Ідентифікаційний номер міжнародного сертифіката/<br/>International Certificate reference number</div>
+                                <input pInputText formControlName="certificateReferenceNumber" class="ua-inp font-bold ua-mt1" [readonly]="!!refNumber || !!certificateRequestId" />
+                            </div>
+
+                            <div class="font-bold text-xs ua-mt2">I.3. Центральний компетентний орган країни-експортера/<br/>Central Competent Authority of exporting country</div>
+                            <div class="font-bold text-xs ua-mt1 uppercase">{{ form.get('centralCompetentAuthority')?.value }}</div>
+
+                            <div class="font-bold text-xs ua-mt2">I.4. Місцевий компетентний орган країни-експортер/Local<br/>Competent Authority of exporting country</div>
+                            <div class="font-bold text-xs ua-mt1 uppercase">{{ form.get('localCompetentAuthority')?.value }}</div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 2: I.5 Consignee | I.6 Person Responsible in Ukraine -->
+                    <tr>
+                        <td class="ua-td">
+                            <div class="font-bold text-xs underline mb-1">I.5. Одержувач/Consignee</div>
+                            <div class="ua-sub-row"><span class="ua-rlbl font-bold">Назва /Name:</span><input pInputText formControlName="consigneeName" class="ua-inp font-bold uppercase" /></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Адреса/Address:</span><textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="ua-inp font-bold uppercase"></textarea></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Поштовий індекс/Postal code:</span><input pInputText formControlName="consigneePostalCode" class="ua-inp" /></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Телефон/Tel.:</span><input pInputText formControlName="consigneeTel" class="ua-inp" /></div>
+                        </td>
+                        <td class="ua-td">
+                            <div class="font-bold text-xs underline mb-1">I.6. Особа, відповідальна за вантаж в Україні/<br/>Person responsible for the consignment in Ukraine</div>
+                            <div class="ua-sub-row"><span class="ua-rlbl font-bold">Назва/Name:</span><input pInputText formControlName="personResponsibleName" class="ua-inp font-bold uppercase" /></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Адреса/Address:</span><textarea pInputTextarea formControlName="personResponsibleAddress" rows="2" [autoResize]="true" class="ua-inp font-bold uppercase"></textarea></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Поштовий індекс/Postal code:</span><input pInputText formControlName="personResponsiblePostalCode" class="ua-inp" /></div>
+                            <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Телефон/Tel.:</span><input pInputText formControlName="personResponsibleTel" class="ua-inp" /></div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 3: Countries & Zones (I.7, I.8, I.9, I.10) -->
+                    <tr>
+                        <td class="p-0" colspan="2">
+                            <table class="w-full border-collapse">
+                                <tr>
+                                    <td class="ua-td border-t-0 border-l-0" style="width: 25%;">
+                                        <div class="font-bold text-xs">I.7. Країна походження/<br/>Country of origin</div>
+                                        <input pInputText formControlName="countryOfOriginName" class="ua-inp font-bold ua-mt1 uppercase" />
+                                    </td>
+                                    <td class="ua-td border-t-0" style="width: 8%;">
+                                        <div class="font-bold text-xs">Код ISO/<br/>ISO code</div>
+                                        <input pInputText formControlName="countryOfOriginISO" class="ua-inp font-bold ua-mt1 uppercase text-center" />
+                                    </td>
+                                    <td class="ua-td border-t-0" style="width: 22%;">
+                                        <div class="font-bold text-xs">I.8. Зона/ компартмент походження/<br/>Zone/compartment of origin</div>
+                                        <input pInputText formControlName="zoneOrigin" class="ua-inp font-bold ua-mt1 uppercase" />
+                                    </td>
+                                    <td class="ua-td border-t-0" style="width: 6%;">
+                                        <div class="font-bold text-xs">Код/<br/>Code</div>
+                                        <input pInputText formControlName="zoneOriginCode" class="ua-inp font-bold ua-mt1 uppercase text-center" />
+                                    </td>
+                                    <td class="ua-td border-t-0" style="width: 22%;">
+                                        <div class="font-bold text-xs">I.9. Країна призначення/<br/>Country of destination</div>
+                                        <input pInputText formControlName="countryDestinationName" class="ua-inp font-bold ua-mt1 uppercase" />
+                                    </td>
+                                    <td class="ua-td border-t-0" style="width: 8%;">
+                                        <div class="font-bold text-xs">Код ISO /<br/>ISO code</div>
+                                        <input pInputText formControlName="countryDestinationISO" class="ua-inp font-bold ua-mt1 uppercase text-center" />
+                                    </td>
+                                    <td class="ua-td border-t-0" style="width: 25%;">
+                                        <div class="font-bold text-xs">I.10. Зона /компартмент призначення/<br/>Zone/compartment of destination</div>
+                                        <input pInputText formControlName="zoneDestination" class="ua-inp ua-mt1 uppercase" />
+                                    </td>
+                                    <td class="ua-td border-t-0 border-r-0" style="width: 6%;">
+                                        <div class="font-bold text-xs">Код/<br/>Code</div>
+                                        <input pInputText formControlName="zoneDestinationCode" class="ua-inp ua-mt1 uppercase text-center" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Row 4: I.11 Place of Origin | I.12 -->
+                    <tr>
+                        <td class="ua-td">
+                            <div class="font-bold text-xs underline mb-1">I.11. Місце походження/ Place of origin</div>
+                            <div class="ua-sub-row"><span class="ua-rlbl font-bold">Назва/Name:</span><input pInputText formControlName="placeOriginName" class="ua-inp font-bold uppercase" /></div>
+                            <div class="ua-sub-row ua-mt1"><span class="ua-rlbl font-bold">Номер затвердження/ Approval number:</span><input pInputText formControlName="placeOriginApprovalNumber" class="ua-inp font-bold" /></div>
+                            <div class="ua-sub-row ua-mt1"><span class="ua-rlbl font-bold">Адреса /Address:</span><textarea pInputTextarea formControlName="placeOriginAddress" rows="2" [autoResize]="true" class="ua-inp font-bold uppercase"></textarea></div>
+                        </td>
+                        <td class="ua-td">
+                            <div class="font-bold text-xs">I.12.</div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 5: I.13 Place of Loading | I.14 Date of Departure -->
+                    <tr>
+                        <td class="ua-td">
+                            <div class="font-bold text-xs underline mb-1">I.13. Місце відвантаження/Place of loading:</div>
+                            <div class="ua-sub-row"><span class="ua-rlbl font-bold">COLOMBO / SRI LANKA</span></div>
+                            <div class="ua-sub-row ua-mt1"><span class="ua-rlbl font-bold">Адреса /Address:</span><textarea pInputTextarea formControlName="placeLoadingAddress" rows="2" [autoResize]="true" class="ua-inp font-bold uppercase"></textarea></div>
+                        </td>
+                        <td class="ua-td">
+                            <div class="font-bold text-xs underline mb-1">I.14. Дата відправлення/Date of departure</div>
+                            <div class="font-bold text-xs mt-2">{{ form.get('dateOfDeparture')?.value | date: 'dd/MM/yyyy' }}</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="ua-footer">
+            <span class="ua-footer-page">1/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 2 — TRANSPORT, PACKAGING & COMMODITIES TABLE ══════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ua-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ua-content">
+            <!-- Header on subsequent pages -->
+            <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <div>Країна-експортер<br/>Exporting country</div>
+                <div>Рибні продукти, призначені для споживання людиною<br/>Fishery products, intended for human consumption</div>
+            </div>
+
+            <table class="ua-tbl w-full border border-black mb-1">
+                <tr>
+                    <td class="ua-td ua-w50 font-bold text-xs">
+                        I.a. Ідентифікаційний номер міжнародного сертифіката/International Certificate reference number<br/>
+                        <span class="text-sm font-bold">{{ form.get('certificateReferenceNumber')?.value || refNumber || '' }}</span>
+                    </td>
+                    <td class="ua-td ua-w50 font-bold text-xs">
+                        I.b
+                    </td>
+                </tr>
+            </table>
+
+            <table class="ua-tbl w-full border border-black">
+                <!-- Transport I.15 | I.16 -->
+                <tr>
+                    <td class="ua-td ua-w50">
+                        <div class="font-bold text-xs underline mb-1">I.15. Транcпорт/Means of transport</div>
+                        <div class="flex flex-wrap gap-3 items-center text-xs mt-1">
+                            <label class="ua-cbl font-bold"><p-checkbox formControlName="transportAeroplane" [binary]="true"></p-checkbox><span class="ml-1">Літак/ Aeroplane</span></label>
+                            <label class="ua-cbl"><p-checkbox formControlName="transportShip" [binary]="true"></p-checkbox><span class="ml-1">Судно/ Ship</span></label>
+                            <label class="ua-cbl"><p-checkbox formControlName="transportRailwayWagon" [binary]="true"></p-checkbox><span class="ml-1">Залізничні вагони/ Railway wagon</span></label>
+                            <label class="ua-cbl"><p-checkbox formControlName="transportRoadVehicle" [binary]="true"></p-checkbox><span class="ml-1">Дорожній екіпаж/ Road vehicle</span></label>
+                            <label class="ua-cbl"><p-checkbox formControlName="transportOther" [binary]="true"></p-checkbox><span class="ml-1">Інший/ Other</span></label>
+                        </div>
+                        <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Ідентифікація /Identification:</span><input pInputText formControlName="transportIdentification" class="ua-inp" /></div>
+                        <div class="ua-sub-row ua-mt2"><span class="ua-rlbl font-bold">Документальні посилання/ Documentary references:</span><input pInputText formControlName="transportDocumentReferences" class="ua-inp" /></div>
+                    </td>
+                    <td class="ua-td ua-w50">
+                        <div class="font-bold text-xs underline mb-1">I.16. Вхідний прикордонний інспекційний пост в Україні/<br/>Entry BIP in Ukraine</div>
+                        <input pInputText formControlName="entryBIPUkraine" class="ua-inp font-bold uppercase mt-2" />
+                    </td>
+                </tr>
+
+                <!-- I.18 Description | I.19 HS Code -->
+                <tr>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.18. Опис товару/Description of commodity</div>
+                        <textarea pInputTextarea formControlName="descriptionOfCommodity" rows="2" [autoResize]="true" class="ua-inp font-bold uppercase" placeholder=""></textarea>
+                    </td>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.19. Код вантажу (УКТЗЕД)<br/>Commodity code (HS code)</div>
+                        <input pInputText formControlName="commodityCodeHS" class="ua-inp font-bold uppercase" />
+                    </td>
+                </tr>
+
+                <!-- I.21 Temperature | I.20 Quantity -->
+                <tr>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.21. Температура продукту/Temperature of the product</div>
+                        <div class="flex flex-col gap-1 text-xs mt-1">
+                            <label class="ua-cbl"><p-checkbox formControlName="temperatureAmbient" [binary]="true"></p-checkbox><span class="ml-1">Температура навколишнього середовища/Ambient</span></label>
+                            <label class="ua-cbl font-bold"><p-checkbox formControlName="temperatureChilled" [binary]="true"></p-checkbox><span class="ml-1">Охолоджений/Chilled</span></label>
+                            <label class="ua-cbl"><p-checkbox formControlName="temperatureFrozen" [binary]="true"></p-checkbox><span class="ml-1">Заморожений/ Frozen</span></label>
+                        </div>
+                    </td>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.20. Кількість/Quantity</div>
+                        <input pInputText formControlName="quantity" class="ua-inp font-bold" />
+                    </td>
+                </tr>
+
+                <!-- I.23 Seal No | I.22 Number of packages -->
+                <tr>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.23. Номер пломби/ контейнера/<br/>Seal /container No</div>
+                        <input pInputText formControlName="sealContainerNo" class="ua-inp font-bold" />
+                    </td>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.22. Кількість упаковок/<br/>Number of packages</div>
+                        <input pInputText formControlName="numberOfPackages" class="ua-inp font-bold" />
+                    </td>
+                </tr>
+
+                <!-- I.25 Certified for | I.24 Type of packaging -->
+                <tr>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.25. Товари призначені для/Commodities certified as</div>
+                        <label class="ua-cbl font-bold mt-2"><p-checkbox formControlName="commoditiesHumanConsumption" [binary]="true"></p-checkbox><span class="ml-1">Споживання людиною/Human consumption</span></label>
+                    </td>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.24. Тип пакування/Type of packaging</div>
+                        <textarea pInputTextarea formControlName="typeOfPackaging" rows="2" [autoResize]="true" class="ua-inp font-bold uppercase"></textarea>
+                    </td>
+                </tr>
+
+                <!-- I.26 | I.27 Import into Ukraine -->
+                <tr>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs">I.26.</div>
+                    </td>
+                    <td class="ua-td">
+                        <div class="font-bold text-xs underline mb-1">I.27. Для імпорту (ввезення) в Україну/<br/>For import (admission) into Ukraine</div>
+                        <div class="text-center font-bold text-lg mt-1 border border-black p-1 w-12 inline-block">☒</div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- I.28 Product Summary / Table -->
+            <div class="border border-black border-t-0 p-2">
+                <div class="font-bold text-xs underline mb-2">I.28. Ідентифікація товару:/Identification of the commodities:</div>
+                <table class="ua-prod-tbl w-full border border-black">
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">Вид тварин (наукова назва)/<br/>Species (Scientific name)</th>
+                            <th style="width: 14%;">Вид товару/<br/>Nature of commodity</th>
+                            <th style="width: 14%;">Тип обробки/<br/>Treatment type</th>
+                            <th style="width: 24%;">Номер затвердження потужностей/<br/>Виробнича потужність/<br/>Approval number / Manufacturing plant</th>
+                            <th style="width: 10%;">Кількість упаковок/<br/>Number of packaging</th>
+                            <th style="width: 20%;">Вид пакування/<br/>Type of packaging</th>
+                            <th style="width: 10%;">Нетто-вага (кг)/<br/>Net weight (kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold uppercase text-center p-1">SEE THE ATTACHMENT</td>
+                            <td class="font-bold uppercase text-center p-1">WILD ORIGIN</td>
+                            <td class="font-bold uppercase text-center p-1">FRESH CHILLED LOINS/ WHOLE</td>
+                            <td class="font-bold uppercase p-1">
+                                <div>DFAR/FPE/98/21</div>
+                                <div>LIHINI SEA FOODS (PVT)LTD</div>
+                            </td>
+                            <td class="text-center font-bold p-1"></td>
+                            <td class="font-bold uppercase text-xs p-1">
+                                VACUUM PACKED IN POLYSTYRENE BOXES WITH GEL ICE AND CORRUGATED BOXES WITH GEL ICE
+                            </td>
+                            <td class="text-right font-bold p-1"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="ua-footer">
+            <span class="ua-footer-page">2/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 3 — PART II HEALTH ATTESTATION ════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ua-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ua-content">
+            <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <div>Країна-експортер<br/>Exporting country</div>
+                <div>Рибні продукти, призначені для споживання людиною<br/>Fishery products, intended for human consumption</div>
+            </div>
+
+            <div class="flex border border-black flex-1">
+                <div class="ua-side-label font-bold text-xs p-1 flex items-center justify-center text-center border-r border-black" style="writing-mode: vertical-rl; transform: rotate(180deg); width: 26px;">
+                    Частина ІІ: Сертифікація/Part II: Certification
+                </div>
+
+                <div class="flex-1 flex flex-col">
+                    <table class="ua-tbl w-full border-b border-black">
+                        <tr>
+                            <td class="ua-td ua-w50 font-bold text-xs">
+                                ІІ. Інформація про здоров’я/<br/>Health information
+                            </td>
+                            <td class="ua-td ua-w50 font-bold text-xs">
+                                II.a. Ідентифікаційний номер міжнародного сертифіката/International Certificate reference number<br/>
+                                <span class="text-sm font-bold">{{ form.get('certificateReferenceNumber')?.value || refNumber || '' }}</span>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="p-2 text-justify text-xs leading-tight flex-1 overflow-hidden" style="font-size: 6.8pt; line-height: 1.25;">
+                        <div class="font-bold mb-1">II.1 Підтвердження безпечності для здоров’я людини / Public health attestation</div>
+                        <p class="mb-1">Я, що нижче підписався державний ветеринарний інспектор, цим засвідчую, що рибні продукти, зазначені в частині І цього міжнародного сертифіката / I, the undersigned official veterinarian, hereby certify that fishery products, described in Part I of this International Certificate:</p>
+                        <p class="mb-1"><strong>II.1.1</strong> походять з потужності(ей), де запроваджено постійно діючі процедури, засновані на принципах системи аналізу небезпечних факторів та контролю у критичних точках (HACCP) / come from (an) establishment(s) implementing a programme, based on the HACCP principles;</p>
+                        <p class="mb-1"><strong>II.1.2</strong> отримані та вироблені відповідно до гігієнічних вимог, встановлених законодавством України про безпечність та окремі показники якості харчових продуктів / were obtained and produced in accordance with the Ukrainian legislation on safety and specific quality parameters of food;</p>
+                        <p class="mb-1"><strong>II.1.3</strong> відповідають вимогам Мікробіологічних критеріїв, встановленим законодавством України/ comply the Microbiological criteria, established by Ukrainian legislation;</p>
+                        <p class="mb-1"><strong>II.1.4</strong> матеріали, які використовуються для пакування, включаючи первинне пакування, відповідають гігієнічним вимогам законодавства України про безпечність та окремі показники якості харчових продуктів/ materials used for packaging, including wrapping, comply with the hygienic requirements of Ukrainian law on safety and specific quality parameters of food;</p>
+                        <p class="mb-1"><strong>II.1.5</strong> зберігаються із дотриманням таких температурних режимів / are stored in accordance with the temperature requirements below: свіжі рибні продукти, розморожені неперероблені рибні продукти, приготовані й охолоджені рибні продукти з ракоподібних та молюсків зберігаються за температури, наближеної до температури танення льоду / fresh fishery products, thawed unprocessed fishery products, cooked and chilled fishery products from crustaceans and molluscs are stored at a temperature approaching that of melting ice; заморожені рибні продукти мають зберігатися за температури не вище -18° C у всіх частинах продукту / frozen fishery products are stored at a temperature of not more than -18° C in all parts of the product; ціла риба, заморожена у сольовому розчині та призначена для виробництва консервованих харчових продуктів, зберігається за температури не вище -9° C / whole fish frozen in brine intended for the manufacture of canned food is kept at a temperature of not more than -9° C; рибні продукти, що зберігаються живими, утримуються за температури й у спосіб, які не чинять негативного впливу на їх життєдіяльність та показники якості / fishery products stored alive are kept at a temperature and in a manner that does not cause an adverse effect on their safety and viability;</p>
+                        <p class="mb-1"><strong>II.1.6</strong> містять ідентифікаційну позначку на упаковці із зазначенням країни, в якій розташована потужність походження (повна назва країни або код з двох літер згідно із відповідним стандартом Міжнародної організації зі стандартизації ISO), а також номер дозволу потужності походження / contain identification mark on the packaging, indicating the name of country where the establishment of origin is located (full country name or a two-letter code in accordance with the respective ISO standard) and the approval number of the establishment of origin;</p>
+                        <p class="mb-1"><strong>II.1.7</strong> гарантії щодо живих тварин та продуктів з них, забезпечуються відповідно до планів моніторингу залишків ветеринарних препаратів, затверджених відповідно до законодавства України / the guarantees covering live animals and products thereof in accordance with residues plans, approved according to the legislation of Ukraine;</p>
+                        <p class="mb-1"><strong>II.1.8</strong> піддавалися державному контролю відповідно до законодавства України / were subjected to official controls in accordance with legislation of Ukraine;</p>
+                        <p class="mb-1"><strong>II.1.9</strong> до ввезення (пересилання) на митну територію України не допускаються рибні продукти / importation (sending) to the customs territory of Ukraine shall be prohibited for the fishery products: рівень вмісту гістаміну у яких перевищує максимально допустимі межі, встановлені законодавством України / with histamine levels exceeding the maximum permitted level provided for by the law of Ukraine; рівень вмісту летючої основи азоту (TVB-N) та азоту триметиламіну (TMA-N) у яких (для неперероблених рибних продуктів) перевищує максимально допустимі межі, встановлені законодавством України / with total volatile basic nitrogen (TVB-N) and Trimethylamine N-oxide (TMA-N) levels (in unprocessed fishery products) exceeding the maximum permitted levels provided for by the law of Ukraine; заражені життєздатними паразитами, що є небезпечними для здоров’я / contaminated with viable parasites that are hazardous to health; вироблені з отруйних видів риб, які належать до родин Tetraodontidae, Molidae, Diodontidae та Canthigasteridae / produced from poisonous fish of Tetraodontidae, Molidae, Diodontidae and Canthigasteridae families; містять сігуатоксин або паралітичні токсини / containing ciguatoxin and muscle-paralysing toxins;</p>
+                        <p class="mb-1"><strong>II.1.10</strong> [свіжі, підготовлені, заморожені або перероблені рибні продукти, отримані з водних тварин, що належать до родини Gempylidae, зокрема Ruvettus pretiosus та Lepidocybium flavobrunneum, запаковані і містять маркування, на якому наведена інформація для споживача щодо методів приготування таких рибних продуктів та про ризик, пов’язаний з вмістом речовин, які мають потенційно шкідливі гастроентерологічні наслідки] / [fresh, prepared, frozen or processed fishery products belonging to Gempylidae family, notably Ruvettus pretiosus and Lepidocybium flavobrunneum, are packaged and labelled containing information for consumers on the preparation / cooking methods of the referenced fishery products and on the risks related to the presence of substances with potentially adverse gastrointestinal effect].</p>
+                        <p class="mb-1"><strong>II.1.11</strong> перед завантаженням транспортні засоби, якими здійснюються перевезення рибних продуктів, очищені або продезінфіковані відповідно до вимог законодавства країни-експортера / країни походження / before loading means of transport, used for the transportation of fishery products were cleaned or disinfected according to the legislation of exporting country / country of origin.</p>
+
+                        <div class="font-bold mt-2 mb-1"><sup>(2)</sup> II.2 Підтвердження безпечності здоров’я тварин / Animal health attestation</div>
+                        <p class="mb-1">Я, що нижче підписався державний ветеринарний інспектор, цим засвідчую, що рибні продукти, зазначені в частині I цього міжнародного сертифіката: / I, the undersigned official veterinarian, hereby certify that fishery products, described in Part I of this International Certificate:</p>
+                        <p><strong>II.2.1</strong> Отримані з риби, ракоподібних чи молюсків, які походять з території країни/зони/компартмента(3)(4), що відповідно до вимог Кодексу здоров’я водних тварин МЕБ є вільними від епізоотичного некрозу гематопоетичної тканини (EHN)(2-1), жовтоголового захворювання(2-1), синдрому Таура(2-1), вірусної геморагічної септицемії (VHS)(2-1), інфекційного некрозу гематопоетичної тканини (IHN)(2-1), вірусної анемії лососевих (ISAV)(2-1), вірусу герпесу Коі (KHVD)(2-1), захворювання білих плям (WSD)(2-1), вірусів Perkinsus marinus(2-1), Marteilia refringens(2-1), Bonamia exitiosa(2-1), Bonamia ostreae(2-1)] / are obtained from fish, crustaceans or molluscs originating from the territory of a country/zone/compartment(3)(4) free from epizootic haematopoietic necrosis (EHN)(2-1), yellow head virus(2-1), Taura syndrome(2-1), viral haemorrhagic septicaemia (VHS)(2-1), infectious haematopoietic necrosis (IHN)(2-1), infection with infectious salmon anaemia virus (ISAV)(2-1), koi herpesvirus disease (KHVD)(2-1), white spots disease (WSD)(2-1), infections with Perkinsus marinus(2-1), Marteilia refringens(2-1), Bonamia exitiosa(2-1), Bonamia ostreae(2-1) in accordance with the OIE Aquatic Animal Health Code requirements.]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ua-footer">
+            <span class="ua-footer-page">3/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 4 — NOTES & SIGNATURES ════════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ua-page" *ngIf="viewMode === 'full'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ua-content">
+            <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <div>Країна-експортер<br/>Exporting country</div>
+                <div>Рибні продукти, призначені для споживання людиною<br/>Fishery products, intended for human consumption</div>
+            </div>
+
+            <div class="border border-black flex-1 flex flex-col justify-between">
+                <table class="ua-tbl w-full border-b border-black">
+                    <tr>
+                        <td class="ua-td ua-w50 font-bold text-xs">
+                            ІІ. Інформація про здоров’я/<br/>Health information
+                        </td>
+                        <td class="ua-td ua-w50 font-bold text-xs">
+                            II.a. Ідентифікаційний номер міжнародного сертифіката/International Certificate reference number<br/>
+                            <span class="text-sm font-bold">{{ form.get('certificateReferenceNumber')?.value || refNumber || '' }}</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="p-2 text-justify text-xs leading-tight flex-1 overflow-hidden" style="font-size: 7pt; line-height: 1.25;">
+                    <div class="font-bold mb-1">Примітки/Notes</div>
+                    <p class="mb-1">Вимоги цього міжнародного сертифіката застосовуються до рибних продуктів, призначених для споживання людиною, що походять з країни чи її окремої території (зони або компартмента) та з потужності, які внесено до реєстру країн та потужностей, з яких дозволяється ввезення (пересилання) продуктів на митну територію України / Requirements of this International Certificate apply to fishery products, intended for human consumption, originating from a country or a separate territory (zone or compartment) thereof and from an establishment listed in the register of countries and establishments authorised for the importation (sending) of products to the customs territory of Ukraine.</p>
+
+                    <div class="font-bold mt-1">Частина I / Part I:</div>
+                    <div><strong>Пункт I.8:</strong> Зона / компартмент походження: для заморожених або перероблених двостулкових молюсків вказати територію виробництва/ Box I.8: Zone / compartment of origin: for frozen or processed bivalve molluscs, indicate the production area.</div>
+                    <div><strong>Пункт I.11:</strong> Назва, адреса та номер затвердження потужності відправлення / Box I.11: Name, address and approval number of the establishment of dispatch.</div>
+                    <div><strong>Пункт I.15:</strong> Вказати реєстраційний номер(и) залізничних вагонів або контейнерів та автомобілів, назви кораблів та номери рейсів літаків. Відправник зобов’язаний повідомити вхідний прикордонний інспекційний пост в Україні у разі розвантаження або перезавантаження / Box I.15: Indicate registration number (railway wagons or container and road vehicle), flight number (aircraft) or name (ship). In the event of unloading and reloading, consignor must inform entry BIP in Ukraine.</div>
+                    <div><strong>Пункт I.19:</strong> Вказати код вантажу (УКТ ЗЕД): 0301, 0302, 0303, 0304, 0305, 0306, 0307, 0308, 1504, 1516, 1518 00, 1603 00, 1604, 1605 або 2106/ Box reference I.19: Indicate commodity code (HScode): 0301, 0302, 0303, 0304, 0305, 0306, 0307, 0308, 1504, 1516, 1518 00, 1603 00, 1604, 1605 or 2106.</div>
+                    <div><strong>Пункт I.20:</strong> Вказати загальну вагу (брутто) та нетто-вагу / Box I.20: Indicate total gross weight and total net weight.</div>
+                    <div><strong>Пункт I.23:</strong> Вказати серійний номер пломби, якщо такий наявний / Box I.23: Where there is a serial number of the seal it has to be indicated.</div>
+                    <div><strong>Пункт I.28: / Box I.28:</strong> Вид товару: вказати «аквакультура» або «дикий вилов» / Specify whether «aquaculture» or «wild origin». Тип обробки: вказати «живі», «охолоджені», «заморожені» або «перероблені» / Treatment type: specify whether «live», «chilled», «frozen» or «processed». Виробнича потужність: сюди входять виробничі (риболовні) судна, морозильні судна, холодильні цехи, переробні потужності / Manufacturing plant: includes factory vessel, freezer vessel, cold store, processing plant.</div>
+
+                    <div class="font-bold mt-1">Частина II: / Part II:</div>
+                    <div><strong>(1)</strong> Рибні продукти — дикі або вирощені на фермі морські чи прісноводні тварини... / Fishery products means all seawater or freshwater animals...</div>
+                    <div><strong>(1–1)</strong> Подальша обробка — будь-яке поводження з рибними продуктами перед їх введенням в обіг... / Further processing means any handling of fishery products...</div>
+                    <div><strong>(2)</strong> Пункт II.2 цього міжнародного сертифіката не застосовується та підлягає видаленню якщо вантаж складається з таких рибних продуктів: / Point II.2 of this International Certificate does not apply and shall be deleted when the consignment consists of the following fishery products...</div>
+                    <div><strong>(2–1)</strong> Застосовується виключно до сприйнятливих видів відповідно до вимог Кодексу здоров’я водних тварин МЕБ / Applies exclusively to the susceptible species according to OIE Aquatic Animal Health Code.</div>
+                    <div><strong>(3)</strong> Вибрати потрібне / Keep as appropriate.</div>
+                    <div><strong>(4)</strong> Застосовується у разі визнання компетентним органом України зонування / компартменталізації / Applies in case of recognition by Competent Authority of Ukraine of zoning / compartmentalization.</div>
+                    <div><strong>(5)</strong> Колір підпису та печатки має відрізнятися від кольору іншого тексту / The signature and the seal must be in a different colour that of the text.</div>
+                </div>
+
+                <!-- Signatory Section -->
+                <div class="border-t border-black p-3">
+                    <div class="flex justify-between items-start">
+                        <div style="width: 48%;">
+                            <div class="font-bold text-xs">Державний ветеринарний інспектор/<br/>Official veterinarian</div>
+                            <div class="ua-sub-row font-bold mt-2 text-xs"><span class="ua-rlbl">Дата/<br/>Date:</span><span class="font-bold">{{ form.get('certifiedDate')?.value | date: 'dd/MM/yyyy' }}</span></div>
+                            <div class="ua-sub-row font-bold mt-1 text-xs"><span class="ua-rlbl">Прізвище (великими літерами)/<br/>Name (in capitals letters):</span><span class="font-bold uppercase">{{ form.get('signatoryName')?.value }}</span></div>
+                            <div class="font-bold mt-2 text-xs mb-1">Печатка<sup>(5)</sup>/<br/>Stamp<sup>(5)</sup></div>
+                            <div class="ua-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                            </div>
+                        </div>
+                        <div style="width: 48%;" class="text-left">
+                            <div class="font-bold text-xs">Кваліфікація та посада/<br/>Qualification and title:</div>
+                            <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-1 text-left mt-1">
+                                <p-select
+                                    [options]="userOptions"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select Authorized Officer"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                    styleClass="w-full text-xs"
+                                    appendTo="body"
+                                ></p-select>
+                            </div>
+                            <div class="font-bold text-xs whitespace-pre-line mt-1">{{ form.get('qualification')?.value }}</div>
+                            <div class="font-bold mt-2 text-xs mb-1">Підпис<sup>(5)</sup>/<br/>Signature<sup>(5)</sup></div>
+                            <div class="ua-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ua-footer">
+            <span class="ua-footer-page">4/{{ totalPages }}</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ PAGE 5 (ATTACHMENT TO VETERINARY CERTIFICATE) ═════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="ua-page" *ngIf="viewMode === 'attachment_only' || (viewMode === 'full' && form.get('includeAttachment')?.value)">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ua-content">
+            <!-- Header matching PDF 1 -->
+            <div class="ua-att-title font-bold text-center">
+                Attachment to the Veterinary certificate number
+                <span class="ua-att-ref-val">{{ form.get('certificateReferenceNumber')?.value || refNumber || '' }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs font-bold px-1 mb-2">
+                <div class="ua-att-meta">DATE: {{ (form.get('dateOfDeparture')?.value || form.get('certifiedDate')?.value) | date: 'dd/MM/yyyy' }}</div>
+                <div class="ua-att-meta">{{ form.get('placeOriginApprovalNumber')?.value || 'DFAR/FPE/98/21' }}</div>
+            </div>
+
+            <table class="ua-att-tbl w-full border border-black">
+                <thead>
+                    <tr>
+                        <th style="width: 60%;" class="text-left font-bold px-3 py-2">Product</th>
+                        <th style="width: 20%;" class="text-center font-bold px-3 py-2">Number of<br/>kgs</th>
+                        <th style="width: 20%;" class="text-center font-bold px-3 py-2">Number of<br/>boxes</th>
+                        <th *ngIf="!viewOnly" class="print-hide" style="width: 30px;"></th>
+                    </tr>
+                </thead>
+                <tbody formArrayName="products">
+                    <tr *ngFor="let item of products.controls; let i = index" [formGroupName]="i" class="ua-att-row">
+                        <td class="px-2 py-1">
+                            <textarea
+                                pInputTextarea
+                                formControlName="species"
+                                rows="1"
+                                [autoResize]="true"
+                                class="ua-cinp font-bold uppercase"
+                                placeholder="Product description"
+                            ></textarea>
+                        </td>
+                        <td class="px-2 py-1">
+                            <input
+                                pInputText
+                                formControlName="netWeight"
+                                (keypress)="onlyDecimals($event)"
+                                inputmode="decimal"
+                                class="ua-cinp text-right font-bold"
+                                placeholder=""
+                            />
+                        </td>
+                        <td class="px-2 py-1">
+                            <input
+                                pInputText
+                                formControlName="numberOfPackaging"
+                                (keypress)="onlyDigits($event)"
+                                inputmode="numeric"
+                                class="ua-cinp text-right font-bold"
+                                placeholder=""
+                            />
+                        </td>
+                        <td class="print-hide text-center" *ngIf="!viewOnly">
+                            <button
+                                pButton
+                                icon="pi pi-trash"
+                                class="p-button-danger p-button-xs p-button-text"
+                                (click)="removeProduct(i)"
+                                *ngIf="products.length > 1"
+                                pTooltip="Remove Row"
+                            ></button>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="ua-total-row">
+                        <td class="font-bold text-center px-3 py-2">TOTAL</td>
+                        <td class="font-bold text-right px-3 py-2">{{ calculateTotalNetWeight() }}</td>
+                        <td class="font-bold text-right px-3 py-2">{{ calculateTotalPackages() }}</td>
+                        <td *ngIf="!viewOnly" class="print-hide"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Attachment Toolbar (print-hide) -->
+            <div class="print-hide p-2 flex items-center justify-between gap-2 mt-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!viewOnly">
+                <div class="flex items-center gap-2">
+                    <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProduct()"></p-button>
+                    <p-button label="Load 10 Standard Items (SY 7511)" icon="pi pi-refresh" severity="secondary" size="small" [outlined]="true" (onClick)="loadDefaultProducts()"></p-button>
+                </div>
+                <button pButton label="Clear All" icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="clearProducts()"></button>
+            </div>
+        </div>
+        <div class="ua-footer">
+            <span class="ua-footer-page">{{ viewMode === 'attachment_only' ? '1/1' : (totalPages + '/' + totalPages) }}</span>
+        </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="ua-actions print-hide flex items-center justify-between gap-3 mt-6 mb-8 w-full max-w-[210mm] mx-auto p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs">
+        <p-button
+            *ngIf="!isEmbedded"
+            label="Back to Forms Queue"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            (onClick)="goBack()"
+        ></p-button>
+        <div class="flex items-center gap-3">
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                [outlined]="true"
+                severity="secondary"
+                (onClick)="printCertificate()"
+                icon="pi pi-print"
+                size="small"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                [disabled]="!isCompany && form.get('signatoryUserId')?.invalid && viewMode !== 'attachment_only'"
+                (onClick)="onSubmit()"
+            ></p-button>
+        </div>
+    </div>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

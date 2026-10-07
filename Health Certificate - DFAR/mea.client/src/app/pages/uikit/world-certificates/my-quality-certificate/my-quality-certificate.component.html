@@ -1,0 +1,222 @@
+<div class="my-q-wrap" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Quality Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Malaysia (Quality)</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('documentReferenceNo')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('documentReferenceNo')?.value || refNumber }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Quality Sample"
+                icon="pi pi-file"
+                severity="help"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleQuality()"
+                pTooltip="Load Annai & Sons Cuttlefish Quality Certificate (TA 9637) matching PDF 2"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ QUALITY CERTIFICATE (1 PAGE) ══════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="my-q-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="my-q-content">
+            <!-- Header -->
+            <div class="my-q-hdr">
+                <div class="cert-header-top-row mb-1">
+                    <div class="cert-header-spacer"></div>
+                    <div class="text-center flex-1">
+                        <div class="my-q-title font-bold">Quality Certificate</div>
+                        <div class="my-q-docref-row text-center my-mt2">
+                            <span class="font-bold">Document Reference No: </span>
+                            <input pInputText formControlName="documentReferenceNo" class="my-q-inp-inline font-bold" [readonly]="!!refNumber || !!certificateRequestId" />
+                        </div>
+                    </div>
+                    <div class="cert-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('documentReferenceNo')?.value || refNumber || ''"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('processingEstablishmentName')?.value"
+                            [destination]="'Malaysia'"
+                            [viewOnly]="viewOnly"
+                            [size]="68"
+                        ></app-certificate-qr>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certification statement -->
+            <div class="my-q-statement my-mt4">
+                <p class="my-q-p">
+                    The under secretariat of quality and food safety certified: that after carrying out the corresponding analysis of the aquaculture and/or fishing product (s) detailed below, it is (they are) fit for: Human Consumption
+                    <span class="inline-flex items-center gap-4 ml-3">
+                        <label class="my-q-cb"><p-checkbox formControlName="humanConsumptionYes" [binary]="true"></p-checkbox><span>Yes</span></label>
+                        <label class="my-q-cb"><p-checkbox formControlName="humanConsumptionNo" [binary]="true"></p-checkbox><span>No</span></label>
+                    </span>
+                </p>
+            </div>
+
+            <!-- Establishment details -->
+            <div class="my-q-est-block my-mt3">
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">Name of processing establishment:</span>
+                    <textarea pInputTextarea formControlName="processingEstablishmentName" rows="1" [autoResize]="true" class="my-q-inp font-bold uppercase"></textarea>
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Processing establishment authorization number:</span>
+                    <input pInputText formControlName="processingEstablishmentAuthNumber" class="my-q-inp font-bold uppercase" />
+                </div>
+            </div>
+
+            <!-- 7-Column Product Table -->
+            <div class="my-mt4">
+                <table class="my-q-table">
+                    <colgroup>
+                        <col style="width: 12%;" />
+                        <col style="width: 14%;" />
+                        <col style="width: 32%;" />
+                        <col style="width: 12%;" />
+                        <col style="width: 12%;" />
+                        <col style="width: 9%;" />
+                        <col style="width: 11%;" />
+                        <col class="print-hide" style="width: 32px;" *ngIf="!viewOnly" />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Product<br/>name</th>
+                            <th>Product type</th>
+                            <th>Test results</th>
+                            <th>Lot code</th>
+                            <th>Sampling<br/>date<br/>(beginning<br/>– end)</th>
+                            <th>Number of<br/>boxes</th>
+                            <th>Lot weight<br/>(Kg)</th>
+                            <th class="print-hide" *ngIf="!viewOnly"></th>
+                        </tr>
+                    </thead>
+                    <tbody formArrayName="products">
+                        <tr *ngFor="let p of products.controls; let i = index" [formGroupName]="i">
+                            <td><textarea pInputTextarea formControlName="productName" rows="4" [autoResize]="true" class="my-q-tinp font-bold uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="productType" rows="4" [autoResize]="true" class="my-q-tinp font-bold uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="testResults" rows="8" [autoResize]="true" class="my-q-tinp uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="lotCode" rows="4" [autoResize]="true" class="my-q-tinp font-bold uppercase"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="samplingDate" rows="4" [autoResize]="true" class="my-q-tinp font-bold"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="numberOfBoxes" rows="2" [autoResize]="true" class="my-q-tinp font-bold uppercase text-center"></textarea></td>
+                            <td><textarea pInputTextarea formControlName="lotWeight" rows="2" [autoResize]="true" class="my-q-tinp font-bold uppercase text-right"></textarea></td>
+                            <td class="text-center print-hide" *ngIf="!viewOnly">
+                                <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeProduct(i)"></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="my-q-total-row">
+                            <td colspan="5" class="text-right font-bold pr-4">Total</td>
+                            <td class="font-bold text-center uppercase">{{ calculateTotalNumberOfBoxes() }}</td>
+                            <td class="font-bold text-right uppercase">{{ calculateTotalLotWeight() }}</td>
+                            <td class="print-hide" *ngIf="!viewOnly"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="print-hide my-mt2" *ngIf="!viewOnly">
+                    <button pButton label="Add Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addProduct()"></button>
+                </div>
+            </div>
+
+            <!-- Footer Details -->
+            <div class="my-q-meta-block my-mt4">
+                <div class="flex items-baseline gap-2">
+                    <span class="font-bold whitespace-nowrap">Tested by:</span>
+                    <input pInputText formControlName="testedBy" class="my-q-inp uppercase" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Country of destination:</span>
+                    <input pInputText formControlName="countryOfDestination" class="my-q-inp font-bold uppercase" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Commercial invoice:</span>
+                    <input pInputText formControlName="commercialInvoice" class="my-q-inp font-bold uppercase" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Unique code:</span>
+                    <input pInputText formControlName="uniqueCode" class="my-q-inp" />
+                </div>
+                <div class="flex items-baseline gap-2 my-mt2">
+                    <span class="font-bold whitespace-nowrap">Observations:</span>
+                    <textarea pInputTextarea formControlName="observations" rows="1" [autoResize]="true" class="my-q-inp"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="my-q-footer">
+            <span class="my-q-footer-page">1/1</span>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- ════ BOTTOM ACTION BAR (PRINT HIDE) ════════════════════════════ -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="my-actions print-hide flex items-center justify-between gap-3 w-full max-w-[210mm] mt-6 mb-12 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+        <p-button
+            *ngIf="!isEmbedded"
+            label="Back to Forms Queue"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="goBack()"
+        ></p-button>
+        <div class="flex items-center gap-3">
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="print()"
+            ></p-button>
+            <p-button
+                label="Save Certificate"
+                icon="pi pi-check"
+                severity="primary"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+                *ngIf="!viewOnly"
+            ></p-button>
+        </div>
+    </div>
+</div>

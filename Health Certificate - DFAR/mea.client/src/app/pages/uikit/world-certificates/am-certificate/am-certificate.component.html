@@ -1,0 +1,545 @@
+<div class="am-container">
+<p-toast class="print-hide"></p-toast>
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Armenia (AM)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <span *ngIf="form.get('certificateNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold">Ref: {{ form.get('certificateNo')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Sample (SX 2008)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleData()"
+                pTooltip="Load standard Armenia Certificate Sample (SX 2008)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+    <form [formGroup]="form">
+    <!-- ════ PAGE 1 — PDF 1/4 ════ -->
+        <div class="am-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="am-content">
+                <!-- Header -->
+                <div class="am-header">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="am-logo-row">
+                            <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="am-logo" />
+                        </div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateNo')?.value"
+                                [certificateRequestId]="requestId"
+                                [consignor]="form.get('consignorName')?.value"
+                                [consignee]="form.get('consigneeName')?.value"
+                                [destination]="'Armenia'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="am-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="am-addr">P.O. Box 531, New Secretariat, Maligawatta, Colombo 10 Sri Lanka</div>
+                    <div class="am-addr">Telephone: +94-11-2449170, 2472186, 2472192</div>
+                    <div class="am-addr">Fax: +94-11-2424086, 2424086</div>
+                    <div class="am-addr">E-mail: depfish&#64;fisheries.gov.lk</div>
+                    <div class="am-title-bar">
+                        <span>COUNTRY: SRI LANKA</span>
+                        <span>VETERINARY CERTIFICATE TO ARMENIA</span>
+                    </div>
+                </div>
+
+                <!-- Main bordered table — page 1 -->
+                <table class="am-main-table">
+                    <!-- Row 1: Section header | 1.5 label -->
+                    <tr>
+                        <td class="am-td am-td-left am-section-cell">
+                            <strong>1. Описание поставки/ Shipment details</strong>
+                        </td>
+                        <td class="am-td am-td-right">
+                            <div class="am-flabel flex items-center justify-between">
+                                <span>1.5 <em>Сертификат № / Certificate №:</em></span>
+                                <span class="font-bold text-sm text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 print-show">{{ form.get('certificateNo')?.value || refNumber || '' }}</span>
+                            </div>
+                            <input pInputText formControlName="certificateNo" class="am-input font-bold text-sm uppercase mt-1" placeholder="Certificate No (e.g. SX 2008)" [readonly]="!!refNumber || !!requestId" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 2: 1.1 Consignor & 1.2 Consignee | Red italic description -->
+                    <tr>
+                        <td class="am-td am-td-left">
+                            <div class="am-stack-cell">
+                                <div class="am-flabel"><em>1.1 Название и адрес грузоотправителя / Name and address of consignor:</em></div>
+                                <input pInputText formControlName="consignorName" class="am-input am-mt4 font-semibold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="am-input am-mt4" placeholder="Address"></textarea>
+                            </div>
+                            <div class="am-stack-cell am-stack-bt">
+                                <div class="am-flabel"><em>1.2 Название и адрес грузополучателя / Name and address of consignee:</em></div>
+                                <input pInputText formControlName="consigneeName" class="am-input am-mt4 font-semibold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="am-input am-mt4" placeholder="Address"></textarea>
+                            </div>
+                        </td>
+                        <td class="am-td am-td-right">
+                            <p class="am-italic-block text-red-700">
+                                <em
+                                    >Ветеринарный сертификат на экспортируемую на таможенную территорию Евразийского экономического союза пищевую продукцию из рыбы, ракообразных, моллюсков, других объектов промысла и продуктов их переработки/ Veterinary certificate for fish, crustacean, mollusks, other fishery products and products of their processing, exported into the customs territory of Eurasian economic union</em
+                                >
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Row 3: 1.3 Transport | 1.6 - 1.9 stacked -->
+                    <tr>
+                        <td class="am-td am-td-left">
+                            <div class="am-flabel">
+                                <em>1.3 Транспорт/ Means of transport:<br />(The number of the railway carriage, truck, container, flight number, name of the ship / № вагона, автомашины, контейнера, рейс самолета, название судна):</em>
+                            </div>
+                            <input pInputText formControlName="transportId" class="am-input font-bold mt-2" placeholder="AIR / Flight / Vessel" />
+                        </td>
+                        <td class="am-td am-td-right am-td-stack">
+                            <!-- 1.6 -->
+                            <div class="am-stack-cell">
+                                <div class="am-flabel"><em>1. 6 Страна происхождения товара / Country of origin:</em></div>
+                                <input pInputText formControlName="countryOrigin" class="am-input font-bold" />
+                            </div>
+                            <!-- 1.7 -->
+                            <div class="am-stack-cell am-stack-bt">
+                                <div class="am-flabel"><em>1.7 Страна выдавшая сертификат /Country issuing this certificate:</em></div>
+                                <input pInputText formControlName="countryIssuing" class="am-input font-bold" />
+                            </div>
+
+                            <div class="am-stack-cell am-stack-bt">
+                                <div class="am-flabel"><em>1.8 Компетентное ведомство страны-экспортера / Competent authority of exporting country:</em></div>
+                                <input pInputText formControlName="competentAuthorityExporting" class="am-input font-bold" />
+                            </div>
+                            <div class="am-stack-cell am-stack-bt">
+                                <div class="am-flabel"><em>1.9 Учреждение страны-экспортера, выдавшее сертификат / Organization issuing this certificate in exporting country:</em></div>
+                                <input pInputText formControlName="organizationIssuing" class="am-input font-bold" />
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 4: 1.4 Country of transit | 1.10 Point of crossing -->
+                    <tr>
+                        <td class="am-td am-td-left">
+                            <div class="am-flabel"><em>1.4 Страна(ы) транзита / Country of transit :</em></div>
+                            <input pInputText formControlName="countryOfTransit" class="am-input font-bold" />
+                        </td>
+                        <td class="am-td am-td-right">
+                            <div class="am-flabel"><em>1.10 Пункт пропуска товаров через таможенную границу/ Point of crossing the border:</em></div>
+                            <input pInputText formControlName="pointOfCrossingBorder" class="am-input font-bold" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="am-footer">
+                <span></span>
+                <span class="am-footer-cert-no font-bold">CERTIFICATE NO {{ form.get('certificateNo')?.value || '' }}</span>
+                <span class="am-footer-page">1/4</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 2 — PDF 2/4 ════ -->
+        <div class="am-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="am-content">
+                <!-- Section 2 + 3 table -->
+                <table class="am-main-table">
+                    <!-- Section 2 header row -->
+                    <tr>
+                        <td class="am-td am-section-cell" colspan="2">
+                            <strong>2. Идентификация товара / Identification of goods</strong>
+                        </td>
+                    </tr>
+                    <!-- 2.1 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2.1 Наименование товара / Name of product:</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="productName" class="am-input font-bold" /></td>
+                    </tr>
+                    <!-- 2.2 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2.2 Дата выработки товара / Date of production:</em></td>
+                        <td class="am-td am-td-right"><p-datepicker formControlName="productionDate" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                    </tr>
+                    <!-- 2.3 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2.3 Упаковка / Type of package:</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="packagingType" class="am-input" /></td>
+                    </tr>
+                    <!-- 2.4 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2 4 Количество мест / Number of packages:</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="numPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="am-input" /></td>
+                    </tr>
+                    <!-- 2.5 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2.5 Вес нетто (кг) / Net weight (kg):</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="am-input" /></td>
+                    </tr>
+                    <!-- 2.6 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2.6 Номер пломбы / Number of seal:</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="numberOfSeal" class="am-input" /></td>
+                    </tr>
+                    <!-- 2.7 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2.7 Маркировка / Identification marks:</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="identificationMarks" class="am-input font-bold" /></td>
+                    </tr>
+                    <!-- 2.8 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>2.8 Условия хранения и перевозки / Conditions of storage and transport:</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="storageConditions" class="am-input font-bold" /></td>
+                    </tr>
+
+                    <!-- Section 3 header -->
+                    <tr>
+                        <td class="am-td am-section-cell" colspan="2">
+                            <strong>3. Происхождение товара / Origin of products:</strong>
+                        </td>
+                    </tr>
+                    <!-- 3.1 establishment -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td" style="width: 42%">
+                            <em>3,1 Название, регистрационный номер и адрес предприятия / Name, registration number and address of establishment:</em>
+                        </td>
+                        <td class="am-td am-td-right">
+                            <input pInputText formControlName="processingEstName" class="am-input font-bold" placeholder="Name" />
+                            <textarea pInputTextarea formControlName="processingEstAddress" rows="2" [autoResize]="true" class="am-input am-mt4" placeholder="Address"></textarea>
+                            <input pInputText formControlName="processingEstRegNo" class="am-input am-mt4 font-bold" placeholder="Registration number (e.g. DFAR/FPE/98/07)" />
+                            <div class="am-mt4 flex items-center gap-2"><em class="am-flabel whitespace-nowrap">Плавбаза / Factory vessel:</em><input pInputText formControlName="factoryVessel" class="am-input flex-1" /></div>
+                            <div class="am-mt4 flex items-center gap-2"><em class="am-flabel whitespace-nowrap">Холодильник / Cold store:</em><input pInputText formControlName="coldStore" class="am-input flex-1" /></div>
+                        </td>
+                    </tr>
+                    <!-- 3.2 -->
+                    <tr>
+                        <td class="am-td am-td-left am-label-td"><em>3.2 Административно-территориальная единица / Administrative – territorial unit:</em></td>
+                        <td class="am-td am-td-right"><input pInputText formControlName="administrativeUnit" class="am-input font-bold" /></td>
+                    </tr>
+                </table>
+
+                <!-- Section 4 block -->
+                <div class="am-s4-block mt-3">
+                    <div class="am-s4-hdr">
+                        <strong>4. Свидетельство о пригодности товара в пищу / Certificate on suitability of products in food</strong><br />
+                        Я, нижеподписавшийся государственный/официальный ветеринарный врач, настоящим удостоверяю следующее / I, the undersigned official/government inspector, certify hereby that:
+                    </div>
+                    <div class="am-s4-sub mt-2">
+                        Сертификат выдан на основе следующих до-экспортных сертификатов (при наличии более двух до-экспортных сертификатов прилагается список) / The certificate is based on the following pre-export certificates (see attached list in case more than two):
+                    </div>
+
+                    <!-- Pre-export table -->
+                    <div class="am-table-wrap mt-2">
+                        <table class="am-pre-table" *ngIf="!viewOnly">
+                            <thead>
+                                <tr>
+                                    <th>Дата / Date:</th>
+                                    <th>Номер / Number:</th>
+                                    <th>Страна происхождения / Country of origin:</th>
+                                    <th>Административная территория / Administrative territory:</th>
+                                    <th>Регистрационный помер предприятия / Approval number of the Establishment:</th>
+                                    <th>Вид и количество (вес нетто) товара / Name and quantity (net weight) of the product:</th>
+                                    <th class="print-hide">Act.</th>
+                                </tr>
+                            </thead>
+                            <tbody formArrayName="preExportCertificates">
+                                <tr *ngFor="let item of preExportCertificates.controls; let i = index" [formGroupName]="i">
+                                    <td><p-datepicker formControlName="date" [showIcon]="true" appendTo="body" styleClass="am-date" inputStyleClass="am-date-input"></p-datepicker></td>
+                                    <td><input pInputText formControlName="number" class="am-tinput text-center" /></td>
+                                    <td><input pInputText formControlName="countryOfOrigin" class="am-tinput" /></td>
+                                    <td><input pInputText formControlName="administrativeTerritory" class="am-tinput" /></td>
+                                    <td><input pInputText formControlName="approvalNumber" class="am-tinput" /></td>
+                                    <td><input pInputText formControlName="productNameAndQuantity" class="am-tinput" /></td>
+                                    <td class="text-center print-hide">
+                                        <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removePreExportCertificate(i)"></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="am-pre-table" *ngIf="viewOnly">
+                            <thead>
+                                <tr>
+                                    <th>Дата / Date:</th>
+                                    <th>Номер / Number:</th>
+                                    <th>Страна происхождения / Country of origin:</th>
+                                    <th>Административная территория / Administrative territory:</th>
+                                    <th>Регистрационный помер предприятия / Approval number of the Establishment:</th>
+                                    <th>Вид и количество (вес нетто) товара / Name and quantity (net weight) of the product:</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let item of preExportCertificatesRows">
+                                    <td>{{ item.date | date: 'dd/MM/yyyy' }}</td>
+                                    <td>{{ item.number }}</td>
+                                    <td>{{ item.countryOfOrigin }}</td>
+                                    <td>{{ item.administrativeTerritory }}</td>
+                                    <td>{{ item.approvalNumber }}</td>
+                                    <td>{{ item.productNameAndQuantity }}</td>
+                                </tr>
+                                <tr *ngIf="preExportCertificatesRows.length === 0">
+                                    <td>XXX</td>
+                                    <td>XXX</td>
+                                    <td>XXXXXXX</td>
+                                    <td>XXXXXXX</td>
+                                    <td>XXXXXXXXXXXX</td>
+                                    <td>XXXXXXXXXXXXX</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="print-hide am-mt4" *ngIf="!viewOnly">
+                        <button pButton label="Add Pre-Export Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addPreExportCertificate()"></button>
+                    </div>
+
+                    <!-- Clause 4.1 -->
+                    <div class="am-clauses mt-2">
+                        <p class="am-clause">
+                            <span class="font-bold">4.1</span> Экспортируемая на таможенную территорию Евразийского экономического союза продукция из водных биологических ресурсов (живая, охлаждённая, мороженая рыба, икра, моллюски, млекопитающие и другие водные животные и объекты промысла) (далее - рыбная продукция) выращена и добыта в экологически чистых водоёмах (акваториях), пищевые продукты ее переработки произведены на предприятиях, в отношении которых не были установлены ветеринарно-санитарные ограничения. / Aquatic biological resources (live, chilled and frozen fish, caviar, shellfish, mammals and other sea products) (hereafter fishery products) exported into the Eurasian economic union were grown and harvested in ecologically clean water resources while products of their processing were produced in establishments that were not somehow limited by the veterinary or sanitary authorities.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="am-footer">
+                <span></span>
+                <span class="am-footer-cert-no font-bold">CERTIFICATE NO {{ form.get('certificateNo')?.value || '' }}</span>
+                <span class="am-footer-page">2/4</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 3 — PDF 3/4 ════ -->
+        <div class="am-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="am-content">
+                <div class="am-page3-block">
+        <div class="am-clauses">
+                        <p class="am-clause">
+                            <span class="font-bold">4.2.</span> В случае наличия паразитов, в пределах допустимых норм рыбная продукция обезврежена существующими методами / If there are any parasites, in acceptable limits, fishery products are inactivated by the current methods.
+                        </p>
+                        <p class="am-clause">
+                            <span class="font-bold">4.3.</span> Рыбная продукция, экспортируемая на таможенную территорию Евразийского экономического союза:/ Fishery products exported into the customs territory of the Eurasian economic union:
+                        </p>
+                        <p class="am-dash">
+                            - не содержит ядовитых рыб семейств Tetraodontidae, Molidae, Diodontidae и Canthigasteridae, а также рыбной продукции, содержащей биотоксины, опасные для здоровья человека / are free from poisonous fish of the bread Tetraodontidae, Molidae, Diodontidae and Canthigasteridae and fishery products containing biotoxins dangerous for human’s health;
+                        </p>
+                        <p class="am-dash">- исследована на наличие паразитов, бактериальных и вирусных инфекций / tested for parasites, bacterial and virus infections;</p>
+                        <p class="am-dash">
+                            - не содержит натуральных или синтетических эстрогенных, гормональных веществ, тиреостатических препаратов; антибиотиков, других медикаментозных средств и пестицидов / are free from natural, synthetic estrogenic and hormoenlike materials, thyreostatic products; antibiotics, other drugs and pesticides;
+                        </p>
+                        <p class="am-dash">- мороженая рыбная продукция имеет температуру в толще продукта не выше минус 18 градусов Цельсия / the temperature of muscle thickness of frozen fish doesn’t exceed minus 18 degrees Celsius;</p>
+                        <p class="am-dash">- не контаминирована сальмонеллами и возбудителями других бактериальных инфекций / they are not contaminated with salmonella and other bacterial infectious agents;</p>
+                        <p class="am-dash">- не обработана красящими веществами, ионизирующим облучением или ультрафиолетовыми лучами / have not been treated with coloring substances, ionizing and ultra-violet rays;</p>
+                        <p class="am-dash">- не имеет изменений характерных для заразных болезней / do not have any alterations typical for infectious diseases;</p>
+                        <p class="am-dash">- не имеет недоброкачественных изменений по органолептическим показателям / do not have poor organoleptic quality;</p>
+                        <p class="am-dash">- не подвергалась дефростации в период хранения / have not been defrosted during the storage period;</p>
+                        <p class="am-clause">
+                            <span class="font-bold">4.4.</span> Двустворчатые моллюски, иглокожие, оболочники и морские гастроподы прошли необходимую выдержку в центрах очистки / Mussels, echinoderms, tunicates and sea gastropods were kept long enough in special tanks designed for water cleaning;
+                        </p>
+                        <p class="am-clause">
+                            <span class="font-bold">4.5.</span> Микробиологические, химикотоксиологические и радиологические показатели рыбной продукции, содержание фикотоксинов и других загрязнителей (для моллюсков) соответствуют действующим на таможенной территории Евразийского экономического союза ветеринарным и санитарным нормам и правилам / content of noxious substance and other contaminants (for mussels), microbiological, chemical, toxicological and radiological characteristics of fish and seafood correspond to actual veterinary and sanitary rules and requirements that are valid on the customs territory of the Eurasian economic union
+                        </p>
+                        <p class="am-clause"><span class="font-bold">4.6.</span> Рыбная продукция признана пригодной для употребления в пищу человеком / Fishery products are recognized acceptable for human consumption.</p>
+                        <p class="am-clause">
+                            <span class="font-bold">4.7.</span> Тара и упаковочный материал одноразовые и соответствуют требованиям Евразийского экономического союза/ Packaging and containers are single-used and correspond to hygienic requirements of the Eurasian economic union.
+                        </p>
+                        <p class="am-clause">
+                            <span class="font-bold">4.8.</span> Транспортное средство обработано и подготовлено в соответствии с правилами, принятыми в стране-экспортере / Means of transport are treated and prepared in accordance with the rules approved in the exporting country.
+                        </p>
+                    </div>
+
+                    <!-- Place | Date row -->
+                    <div class="am-place-date-row mt-4">
+                        <span class="am-pd-label font-bold">Место / Place:</span>
+                        <input pInputText formControlName="placeOfIssue" class="am-input am-pd-input font-bold" />
+                        <span class="am-pd-label am-pd-spacer font-bold">Дата / Date:</span>
+                        <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body"></p-datepicker>
+                    </div>
+
+                    <!-- Stamp + Signature row -->
+                    <div class="am-sig-row mt-3">
+                        <div class="am-sig-section">
+                            <div class="am-sig-label">Печать / Stamp</div>
+                            <div class="am-sig-area">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                            </div>
+                        </div>
+                        <div class="am-sig-section">
+                            <div class="am-sig-label">Подпись государственного ветеринарного врача / Signature of state/official veterinarian.</div>
+                            <div class="am-sig-area">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Name and position in capital letters -->
+                    <div class="am-name-block mt-4">
+                        <div class="am-name-label font-bold">Ф.И.О. и должность / Name and position in capital letters</div>
+
+                        <div *ngIf="showReadonlySignatory" class="mt-2 space-y-1">
+                            <div><span class="font-semibold">Name : </span><span class="font-bold">{{ form.get('signatoryName')?.value }}</span></div>
+                            <div><span class="font-semibold">Designation: </span><span>{{ form.get('qualification')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                        </div>
+
+                        <div class="print-hide mt-3" *ngIf="shouldShowSignatorySelect">
+                            <div class="font-semibold text-xs text-gray-600 mb-1">Authorized Official Signatory:</div>
+                            <p-select
+                                [options]="userOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                formControlName="signatoryUserId"
+                                placeholder="Select Officer"
+                                styleClass="signatory-select"
+                                [style]="{ width: '100%' }"
+                                (onChange)="onSignatoryChange($event.value)"
+                            ></p-select>
+
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="font-semibold text-xs text-gray-600 whitespace-nowrap">Designation / Qualification:</span>
+                                <input pInputText formControlName="qualification" class="am-input flex-1" [readonly]="showReadonlySignatory" />
+                            </div>
+                        </div>
+
+                        <div class="print-only mt-2 space-y-1" *ngIf="shouldShowSignatorySelect">
+                            <div><span class="font-semibold">Name : </span><span class="font-bold">{{ form.get('signatoryName')?.value }}</span></div>
+                            <div><span class="font-semibold">Designation: </span><span>{{ form.get('qualification')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="am-footer">
+                <span></span>
+                <span class="am-footer-cert-no font-bold">CERTIFICATE NO {{ form.get('certificateNo')?.value || '' }}</span>
+                <span class="am-footer-page">3/4</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 4 — Attachment to Veterinary Certificate ════ -->
+        <div class="am-page am-attach-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="am-attachment-watermark">ORIGINAL</div>
+            <div class="am-content">
+                <div class="am-attach-title text-center font-bold">
+                    Attachment to the Veterinary certificate number {{ form.get('certificateNo')?.value || 'SX 2008' }}
+                </div>
+
+                <div class="am-attach-meta-row flex items-center justify-between">
+                    <div class="flex items-center gap-1">
+                        <span class="am-att-label font-bold">DATE:</span>
+                        <p-datepicker formControlName="dateOfAttachment" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" class="print-hide am-att-datepicker"></p-datepicker>
+                        <span class="print-show font-bold">{{ form.get('dateOfAttachment')?.value | date: 'dd/MM/yyyy' }}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="am-att-label font-bold"><em class="italic font-bold">Маркировка</em> / Identification marks:</span>
+                        <input pInputText formControlName="identificationMarksAttachment" class="am-input font-bold print-hide am-att-id-input" style="width: 170px" />
+                        <span class="print-show font-bold">{{ form.get('identificationMarksAttachment')?.value || 'DFAR/FPE/98/07' }}</span>
+                    </div>
+                </div>
+
+                <table class="am-att-table mt-2">
+                    <thead>
+                        <tr>
+                            <th class="am-att-th am-att-th-prod">Product</th>
+                            <th class="am-att-th am-att-th-kgs">Number of kgs</th>
+                            <th class="am-att-th am-att-th-boxes">Number of<br />boxes</th>
+                            <th class="print-hide am-att-th-act" *ngIf="!viewOnly"></th>
+                        </tr>
+                    </thead>
+                    <tbody formArrayName="attachments">
+                        <tr *ngFor="let item of attachments.controls; let i = index" [formGroupName]="i" class="am-att-tr">
+                            <td class="am-att-td-prod">
+                                <input pInputText formControlName="product" class="am-att-input am-att-prod-input print-hide font-bold" />
+                                <span class="print-show font-bold am-att-prod-text" [innerHTML]="formatProductName(item.get('product')?.value)"></span>
+                            </td>
+                            <td class="am-att-td-kgs">
+                                <input pInputText formControlName="numberOfKgs" (keypress)="onlyDecimals($event)" inputmode="decimal" class="am-att-input text-right print-hide font-bold" />
+                                <span class="print-show font-bold text-right block pr-1">{{ item.get('numberOfKgs')?.value }}</span>
+                            </td>
+                            <td class="am-att-td-boxes">
+                                <input pInputText formControlName="numberOfBoxes" (keypress)="onlyDigits($event)" inputmode="numeric" class="am-att-input text-right print-hide font-bold" />
+                                <span class="print-show font-bold text-right block pr-1">{{ item.get('numberOfBoxes')?.value }}</span>
+                            </td>
+                            <td class="print-hide text-center am-att-td-act" *ngIf="!viewOnly">
+                                <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeAttachment(i)" *ngIf="attachments.length > 1"></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="am-att-total-tr">
+                            <td class="am-att-total-lbl font-bold text-center">TOTAL</td>
+                            <td class="am-att-total-val font-bold text-right">{{ calculateTotalKgs() }}</td>
+                            <td class="am-att-total-val font-bold text-right">{{ calculateTotalBoxes() }}</td>
+                            <td class="print-hide" *ngIf="!viewOnly"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Attachment Toolbar (print-hide) -->
+                <div class="print-hide p-2 flex items-center justify-between gap-2 mt-3 bg-slate-50 border border-slate-200 rounded" *ngIf="!viewOnly">
+                    <div class="flex items-center gap-2">
+                        <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addAttachment()"></p-button>
+                        <p-button label="Load 21 Standard Items (SX 2008)" icon="pi pi-refresh" severity="secondary" size="small" [outlined]="true" (onClick)="loadDefaultProducts()"></p-button>
+                    </div>
+                    <button pButton label="Clear All" icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="clearProducts()"></button>
+                </div>
+            </div>
+            <div class="am-footer">
+                <span></span>
+                <span class="am-footer-cert-no font-bold">CERTIFICATE NO {{ form.get('certificateNo')?.value || '' }}</span>
+                <span class="am-footer-page">4/4</span>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="am-actions print-hide flex items-center justify-between gap-3 mt-4">
+            <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+            <div class="flex items-center gap-2">
+                <p-button
+                    *ngIf="isAdmin"
+                    label="Print"
+                    [outlined]="true"
+                    (onClick)="print()"
+                    icon="pi pi-print"
+                    [disabled]="form.get('signatoryUserId')?.invalid"
+                    tooltipPosition="top"
+                ></p-button>
+                <p-button label="Submit" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+            </div>
+        </div>
+    </form>
+    <app-confirm-password-dialog class="print-hide" [(visible)]="showPasswordDialog" [userEmail]="pendingSignatoryUserEmail" [userId]="pendingSignatoryUserId || ''" (onConfirm)="onSignatoryConfirmed($event)" (onCancel)="onSignatoryCanceled()">
+    </app-confirm-password-dialog>
+</div>

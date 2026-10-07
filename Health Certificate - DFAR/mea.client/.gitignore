@@ -1,0 +1,34 @@
+# Node/Angular
+node_modules/
+dist/
+.angular/
+.tmp/
+
+# VS Code / editor
+.vscode/
+*.code-workspace
+
+# Visual Studio
+.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.cache
+*.log
+*.vsidx
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Environment / credentials
+*.env
+.env.local
+
+# Coverage / testing
+coverage/
+.nyc_output/
+
+# OS junk
+.DS_Store
+Thumbs.db

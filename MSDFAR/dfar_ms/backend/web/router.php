@@ -7,4 +7,4 @@ if ($uri !== '/' && file_exists($file) && !is_dir($file)) {
 }
 
 $_SERVER['SCRIPT_NAME'] = '/index.php';
-require_once __DIR__ . '/index.php';
+require __DIR__ . '/index.php';

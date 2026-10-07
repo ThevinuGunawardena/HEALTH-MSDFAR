@@ -1,0 +1,442 @@
+<div class="br-container">
+<p-toast class="print-hide"></p-toast>
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Brazil (BR)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <span *ngIf="form.get('certificateNo')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold">Ref: {{ form.get('certificateNo')?.value || refNumber }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load Sample (BR 8812)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleData()"
+                pTooltip="Load standard Brazil Certificate Sample (BR 8812)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+    <form [formGroup]="form">
+    <!-- ════ PAGE 1 — PDF 1/2 ════ -->
+        <div class="br-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="br-content">
+                <!-- Header -->
+                <div class="br-header">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="br-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="br-logo" /></div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateNo')?.value || refNumber"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('exporterName')?.value"
+                                [consignee]="form.get('importerName')?.value"
+                                [destination]="'Brazil'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="br-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="br-addr">P.O. Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                    <div class="br-addr">Telephone: +94-2449170, 2472186, 2472192</div>
+                    <div class="br-addr">Fax: +94-11-2424086, 2449170</div>
+                    <div class="br-addr">E-mail: dg&#64;fisheriesdept.gov.lk</div>
+                    <div class="br-title-bar">
+                        <span>COUNTRY: SRI LANKA</span>
+                        <span>VETERINARY CERTIFICATE TO BRAZIL</span>
+                    </div>
+                    <div class="br-subtitle">HEALTH CERTIFICATE FOR FISH AND FISHERY PRODUCTS FROM FISHING</div>
+                </div>
+
+                <!-- Main bordered grid table — mirrors PDF page 1 exactly -->
+                <table class="br-main-table">
+                    <!-- Row 1: Field 1 Exporter (rowspan 3 left) | Field 2 Certificate No -->
+                    <tr>
+                        <td class="br-td br-td-left" rowspan="3">
+                            <div class="br-flabel">1. Exporter (name, address):</div>
+                            <input pInputText formControlName="exporterName" class="br-input br-mt4" placeholder="Name" />
+                            <textarea pInputTextarea formControlName="exporterAddress" rows="3" [autoResize]="true" class="br-input br-mt4" placeholder="Address"></textarea>
+                        </td>
+                        <td class="br-td br-td-right" colspan="2">
+                            <div class="br-flabel">2. Certificate No:</div>
+                            <input pInputText formControlName="certificateNo" class="br-input font-bold" placeholder="Certificate No" [readonly]="!!refNumber || !!certificateRequestId" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 2: (Exporter continues) | Field 3 Competent authority -->
+                    <tr>
+                        <td class="br-td br-td-right" colspan="2">
+                            <div class="br-flabel">3. Competent authority:</div>
+                            <input pInputText formControlName="competentAuthority" class="br-input" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 3: (Exporter continues) | Field 4 Local competent authority -->
+                    <tr>
+                        <td class="br-td br-td-right" colspan="2">
+                            <div class="br-flabel">4. Local competent authority:</div>
+                            <input pInputText formControlName="localCompetentAuthority" class="br-input" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 4: Field 5 Importer | Field 6/7 country split -->
+                    <tr>
+                        <td class="br-td br-td-left">
+                            <div class="br-flabel">5. Importer (name, address):</div>
+                            <input pInputText formControlName="importerName" class="br-input br-mt4" placeholder="Name" />
+                            <textarea pInputTextarea formControlName="importerAddress" rows="2" [autoResize]="true" class="br-input br-mt4" placeholder="Address"></textarea>
+                        </td>
+                        <td class="br-td br-td-right br-td-inner-split" colspan="2">
+                            <div class="br-inner-split-row">
+                                <div class="br-inner-cell br-inner-sep">
+                                    <div class="br-flabel">6. Country of origin:</div>
+                                    <input pInputText formControlName="countryOrigin" class="br-input" />
+                                </div>
+                                <div class="br-inner-cell br-inner-cell-sm">
+                                    <div class="br-flabel">ISO Code:</div>
+                                    <input pInputText formControlName="countryOriginISO" class="br-input" />
+                                </div>
+                                <div class="br-inner-cell br-inner-sep">
+                                    <div class="br-flabel">7. Country of destination:</div>
+                                    <input pInputText formControlName="countryOfDestination" class="br-input" />
+                                </div>
+                                <div class="br-inner-cell br-inner-cell-sm">
+                                    <div class="br-flabel">ISO Code:</div>
+                                    <input pInputText formControlName="countryDestinationISO" class="br-input" />
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 6: Field 8 Place of loading | Field 9 Means of transport | Field 10 Declared point of entry -->
+                    <tr>
+                        <td class="br-td br-td-third">
+                            <div class="br-flabel">8. Place of loading;</div>
+                            <input pInputText formControlName="placeOfLoading" class="br-input" />
+                        </td>
+                        <td class="br-td br-td-third">
+                            <div class="br-flabel">9. Means of transports:</div>
+                            <div class="br-cb-row br-mt4">
+                                <label class="br-cb"><p-checkbox formControlName="transportAeroPlane" binary="true"></p-checkbox><span>Aero plane</span></label>
+                                <label class="br-cb"><p-checkbox formControlName="transportShip" binary="true"></p-checkbox><span>Ship</span></label>
+                                <label class="br-cb"><p-checkbox formControlName="transportRailwayWagon" binary="true"></p-checkbox><span>Railway wagon</span></label>
+                                <label class="br-cb"><p-checkbox formControlName="transportRoadVehicle" binary="true"></p-checkbox><span>Road vehicle</span></label>
+                                <label class="br-cb"><p-checkbox formControlName="transportOther" binary="true"></p-checkbox><span>Other</span></label>
+                            </div>
+                        </td>
+                        <td class="br-td br-td-third">
+                            <div class="br-flabel">10. Declared point of entry:</div>
+                            <input pInputText formControlName="declaredPointOfEntry" class="br-input" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 7: Field 11 Conditions — full width -->
+                    <tr>
+                        <td class="br-td" colspan="3">
+                            <div class="br-flabel">11. Conditions for transport/storage:</div>
+                            <input pInputText formControlName="conditionsForTransportStorage" class="br-input" />
+                        </td>
+                    </tr>
+
+                    <!-- Row 8: Field 12 Identification of containers — full width -->
+                    <tr>
+                        <td class="br-td" colspan="3">
+                            <div class="br-flabel">12. Identification of container(s)/Seal number(s):</div>
+                            <input pInputText formControlName="identificationOfContainers" class="br-input" />
+                            <div class="br-spacer-sm"></div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 9: Field 13 Identification of food products — full width -->
+                    <tr>
+                        <td class="br-td" colspan="3">
+                            <div class="br-flabel">13. Identification of food products:</div>
+                            <input pInputText formControlName="identificationOfFoodProducts" class="br-input" />
+                            <div class="br-spacer-sm"></div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 10: Producer/Manufacturer — full width -->
+                    <tr>
+                        <td class="br-td" colspan="3">
+                            <div class="br-flabel">Name, address and approval number of the producer/manufacturer establishment:</div>
+                            <textarea pInputTextarea formControlName="producerDetails" rows="3" [autoResize]="true" class="br-input br-mt4"></textarea>
+                        </td>
+                    </tr>
+
+                    <!-- Row 11: Field 14 HS Code | Field 15 Intended purpose -->
+                    <tr>
+                        <td class="br-td" style="width: 52%">
+                            <div class="br-flabel">14. HS Code:</div>
+                            <input pInputText formControlName="hsCode" class="br-input" />
+                        </td>
+                        <td class="br-td" colspan="2">
+                            <div class="br-flabel">15. Intended purpose:</div>
+                            <input pInputText formControlName="intendedPurpose" class="br-input" readonly />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="br-footer">
+                <span class="br-footer-brand">Veterinary Certificate — Brazil</span>
+                <span class="br-footer-cert-no font-bold">CERTIFICATE NO: {{ form.get('certificateNo')?.value || refNumber || '' }}</span>
+                <span class="br-footer-page">1/2</span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 2 — PDF 2/2 ════ -->
+        <div class="br-page last-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="br-content">
+                <!-- Row 12: Product table — full width -->
+                <table class="br-main-table">
+                    <tr>
+                        <td class="br-td br-product-cell" colspan="3">
+                            <table class="br-product-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name of the product</th>
+                                        <th>Scientific name</th>
+                                        <th style="width: 100px">Type of packaging</th>
+                                        <th style="width: 90px">Number of packages</th>
+                                        <th style="width: 100px">Net weight (Kg)</th>
+                                        <th class="print-hide" style="width: 40px">Act.</th>
+                                    </tr>
+                                </thead>
+                                <tbody formArrayName="products">
+                                    <tr *ngFor="let product of products.controls; let i = index" [formGroupName]="i">
+                                        <td><textarea pInputTextarea formControlName="nameOfTheProduct" rows="1" [autoResize]="true" class="br-tinput br-tinput-wrap"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="scientificName" rows="1" [autoResize]="true" class="br-tinput br-tinput-wrap"></textarea></td>
+                                        <td><textarea pInputTextarea formControlName="typeOfPackaging" rows="1" [autoResize]="true" class="br-tinput br-tinput-wrap"></textarea></td>
+                                        <td><input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="br-tinput" /></td>
+                                        <td><input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" type="number" class="br-tinput" /></td>
+                                        <td class="text-center print-hide">
+                                            <button pButton icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="removeProduct(i)"></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="br-total-label" colspan="4">Total:</td>
+                                        <td class="br-total-val">{{ calculateTotalNetWeight() }}</td>
+                                        <td *ngIf="!viewOnly" class="print-hide"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            <div class="print-hide br-mt4">
+                                <button pButton label="Add Product Row" icon="pi pi-plus" class="p-button-secondary p-button-sm" (click)="addProduct()"></button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 13: Official Stamp | Signature -->
+                    <tr>
+                        <td class="br-td" colspan="3">
+                            <div class="grid-row" style="align-items: stretch;">
+                                <div class="grid-cell br" style="min-height: 110px">
+                                    <div class="cell-label mb-1">Stamp</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                    </div>
+                                </div>
+                                <div class="grid-cell" style="min-height: 110px">
+                                    <div class="cell-label mb-1">Signature:</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="!isCompany && !viewOnly">
+                        <td class="br-td br-stamp-cell" colspan="2" style="width: 50%">
+                            <div style="font-size: 9.5pt; font-weight: 600; width: 80px">Signatory:</div>
+                            <div style="flex: 1; margin-right: 20px">
+                                <p-select
+                                    [options]="userOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select User"
+                                    styleClass="signatory-select"
+                                    [style]="{ width: '100%' }"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                >
+                                </p-select>
+                            </div>
+                        </td>
+                        <td class="br-td br-sig-cell" style="width: 50%">
+                            <div style="font-size: 9.5pt; font-weight: 600; width: 100px">Qualification:</div>
+                            <div style="flex: 1; padding-top: 5px">
+                                    <input pInputText formControlName="qualification" class="br-input" />
+                                </div>
+                        </td>
+                    </tr>
+
+                    <!-- Row 14: Place and date | Modeloconforme -->
+                    <tr>
+                        <td class="br-td" colspan="2">
+                            <div class="br-flabel">(Place and date)</div>
+                            <input pInputText formControlName="placeAndDate" class="br-input" />
+                        </td>
+                        <td class="br-td">
+                            <div class="br-flabel">Modeloconforme Circular No:</div>
+                            <input pInputText formControlName="modeloConformeCircularNo" class="br-input" />
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Page 2 title bar -->
+                <div class="br-p2-header">
+                    <span>COUNTRY: SRI LANKA &nbsp;&nbsp;&nbsp; Fishery Product</span>
+                    <span class="br-p2-certno font-bold">Certificate no: <span class="font-bold text-sm ml-1 underline">{{ form.get('certificateNo')?.value || refNumber || '' }}</span></span>
+                </div>
+
+                <!-- Sanitary Certification block -->
+                <div class="br-sanitary-block">
+                    <div class="br-san-hdr">14. Sanitary Certification:</div>
+                    <p class="br-san-intro">The Official Veterinarian inspector certify that:</p>
+                    <ol class="br-san-list">
+                        <li>the fish were caught and handled on board the boats, according to the hygienic standards from the exporting country:</li>
+                        <li>
+                            the fish were landed, handled, packaged, prepared, processed, frozen stored and transported in hygienic-sanitary facilities officially authorized by the competent Sanitary Authority from the Country of Origin respecting
+                            the criteria organoleptic parasitological, chemical, microbiological or virological the country exporter and conditions, at least, equivalent Standards and Codes of Practice of the Codex Alimentarius;
+                        </li>
+                        <li>
+                            the fish has been obtained under hygienic conditions, in establishments that have implemented Good Manufacturing Practice - GMP, Sanitation Standard Operating Procedure SSOP and Hazard Analysis Critical Control Point -
+                            HACCP, under systematic verification of the Official Inspection Service;
+                        </li>
+                        <li>
+                            the consignment comply in every respect the requirements on quality and safety, stipulated under the official authorities of the country of origin relating to Fish and Fishery Products, with regard to healthy and wholesome
+                            fish, having been subjected to the Official Program of Residues Control And Contaminants for Fish, and fit for human consumption, destinated for export taking in account the normal time of transportation;
+                        </li>
+                        <li>bivalve molluscs and gastropods were harvesting in areas subjected to sanitary control officer for identification of marine biotoxins, according to internationally recognized standards<sup>(1)</sup></li>
+                        <li>frozen fish was not defrosted during storing, has the temperature in the muscle thickness not higher than – 18°C;</li>
+                        <li>packing material is used for the first time and satisfies the necessary sanitary-hygienical requirements</li>
+                        <li>means of transport are treated and prepared in accordance with the rules approved in the producing country</li>
+                    </ol>
+                </div>
+
+                
+
+                <!-- Stamp | Signature row -->
+                <table class="br-main-table br-mt6">
+                    <tr>
+                        <td class="br-td br-sig-cell">
+                                <div class="grid-cell" style="min-height: 110px">
+                                    <div class="cell-label mb-1">Stamp</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                    </div>
+                                </div>
+                            </td>
+                        <td class="br-td br-sig-cell">
+                                <div class="grid-cell" style="min-height: 110px">
+                                    <div class="cell-label mb-1">Signature:</div>
+                                    <div class="cert-area">
+                                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                    </div>
+                                </div>
+                        </td>
+                    </tr>
+                    
+                    <tr class="print-hide" *ngIf="!isCompany && !viewOnly">
+                        <td class="br-td br-stamp-cell" style="width: 50%">
+                            <div style="font-size: 9.5pt; font-weight: 600; width: 80px">Signatory:</div>
+                            <div style="flex: 1; margin-right: 20px">
+                                <p-select
+                                    [options]="userOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select User"
+                                    styleClass="signatory-select"
+                                    [style]="{ width: '100%' }"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                >
+                                </p-select>
+                            </div>
+                        </td>
+                        <td class="br-td br-sig-cell">
+                            <div style="font-size: 9.5pt; font-weight: 600; width: 100px">Qualification:</div>
+                            <div class="br-input" style="flex: 1; padding-top: 5px">
+                                {{ selectedUserQualification || '&nbsp;' }}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Place | Date -->
+                    <tr>
+                        <td class="br-td">
+                            <div class="br-flabel">(Place)</div>
+                            <input pInputText formControlName="placeAndDate" class="br-input" />
+                        </td>
+                        <td class="br-td">
+                            <div class="br-flabel">Date:</div>
+                            <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body"></p-datepicker>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="br-footer">
+                <span class="br-footer-brand">Veterinary Certificate — Brazil</span>
+                <span class="br-footer-cert-no font-bold">CERTIFICATE NO: {{ form.get('certificateNo')?.value || refNumber || '' }}</span>
+                <span class="br-footer-page">2/2</span>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="br-actions print-hide flex items-center justify-between gap-3 mt-4">
+            <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+            <div class="flex items-center gap-2">
+                <p-button
+                    *ngIf="isAdmin"
+                    label="Print"
+                    [outlined]="true"
+                    (onClick)="print()"
+                    icon="pi pi-print"
+                    [disabled]="form.get('signatoryUserId')?.invalid"
+                    tooltipPosition="top"
+                ></p-button>
+                <p-button label="Submit" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+            </div>
+        </div>
+    </form>
+    <app-confirm-password-dialog [(visible)]="showPasswordDialog" [userEmail]="pendingSignatoryUserEmail" [userId]="pendingSignatoryUserId || ''" (onConfirm)="onSignatoryConfirmed($event)" (onCancel)="onSignatoryCanceled()">
+    </app-confirm-password-dialog>
+</div>
+

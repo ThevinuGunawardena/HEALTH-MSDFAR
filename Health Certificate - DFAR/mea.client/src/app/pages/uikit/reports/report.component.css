@@ -1,0 +1,54 @@
+.card {
+    margin-bottom: 2rem;
+}
+
+:host ::ng-deep .p-card-content {
+    padding-top: 10px;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 1rem;
+}
+
+.gap-4 {
+    gap: 1.5rem;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.p-4 {
+    padding: 1.5rem;
+}
+
+@media screen and (min-width: 768px) {
+    .md\:flex-row {
+        flex-direction: row;
+    }
+
+    .md\:w-20rem {
+        width: 20rem;
+    }
+}

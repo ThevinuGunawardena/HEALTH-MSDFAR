@@ -1,0 +1,834 @@
+<div class="usa-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs w-full max-w-5xl" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">UNITED STATES OF AMERICA (USA)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">
+                Ref: {{ form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber }}
+            </span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                [disabled]="form.get('signatoryUserId')?.invalid"
+                tooltipPosition="bottom"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Format Selector Bar (Creation / Edit mode) -->
+    <div class="flex flex-wrap items-center gap-4 mb-3 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide w-full max-w-5xl" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Format:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('letter')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="letter" inputId="vm_usa_letter" (onClick)="onViewModeChange('letter')"></p-radiobutton>
+            <span>OFFICIAL LETTERHEAD (PROCESSED FISH - PDF 1)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('live')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="live" inputId="vm_usa_live" (onClick)="onViewModeChange('live')"></p-radiobutton>
+            <span>OFFICIAL LETTERHEAD (LIVE CRABS / LOBSTERS / OYSTERS - PDF 2-4)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('attachment')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment" inputId="vm_usa_attachment" (onClick)="onViewModeChange('attachment')"></p-radiobutton>
+            <span>ATTACHMENT BREAKDOWN TABLE</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700 hover:text-blue-700" (click)="onViewModeChange('generic')">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="generic" inputId="vm_usa_generic" (onClick)="onViewModeChange('generic')"></p-radiobutton>
+            <span>GENERIC MODEL CERTIFICATE (BOXED FORMAT)</span>
+        </label>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode or when Submitted -->
+    <div class="flex items-center gap-2 mb-3 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs w-full max-w-5xl" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'generic' ? 'GENERIC MODEL CERTIFICATE (BOXED FORMAT)' : ((form.get('viewMode')?.value || viewMode) === 'attachment' ? 'ATTACHMENT BREAKDOWN TABLE' : ((form.get('viewMode')?.value || viewMode) === 'live' ? 'OFFICIAL LETTERHEAD (LIVE CRABS / LOBSTERS / OYSTERS)' : 'OFFICIAL LETTERHEAD (PROCESSED FISH)')) }}
+        </span>
+    </div>
+
+    <!-- Quick Presets Toolbar for Letter Format (PDF 1) -->
+    <div class="flex flex-wrap items-center gap-2 mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg print-hide w-full max-w-5xl" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letter'">
+        <span class="text-xs font-bold text-blue-900 mr-2"><i class="pi pi-bolt text-xs mr-1"></i>Presets:</span>
+        <p-button label="With Attachment Table (PDF 1)" icon="pi pi-file" size="small" [outlined]="true" severity="info" (onClick)="setLetterPreset('attachment')"></p-button>
+        <p-button label="Direct Processed Fish (e.g. Yellowfin Tuna)" icon="pi pi-check" size="small" [outlined]="true" severity="secondary" (onClick)="setLetterPreset('processed')"></p-button>
+    </div>
+
+    <!-- Quick Presets Toolbar for Live Format (PDF 2, 3, 4) -->
+    <div class="flex flex-wrap items-center gap-2 mb-4 p-2 bg-emerald-50 border border-emerald-200 rounded-lg print-hide w-full max-w-5xl" *ngIf="(form.get('viewMode')?.value || viewMode) === 'live'">
+        <span class="text-xs font-bold text-emerald-900 mr-2"><i class="pi pi-bolt text-xs mr-1"></i>Live Presets:</span>
+        <p-button label="Live Mud Crabs (PDF 2)" icon="pi pi-tag" size="small" [outlined]="true" severity="success" (onClick)="setLivePreset('crabs')"></p-button>
+        <p-button label="Live Lobsters (PDF 3)" icon="pi pi-tag" size="small" [outlined]="true" severity="success" (onClick)="setLivePreset('lobsters')"></p-button>
+        <p-button label="Live Oysters (PDF 4)" icon="pi pi-tag" size="small" [outlined]="true" severity="success" (onClick)="setLivePreset('oysters')"></p-button>
+        <p-button label="Live Fish" icon="pi pi-tag" size="small" [outlined]="true" severity="secondary" (onClick)="setLivePreset('fish')"></p-button>
+
+        <div class="ml-auto flex items-center gap-4 text-xs font-semibold text-slate-700">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" formControlName="hasProcessingPlant" class="rounded border-slate-300 text-blue-600" />
+                <span>Include Processing Plant &amp; Reg No.</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" formControlName="showDateOfProcessing" class="rounded border-slate-300 text-blue-600" />
+                <span>Show Date of Processing</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 1: OFFICIAL LETTERHEAD - PROCESSED FISH (PDF 1)           -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="usa-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'letter'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="usa-content">
+            <!-- ── TOP LETTERHEAD HEADER ── -->
+            <div class="usa-header">
+                <div class="usa-header-top-row">
+                    <div class="usa-header-spacer"></div>
+                    <div class="usa-logo-row">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="usa-logo" />
+                    </div>
+                    <div class="usa-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || refNumber || ''"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('itemName')?.value"
+                            [date]="form.get('date')?.value"
+                            [officer]="form.get('signatoryName')?.value"
+                            [destination]="'UNITED STATES OF AMERICA'"
+                            [viewOnly]="viewOnly"
+                            [size]="68">
+                        </app-certificate-qr>
+                    </div>
+                </div>
+                <div class="usa-dept-si">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="usa-dept-ta">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                <div class="usa-dept-en">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+
+                <div class="usa-contact-row">
+                    <span>web site : http://www.fisheriesdept.gov.lk</span>
+                    <span>E - mail : info&#64;fisheriesdept.gov.lk</span>
+                </div>
+
+                <div class="usa-addr-row">
+                    <span>புதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை</span>
+                    <span>නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                    <span>New Secretariat, Maligawaththa, Colombo 10</span>
+                </div>
+            </div>
+
+            <!-- ── REFERENCE / DATE ROW (3 Bracketed Fields) ── -->
+            <div class="usa-refs-grid">
+                <div class="usa-ref-block">
+                    <div class="usa-ref-labels">
+                        <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
+                    </div>
+                    <div class="usa-ref-brace">&#125;</div>
+                    <input pInputText formControlName="myRef" class="usa-ref-input uppercase-text font-bold" placeholder="e.g. SX 1691 / TB 5820" [readonly]="!!refNumber || !!certificateRequestId" />
+                </div>
+                <div class="usa-ref-block">
+                    <div class="usa-ref-labels">
+                        <span>ඔබේ අංකය</span><span>உமது இல</span><span>Your Ref</span>
+                    </div>
+                    <div class="usa-ref-brace">&#125;</div>
+                    <input pInputText formControlName="yourRef" class="usa-ref-input font-bold" />
+                </div>
+                <div class="usa-ref-block usa-date-block">
+                    <div class="usa-ref-labels">
+                        <span>දිනය</span><span>திகதி</span><span>Date</span>
+                    </div>
+                    <div class="usa-ref-brace">&#125;</div>
+                    <div class="print-show font-bold text-xs usa-ref-date-print">
+                        {{ form.get('date')?.value ? (form.get('date')?.value | date: 'dd/MM/yyyy') : ' ' }}
+                    </div>
+                    <div class="print-hide flex-1 min-w-0">
+                        <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" styleClass="usa-datepicker w-full" inputStyleClass="usa-date-input"></p-datepicker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── HEALTH CERTIFICATE TITLE ── -->
+            <h2 class="usa-cert-title">HEALTH CERTIFICATE</h2>
+
+            <!-- ── PROCESS STATEMENT PREAMBLE ── -->
+            <p class="usa-preamble">
+                The undersigned official inspector hereby certifies that the following consignment of fishery product has been processed in an approved fish processing establishment under the relevant conditions laid down in Fish Products (Export) Regulations, 1998 required for the production of fishery products for human consumption and intended for export market.
+            </p>
+
+            <!-- ── SUBTITLE ── -->
+            <h3 class="usa-sub-title">{{ form.get('subTitle')?.value || 'Fish and Fishery Products' }}</h3>
+
+            <!-- ── CONSIGNMENT PARTICULARS ── -->
+            <div class="usa-field-row">
+                <span class="usa-lbl">Item:</span>
+                <input pInputText formControlName="itemName" class="usa-line-input uppercase-text font-bold" placeholder="SEE THE ATTACHMENT - WILD CAUGHT" />
+            </div>
+            <div class="usa-field-row">
+                <span class="usa-lbl">No. of packages:</span>
+                <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="usa-line-input font-bold" />
+            </div>
+            <div class="usa-field-row">
+                <span class="usa-lbl">Net weight:</span>
+                <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="usa-line-input font-bold" />
+            </div>
+
+            <!-- ── PROCESSING PLANT ── -->
+            <div class="usa-field-row">
+                <span class="usa-lbl-lg">Name and address of the processing plant:</span>
+                <input pInputText formControlName="processingPlantName" class="usa-line-input uppercase-text font-bold" placeholder="BLUE LINE OCEAN (PVT) LTD." />
+            </div>
+            <div class="usa-field-row pl-indent">
+                <textarea pTextarea formControlName="processingPlantAddress" rows="2" [autoResize]="true" class="usa-textarea uppercase-text font-bold" placeholder="NO: 231/003Y, BASELINE ROAD, PETER MAWATHA, AMANDOLUWA, SEEDUWA, SRI LANKA"></textarea>
+            </div>
+
+            <div class="usa-field-row">
+                <span class="usa-lbl-lg">Competent Authority Reg. No.:</span>
+                <input pInputText formControlName="competentAuthorityRegNo" class="usa-line-input uppercase-text font-bold" placeholder="DFAR/FPE/98/109" />
+            </div>
+
+            <!-- ── CONSIGNOR ── -->
+            <div class="usa-field-row">
+                <span class="usa-lbl-lg">Name and address of consignor:</span>
+                <input pInputText formControlName="consignorName" class="usa-line-input uppercase-text font-bold" placeholder="BLUE LINE OCEAN (PVT) LTD." />
+            </div>
+            <div class="usa-field-row pl-indent">
+                <textarea pTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="usa-textarea uppercase-text font-bold" placeholder="NO. 222/1 A, WILIBULA, HENEGAMA, GAMPAHA, SRI LANKA."></textarea>
+            </div>
+
+            <!-- ── CONSIGNEE ── -->
+            <div class="usa-field-row">
+                <span class="usa-lbl-lg">Name and address of consignee:</span>
+                <input pInputText formControlName="consigneeName" class="usa-line-input uppercase-text font-bold" placeholder="KAS MART USA INC" />
+            </div>
+            <div class="usa-field-row pl-indent">
+                <textarea pTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="usa-textarea uppercase-text font-bold" placeholder="20610 MANHATTAN PLACE, SUITE #108, TORRANCE, CA 90501"></textarea>
+            </div>
+
+            <!-- ── DESPATCH ── -->
+            <p class="usa-despatch-intro">The above fishery products are to be dispatched</p>
+            <div class="usa-field-row">
+                <span class="usa-lbl">from:</span>
+                <input pInputText formControlName="despatchFrom" class="usa-line-input uppercase-text font-bold" />
+            </div>
+            <div class="usa-field-row">
+                <span class="usa-lbl">to:</span>
+                <input pInputText formControlName="despatchTo" class="usa-line-input uppercase-text font-bold" />
+            </div>
+            <div class="usa-field-row">
+                <input pInputText formControlName="despatchByShip" class="usa-line-input uppercase-text font-bold" placeholder="BY AIR FREIGHT" />
+            </div>
+
+            <!-- ── STAMP & SIGNATURE SECTION ── -->
+            <div class="usa-stamp-sig-section">
+                <div class="usa-stamp-col">
+                    <div class="usa-lbl-bold">Official stamp:</div>
+                    <div class="usa-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                    </div>
+                </div>
+                <div class="usa-sig-col">
+                    <div class="usa-lbl-bold">Signature of Official Inspector:</div>
+                    <div class="usa-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                    </div>
+
+                    <div class="usa-officer-info">
+                        <div class="officer-row">
+                            <span class="officer-label">Name:</span>
+                            <span class="officer-value uppercase-text">{{ form.get('signatoryName')?.value || 'P.I.LAKMINI FERNANDO' }}</span>
+                        </div>
+                        <div class="officer-row">
+                            <span class="officer-label">Designation:</span>
+                            <input pInputText formControlName="designation" class="usa-line-input uppercase-text font-bold print-hide" placeholder="QUALITY CONTROL OFFICER (GRADE II)" />
+                            <span class="officer-value uppercase-text print-show">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span>
+                        </div>
+                        <div class="officer-row" *ngIf="form.get('qualification')?.value">
+                            <span class="officer-value uppercase-text text-2xs">{{ form.get('qualification')?.value }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide mt-3 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+                <div *ngIf="form.controls['signatoryUserId'].invalid && form.controls['signatoryUserId'].touched" class="text-red-500 text-xs mt-1">
+                    Authorized signatory selection and confirmation is required
+                </div>
+            </div>
+
+            <!-- ── BOTTOM FOOTER BAR ── -->
+            <div class="usa-bottom-bar">
+                <div class="usa-bottom-item">
+                    <div class="usa-bottom-labels">
+                        <span>තැ.පෙ.</span><span>த.பெ.ப</span><span>P.O.Box</span>
+                    </div>
+                    <div class="usa-bottom-brace">&#125;</div>
+                    <span class="usa-bottom-val">531</span>
+                </div>
+                <div class="usa-bottom-item">
+                    <div class="usa-bottom-labels">
+                        <span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span>
+                    </div>
+                    <div class="usa-bottom-brace">&#125;</div>
+                    <span class="usa-bottom-val">+94(0)112446183 (2 lines)</span>
+                </div>
+                <div class="usa-bottom-item">
+                    <div class="usa-bottom-labels">
+                        <span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span>
+                    </div>
+                    <div class="usa-bottom-brace">&#125;</div>
+                    <span class="usa-bottom-val">+94(0) 112449170</span>
+                </div>
+            </div>
+
+            <div class="usa-system-note">
+                This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 2: OFFICIAL LETTERHEAD - LIVE ANIMALS (PDF 2, 3, 4)       -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="usa-page letter-page" *ngIf="(form.get('viewMode')?.value || viewMode) === 'live'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="usa-content">
+            <!-- ── TOP LETTERHEAD HEADER ── -->
+            <div class="usa-header">
+                <div class="usa-header-top-row">
+                    <div class="usa-header-spacer"></div>
+                    <div class="usa-logo-row">
+                        <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="usa-logo" />
+                    </div>
+                    <div class="usa-header-qr-slot">
+                        <app-certificate-qr
+                            [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || refNumber || ''"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('itemName')?.value"
+                            [date]="form.get('date')?.value"
+                            [officer]="form.get('signatoryName')?.value"
+                            [destination]="'UNITED STATES OF AMERICA'"
+                            [viewOnly]="viewOnly"
+                            [size]="68">
+                        </app-certificate-qr>
+                    </div>
+                </div>
+                <div class="usa-dept-si">ධීවර හා ජලජ සම්පත් දෙපාර්තමේන්තුව</div>
+                <div class="usa-dept-ta">கடற்றொழில் நீரியல் வளத்துறை திணைக்களம்</div>
+                <div class="usa-dept-en">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+
+                <div class="usa-contact-row">
+                    <span>web site : http://www.fisheriesdept.gov.lk</span>
+                    <span>E - mail : info&#64;fisheriesdept.gov.lk</span>
+                </div>
+
+                <div class="usa-addr-row">
+                    <span>புதிய செயலகம், மாளிகாவத்தை கொழும்பு 10, இலங்கை</span>
+                    <span>නව මහ ලේකම් කාර්යාලය, මාළිගාවත්ත, කොළඹ 10, ශ්‍රී ලංකාව</span>
+                    <span>New Secretariat, Maligawaththa, Colombo 10</span>
+                </div>
+            </div>
+
+            <!-- ── REFERENCE / DATE ROW (3 Bracketed Fields) ── -->
+            <div class="usa-refs-grid">
+                <div class="usa-ref-block">
+                    <div class="usa-ref-labels">
+                        <span>මගේ අංකය</span><span>எனது இல</span><span>My Ref</span>
+                    </div>
+                    <div class="usa-ref-brace">&#125;</div>
+                    <input pInputText formControlName="myRef" class="usa-ref-input uppercase-text font-bold" placeholder="e.g. SX 1691 / TB 5820" [readonly]="!!refNumber || !!certificateRequestId" />
+                </div>
+                <div class="usa-ref-block">
+                    <div class="usa-ref-labels">
+                        <span>ඔබේ අංකය</span><span>உமது இல</span><span>Your Ref</span>
+                    </div>
+                    <div class="usa-ref-brace">&#125;</div>
+                    <input pInputText formControlName="yourRef" class="usa-ref-input font-bold" />
+                </div>
+                <div class="usa-ref-block usa-date-block">
+                    <div class="usa-ref-labels">
+                        <span>දිනය</span><span>திகதி</span><span>Date</span>
+                    </div>
+                    <div class="usa-ref-brace">&#125;</div>
+                    <div class="print-show font-bold text-xs usa-ref-date-print">
+                        {{ form.get('date')?.value ? (form.get('date')?.value | date: 'dd/MM/yyyy') : ' ' }}
+                    </div>
+                    <div class="print-hide flex-1 min-w-0">
+                        <p-datepicker formControlName="date" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" styleClass="usa-datepicker w-full" inputStyleClass="usa-date-input"></p-datepicker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── HEALTH CERTIFICATE TITLE (Clean single heading) ── -->
+            <h2 class="usa-cert-title">HEALTH CERTIFICATE</h2>
+
+            <!-- ── LIVE ANIMALS STATEMENT PREAMBLE ── -->
+            <p class="usa-preamble">
+                This is to certify that the undersigned Official Inspector of the Fishery Products Quality Control Unit of the Department of Fisheries &amp; Aquatic Resources, Colombo, Sri Lanka has examined a sample of <span class="font-bold underline">{{ form.get('liveSampleType')?.value || 'live Crabs' }}</span> today. At the time of examination, this sample of <span class="font-bold underline">{{ form.get('liveSampleType')?.value || 'live Crabs' }}</span> was found healthy and fit for human consumption.
+            </p>
+
+            <div class="print-hide p-2 bg-slate-100 border border-slate-200 rounded mb-2 flex items-center gap-2 text-xs">
+                <span class="font-semibold text-slate-700">Examined Sample Text in Statement:</span>
+                <input pInputText formControlName="liveSampleType" placeholder="e.g. live Crabs / live lobsters / live Oysters / live fish" class="p-inputtext-sm flex-1 font-bold" />
+            </div>
+
+            <!-- ── SUBTITLE ── -->
+            <h3 class="usa-sub-title">{{ form.get('subTitle')?.value || 'Fish and Fishery Products' }}</h3>
+
+            <!-- ── CONSIGNMENT PARTICULARS ── -->
+            <div class="usa-field-row">
+                <span class="usa-lbl">Item:</span>
+                <input pInputText formControlName="itemName" class="usa-line-input uppercase-text font-bold" placeholder="WILD CAUGHT- LIVE MUD CRAB (Scylla serrata)" />
+            </div>
+            <div class="usa-field-row">
+                <span class="usa-lbl">No. of packages:</span>
+                <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="usa-line-input font-bold" />
+            </div>
+            <div class="usa-field-row">
+                <span class="usa-lbl">Net weight:</span>
+                <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="usa-line-input font-bold" />
+            </div>
+
+            <!-- Optional Date of Processing (e.g. for Mud Crabs in PDF 2) -->
+            <div class="usa-field-row" *ngIf="form.get('showDateOfProcessing')?.value || form.get('dateOfProcessing')?.value">
+                <span class="usa-lbl">Date of processing:</span>
+                <input pInputText formControlName="dateOfProcessing" class="usa-line-input font-bold" placeholder="e.g. 20th May 2026" />
+            </div>
+
+            <!-- ── PROCESSING PLANT (Present in PDF 2 & 3, Omitted in PDF 4) ── -->
+            <ng-container *ngIf="form.get('hasProcessingPlant')?.value">
+                <div class="usa-field-row">
+                    <span class="usa-lbl-lg">Name and address of the processing plant:</span>
+                    <input pInputText formControlName="processingPlantName" class="usa-line-input uppercase-text font-bold" placeholder="Plant Name" />
+                </div>
+                <div class="usa-field-row pl-indent">
+                    <textarea pTextarea formControlName="processingPlantAddress" rows="2" [autoResize]="true" class="usa-textarea uppercase-text font-bold" placeholder="Plant Address"></textarea>
+                </div>
+
+                <div class="usa-field-row">
+                    <span class="usa-lbl-lg">Competent Authority Reg. No.:</span>
+                    <input pInputText formControlName="competentAuthorityRegNo" class="usa-line-input uppercase-text font-bold" placeholder="DFAR/FPE/98/..." />
+                </div>
+            </ng-container>
+
+            <!-- ── CONSIGNOR ── -->
+            <div class="usa-field-row">
+                <span class="usa-lbl-lg">Name and address of consignor:</span>
+                <input pInputText formControlName="consignorName" class="usa-line-input uppercase-text font-bold" placeholder="Consignor Name" />
+            </div>
+            <div class="usa-field-row pl-indent">
+                <textarea pTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="usa-textarea uppercase-text font-bold" placeholder="Consignor Address"></textarea>
+            </div>
+
+            <!-- ── CONSIGNEE ── -->
+            <div class="usa-field-row">
+                <span class="usa-lbl-lg">Name and address of consignee:</span>
+                <input pInputText formControlName="consigneeName" class="usa-line-input uppercase-text font-bold" placeholder="Consignee Name" />
+            </div>
+            <div class="usa-field-row pl-indent">
+                <textarea pTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="usa-textarea uppercase-text font-bold" placeholder="Consignee Address"></textarea>
+            </div>
+
+            <!-- ── DESPATCH ── -->
+            <p class="usa-despatch-intro">The above fishery products are to be dispatched</p>
+            <div class="usa-field-row">
+                <span class="usa-lbl">from:</span>
+                <input pInputText formControlName="despatchFrom" class="usa-line-input uppercase-text font-bold" />
+            </div>
+            <div class="usa-field-row">
+                <span class="usa-lbl">to:</span>
+                <input pInputText formControlName="despatchTo" class="usa-line-input uppercase-text font-bold" />
+            </div>
+            <div class="usa-field-row">
+                <input pInputText formControlName="despatchByShip" class="usa-line-input uppercase-text font-bold" placeholder="BY AIR FREIGHT" />
+            </div>
+
+            <!-- ── STAMP & SIGNATURE SECTION ── -->
+            <div class="usa-stamp-sig-section">
+                <div class="usa-stamp-col">
+                    <div class="usa-lbl-bold">Official stamp:</div>
+                    <div class="usa-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                    </div>
+                </div>
+                <div class="usa-sig-col">
+                    <div class="usa-lbl-bold">Signature of Official Inspector:</div>
+                    <div class="usa-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                    </div>
+
+                    <div class="usa-officer-info">
+                        <div class="officer-row">
+                            <span class="officer-label">Name:</span>
+                            <span class="officer-value uppercase-text">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span>
+                        </div>
+                        <div class="officer-row">
+                            <span class="officer-label">Designation:</span>
+                            <input pInputText formControlName="designation" class="usa-line-input uppercase-text font-bold print-hide" placeholder="QUALITY CONTROL OFFICER (GRADE II)" />
+                            <span class="officer-value uppercase-text print-show">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span>
+                        </div>
+                        <div class="officer-row" *ngIf="form.get('qualification')?.value">
+                            <span class="officer-value uppercase-text text-2xs">{{ form.get('qualification')?.value }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide mt-3 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+                <div *ngIf="form.controls['signatoryUserId'].invalid && form.controls['signatoryUserId'].touched" class="text-red-500 text-xs mt-1">
+                    Authorized signatory selection and confirmation is required
+                </div>
+            </div>
+
+            <!-- ── BOTTOM FOOTER BAR ── -->
+            <div class="usa-bottom-bar">
+                <div class="usa-bottom-item">
+                    <div class="usa-bottom-labels">
+                        <span>තැ.පෙ.</span><span>த.பெ.ப</span><span>P.O.Box</span>
+                    </div>
+                    <div class="usa-bottom-brace">&#125;</div>
+                    <span class="usa-bottom-val">531</span>
+                </div>
+                <div class="usa-bottom-item">
+                    <div class="usa-bottom-labels">
+                        <span>පොදු දුරකථනය</span><span>பொது தொலைபேசி</span><span>Gen. Telephone</span>
+                    </div>
+                    <div class="usa-bottom-brace">&#125;</div>
+                    <span class="usa-bottom-val">+94(0)112446183 (2 lines)</span>
+                </div>
+                <div class="usa-bottom-item">
+                    <div class="usa-bottom-labels">
+                        <span>ෆැක්ස්</span><span>தொலைநகல்</span><span>Fax</span>
+                    </div>
+                    <div class="usa-bottom-brace">&#125;</div>
+                    <span class="usa-bottom-val">+94(0) 112449170</span>
+                </div>
+            </div>
+
+            <div class="usa-system-note">
+                This Letter issued via document management and e signature management system of DFAR/ IT division &#64; 2019/20
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 3: MULTI-ITEM ATTACHMENT TABLE                            -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="usa-page attachment-page mt-4" *ngIf="(form.get('viewMode')?.value || viewMode) === 'attachment'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="usa-content">
+            <div class="attachment-header text-center mb-3">
+                <div class="font-bold text-sm uppercase underline">ATTACHMENT TO HEALTH CERTIFICATE</div>
+                <div class="text-xs font-bold text-slate-700 mt-1">
+                    Reference No: <span class="font-mono">{{ form.get('myRef')?.value || form.get('certificateNumber')?.value || refNumber || '________________' }}</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-2 print-hide">
+                <span class="text-xs font-bold text-slate-700 uppercase">Product Breakdown Attachment:</span>
+                <p-button label="Add Product Item" icon="pi pi-plus" size="small" (onClick)="addProductAttachment()" *ngIf="!viewOnly"></p-button>
+            </div>
+
+            <table class="attachment-grid w-full border-collapse border border-black text-xs">
+                <thead>
+                    <tr class="bg-slate-100">
+                        <th class="border border-black p-1.5 text-left font-bold">#</th>
+                        <th class="border border-black p-1.5 text-left font-bold">Product / Species</th>
+                        <th class="border border-black p-1.5 text-left font-bold">Lot Identifier / Batch</th>
+                        <th class="border border-black p-1.5 text-left font-bold">Type of Packaging</th>
+                        <th class="border border-black p-1.5 text-center font-bold">No. of Boxes</th>
+                        <th class="border border-black p-1.5 text-right font-bold">Net Weight (KG)</th>
+                        <th class="border border-black p-1.5 text-center font-bold print-hide" *ngIf="!viewOnly">Action</th>
+                    </tr>
+                </thead>
+                <tbody formArrayName="productsAttachment">
+                    <tr *ngFor="let item of productsAttachment.controls; let i = index" [formGroupName]="i">
+                        <td class="border border-black p-1.5 text-center font-bold">{{ i + 1 }}</td>
+                        <td class="border border-black p-1">
+                            <input pInputText formControlName="product" class="w-full font-bold uppercase-text text-xs p-1" placeholder="Product name" />
+                        </td>
+                        <td class="border border-black p-1">
+                            <input pInputText formControlName="lotIdentifier" class="w-full font-bold uppercase-text text-xs p-1" placeholder="Lot ID" />
+                        </td>
+                        <td class="border border-black p-1">
+                            <input pInputText formControlName="typeOfPackaging" class="w-full font-bold uppercase-text text-xs p-1" placeholder="e.g. Master Carton" />
+                        </td>
+                        <td class="border border-black p-1 text-center">
+                            <input pInputText type="number" formControlName="numberOfBoxes" (keypress)="onlyDigits($event)" inputmode="numeric" class="w-full text-center font-bold text-xs p-1" placeholder="0" />
+                        </td>
+                        <td class="border border-black p-1 text-right">
+                            <input pInputText formControlName="numberOfKgs" (keypress)="onlyDecimals($event)" inputmode="decimal" class="w-full text-right font-bold text-xs p-1" placeholder="0.00" />
+                        </td>
+                        <td class="border border-black p-1 text-center print-hide" *ngIf="!viewOnly">
+                            <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small" (onClick)="removeProductAttachment(i)"></p-button>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="bg-slate-100 font-bold">
+                        <td class="border border-black p-1.5 text-right" colspan="4">TOTALS:</td>
+                        <td class="border border-black p-1.5 text-center">{{ getTotalAttachmentBoxes() }}</td>
+                        <td class="border border-black p-1.5 text-right">{{ getTotalAttachmentKgs() | number: '1.2-2' }} KG</td>
+                        <td class="border border-black p-1.5 print-hide" *ngIf="!viewOnly"></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Attachment Signatory & Stamp -->
+            <div class="grid grid-cols-2 gap-4 mt-6 pt-2 border-t border-slate-300">
+                <div class="usa-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                </div>
+
+                <div class="text-xs space-y-1">
+                    <div class="font-bold">Signature of Official Inspector:</div>
+                    <div class="usa-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                        <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                    </div>
+
+                    <div><span class="font-bold">Name:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'P.I.LAKMINI FERNANDO' }}</span></div>
+                    <div><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value || 'QUALITY CONTROL OFFICER (GRADE II)' }}</span></div>
+                    <div class="font-bold">Date: {{ form.get('date')?.value | date: 'dd/MM/yyyy' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- FORMAT 4: GENERIC MODEL OFFICIAL CERTIFICATE (BOXED FORMAT)      -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div class="usa-page generic-page mt-4" *ngIf="(form.get('viewMode')?.value || viewMode) === 'generic'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="usa-content">
+            <div class="generic-header text-center mb-3">
+                <div class="font-bold text-sm uppercase underline">MODEL OFFICIAL CERTIFICATE FOR ENTRY INTO UNITED STATES OF AMERICA OF FISHERY PRODUCTS</div>
+                <div class="text-2xs text-slate-600 mt-0.5">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES, SRI LANKA</div>
+            </div>
+
+            <table class="usa-grid w-full border-collapse border border-black text-xs">
+                <colgroup>
+                    <col style="width: 50%" />
+                    <col style="width: 25%" />
+                    <col style="width: 25%" />
+                </colgroup>
+                <tr>
+                    <td class="p-2 border border-black align-top" rowspan="2">
+                        <span class="font-bold block">1. Consignor / Exporter:</span>
+                        <input pInputText formControlName="consignorName" class="w-full font-bold uppercase-text mb-1" placeholder="Consignor Name" />
+                        <textarea pTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="w-full font-bold uppercase-text" placeholder="Consignor Address"></textarea>
+                    </td>
+                    <td class="p-2 border border-black align-top" colspan="2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1">
+                                <span class="font-bold block">2. Certificate Reference No:</span>
+                                <input pInputText formControlName="myRef" class="w-full font-bold uppercase-text" placeholder="Certificate No" [readonly]="!!refNumber || !!certificateRequestId" />
+                            </div>
+                            <div class="shrink-0">
+                                <app-certificate-qr
+                                    [refNumber]="form.get('certificateNumber')?.value || form.get('myRef')?.value || refNumber || ''"
+                                    [certificateRequestId]="certificateRequestId"
+                                    [consignor]="form.get('consignorName')?.value"
+                                    [consignee]="form.get('consigneeName')?.value"
+                                    [item]="form.get('itemName')?.value"
+                                    [date]="form.get('date')?.value"
+                                    [officer]="form.get('signatoryName')?.value"
+                                    [destination]="'UNITED STATES OF AMERICA'"
+                                    [viewOnly]="viewOnly"
+                                    [size]="52">
+                                </app-certificate-qr>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top" colspan="2">
+                        <span class="font-bold block">3. Competent Authority:</span>
+                        <input pInputText formControlName="competentAuthority" class="w-full font-bold uppercase-text text-2xs" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">4. Consignee / Importer:</span>
+                        <input pInputText formControlName="consigneeName" class="w-full font-bold uppercase-text mb-1" placeholder="Consignee Name" />
+                        <textarea pTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="w-full font-bold uppercase-text" placeholder="Consignee Address"></textarea>
+                    </td>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">5. Country of Origin:</span>
+                        <input pInputText formControlName="countryOfOrigin" class="w-full font-bold uppercase-text" />
+                        <span class="text-3xs text-slate-500 font-mono">ISO: {{ form.get('countryOfOriginISO')?.value }}</span>
+                    </td>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">6. Country of Destination:</span>
+                        <input pInputText formControlName="countryOfDestination" class="w-full font-bold uppercase-text" />
+                        <span class="text-3xs text-slate-500 font-mono">ISO: {{ form.get('countryOfDestinationISO')?.value }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top">
+                        <span class="font-bold block">7. Place of Loading / Dispatch:</span>
+                        <input pInputText formControlName="despatchFrom" class="w-full font-bold uppercase-text" />
+                    </td>
+                    <td class="p-2 border border-black align-top" colspan="2">
+                        <span class="font-bold block">8. Means of Transport:</span>
+                        <input pInputText formControlName="despatchByShip" class="w-full font-bold uppercase-text" placeholder="BY AIR FREIGHT / BY SEA FREIGHT" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top" colspan="3">
+                        <span class="font-bold block">9. Identification of Fishery Products:</span>
+                        <div class="grid grid-cols-3 gap-2 mt-1">
+                            <div>
+                                <span class="text-3xs font-semibold block">Description / Commodity:</span>
+                                <input pInputText formControlName="itemName" class="w-full font-bold uppercase-text" />
+                            </div>
+                            <div>
+                                <span class="text-3xs font-semibold block">No. of Packages:</span>
+                                <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="w-full font-bold" />
+                            </div>
+                            <div>
+                                <span class="text-3xs font-semibold block">Net Weight:</span>
+                                <input pInputText formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="w-full font-bold" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <span class="text-3xs font-semibold block">Processing Plant Name &amp; Address:</span>
+                                <input pInputText formControlName="processingPlantName" class="w-full font-bold uppercase-text mb-1" placeholder="Plant Name" />
+                                <textarea pTextarea formControlName="processingPlantAddress" rows="1" [autoResize]="true" class="w-full font-bold uppercase-text" placeholder="Plant Address"></textarea>
+                            </div>
+                            <div>
+                                <span class="text-3xs font-semibold block">Competent Authority Reg. No.:</span>
+                                <input pInputText formControlName="competentAuthorityRegNo" class="w-full font-bold uppercase-text" />
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-2 border border-black align-top" colspan="3">
+                        <span class="font-bold block mb-1">10. Official Attestation &amp; Signatory Block:</span>
+                        <p class="text-2xs text-justify leading-normal mb-2">
+                            The undersigned official inspector certifies that the fish and fishery products described above were handled, prepared, processed, frozen, packaged and stored under hygienic conditions in compliance with official export regulations.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <div>
+                                <div class="font-bold text-3xs uppercase mb-1">Official Stamp:</div>
+                                <div class="usa-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                </div>
+                            </div>
+                            <div class="text-xs space-y-1">
+                                <div><span class="font-bold">Official Inspector:</span> <span class="font-bold uppercase">{{ form.get('signatoryName')?.value || 'OFFICIAL INSPECTOR' }}</span></div>
+                                <div><span class="font-bold">Signature:</span></div>
+                                <div class="usa-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                </div>
+                                <div><span class="font-bold">Designation:</span> <span class="font-bold uppercase">{{ form.get('designation')?.value }}</span></div>
+                                <div *ngIf="form.get('qualification')?.value" class="text-3xs">{{ form.get('qualification')?.value }}</div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="font-bold">Date:</span>
+                                    <span class="font-bold">{{ form.get('date')?.value | date: 'dd/MM/yyyy' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Signatory Selector in Screen Mode -->
+            <div class="signatory-selection-box print-hide mt-3 p-2 bg-slate-50 border border-slate-200 rounded" *ngIf="!isCompany && !viewOnly">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-700">Select Authorized Signatory:</span>
+                    <div class="flex-1">
+                        <p-select
+                            [options]="userOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="signatoryUserId"
+                            placeholder="Choose Signatory Officer"
+                            styleClass="signatory-select"
+                            [style]="{ width: '100%' }"
+                            (onChange)="onSignatoryChange($event.value)"
+                        ></p-select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Bottom Bar -->
+    <div class="actions-bottom-bar print-hide flex items-center justify-between gap-3 mt-6 p-3 bg-white border border-slate-200 rounded-lg shadow-xs w-full max-w-5xl">
+        <p-button *ngIf="!isEmbedded" label="Back to Forms Queue" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="goBack()"></p-button>
+        <div class="flex items-center gap-2 ml-auto">
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="print()"
+                [disabled]="form.get('signatoryUserId')?.invalid"
+                tooltipPosition="top"
+            ></p-button>
+            <p-button label="Submit &amp; Save" icon="pi pi-check" (onClick)="onSubmit()" *ngIf="!viewOnly" severity="primary" [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"></p-button>
+        </div>
+    </div>
+
+    <app-confirm-password-dialog
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

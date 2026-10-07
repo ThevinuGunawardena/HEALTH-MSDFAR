@@ -1,19 +1,12 @@
 <?php
 
-$dbPassword = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : (function() {
-    try {
-        new PDO('mysql:host=localhost;dbname=dfar_ms', 'root', '12345');
-        return '12345';
-    } catch (\Throwable $e) {
-        return '';
-    }
-})();
+$dbPassword = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '12345';
 
 return [
     'components' => [
         'db' => [
             'class' => 'yii\db\Connection',
-            'dsn' => 'mysql:host=localhost;dbname=dfar_ms',
+            'dsn' => 'mysql:host=127.0.0.1;dbname=dfar_ms',
             'username' => 'root',
             'password' => $dbPassword,
             'charset' => 'utf8',

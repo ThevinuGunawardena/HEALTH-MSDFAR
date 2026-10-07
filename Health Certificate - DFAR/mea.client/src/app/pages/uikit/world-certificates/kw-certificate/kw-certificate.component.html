@@ -1,0 +1,356 @@
+<div class="kw-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">Kuwait (KW)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('certificateReferenceNo')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateReferenceNo')?.value || refNumber }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Radio Selection (print-hide) -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Mode:</span>
+        <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700">
+            <p-radiobutton name="viewMode" value="single" [ngModel]="'single'" [ngModelOptions]="{ standalone: true }" inputId="vm_kw_single"></p-radiobutton>
+            <span>VETERINARY CERTIFICATE TO KUWAIT</span>
+        </label>
+    </div>
+
+    <!-- ════ PAGE 1 ════ -->
+        <div class="kw-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="kw-content">
+                <!-- Header -->
+                <div class="kw-header">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="kw-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="kw-logo" /></div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateReferenceNo')?.value || refNumber || ''"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorName')?.value"
+                                [consignee]="form.get('consigneeName')?.value"
+                                [date]="form.get('dateOfIssue')?.value"
+                                [destination]="'Kuwait'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="kw-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="kw-addr">P.O. Box 531, Secretariat, Maligawatta, Colombo 10, Sri Lanka</div>
+                    <div class="kw-addr">Telephone: +94-2449170, 2472186, 2472192</div>
+                    <div class="kw-addr">Fax: +94-11-2424086, 2449170</div>
+                    <div class="kw-addr">E-mail: depfish&#64;fisheries.gov.lk</div>
+                </div>
+
+                <!-- Country / Cert title bar -->
+                <div class="kw-title-bar">
+                    <span class="kw-title-l font-bold">COUNTRY:SRI LANKA</span>
+                    <span class="kw-title-r font-bold">VETERINARY CERTIFICATE TO KUWAIT</span>
+                </div>
+                <div class="kw-original-bar font-bold">ORIGINAL</div>
+                <div class="kw-cert-health-bar font-bold">CERTIFICATE OF HEALTH</div>
+
+                <!-- ONE outer bordered table — all fields -->
+                <table class="kw-grid">
+                    <!-- Subtitle row -->
+                    <tr>
+                        <td class="kw-td kw-subtitle-td font-bold" colspan="4">
+                            Health Certificate for Export of Products<br />
+                            Of Aquatic Animal Origin
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.1 Consignor | 1.2 Cert Ref / Place / Date ── -->
+                    <tr>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-fnum font-bold">1.1 &nbsp; Consignor (Exporter)</div>
+                            <div class="kw-sub-row font-bold"><span class="kw-lbl-min">Name :</span><input pInputText formControlName="consignorName" class="kw-inp font-bold" /></div>
+                            <div class="kw-sub-row font-bold kw-mt2"><span class="kw-lbl-min">Address :</span><textarea pInputTextarea rows="2" [autoResize]="true" formControlName="consignorAddress" class="kw-inp font-bold"></textarea></div>
+                        </td>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-sub-row font-bold"><span class="kw-fnum">1.2 &nbsp; Certificate Reference No. :</span><input pInputText formControlName="certificateReferenceNo" class="kw-inp font-bold" [readonly]="!!refNumber || !!certificateRequestId" /></div>
+                            <div class="kw-sub-row font-bold kw-mt2"><span class="kw-lbl-min">Place of Issue :</span><textarea pInputTextarea rows="2" [autoResize]="true" formControlName="placeOfIssue" class="kw-inp font-bold"></textarea></div>
+                            <div class="kw-sub-row font-bold kw-mt2"><span class="kw-lbl-min">Date of Issue :</span><p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body" styleClass="p-inputtext-xs"></p-datepicker></div>
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.4 Consignee | 1.3 Competent Authority ── -->
+                    <tr>
+                        <td class="kw-td kw-col-half" colspan="2" rowspan="3">
+                            <div class="kw-fnum font-bold">1.4 &nbsp; Consignee (Importer)</div>
+                            <div class="kw-sub-row font-bold"><span class="kw-lbl-min">Name :</span><input pInputText formControlName="consigneeName" class="kw-inp font-bold" /></div>
+                            <div class="kw-sub-row font-bold kw-mt2"><span class="kw-lbl-min">Address :</span><textarea pInputTextarea rows="3" [autoResize]="true" formControlName="consigneeAddress" class="kw-inp font-bold"></textarea></div>
+                        </td>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-fnum font-bold">1.3 &nbsp; Competent / Certifying Authority: DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                            <div class="kw-sub-row font-bold kw-mt1"><span class="kw-lbl-min">Address :</span><textarea pInputTextarea formControlName="competentAuthorityAddress" rows="2" [autoResize]="true" class="kw-inp font-bold"></textarea></div>
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.5 Country of Origin | ISO ── -->
+                    <tr>
+                        <td class="kw-td kw-col-q">
+                            <div class="kw-fnum font-bold">1.5 &nbsp; Country of Origin</div>
+                            <input pInputText formControlName="countryOfOrigin" class="kw-inp font-bold kw-mt1" />
+                        </td>
+                        <td class="kw-td kw-col-q">
+                            <div class="kw-fnum font-bold">ISO</div>
+                            <input pInputText formControlName="countryOfOriginIso" class="kw-inp font-bold kw-mt1" />
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.6 Country of Destination | ISO CODE ── -->
+                    <tr>
+                        <td class="kw-td kw-col-q">
+                            <div class="kw-fnum font-bold">1.6 &nbsp; Country of<br />Destination</div>
+                            <input pInputText formControlName="countryOfDestination" class="kw-inp font-bold kw-mt1" />
+                        </td>
+                        <td class="kw-td kw-col-q">
+                            <div class="kw-fnum font-bold">ISO CODE</div>
+                            <input pInputText formControlName="countryOfDestinationIso" class="kw-inp font-bold kw-mt1" />
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.7 Producer | 1.8 Packing Est ── -->
+                    <tr>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-fnum font-bold">1.7 &nbsp; Producer.</div>
+                            <div class="kw-sub-row font-bold"><span class="kw-lbl-min">Name :</span><input pInputText formControlName="producerName" class="kw-inp font-bold" /></div>
+                            <div class="kw-sub-row font-bold kw-mt2"><span class="kw-lbl-min">Address:</span><textarea pInputTextarea rows="2" [autoResize]="true" formControlName="producerAddress" class="kw-inp font-bold"></textarea></div>
+                        </td>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-fnum font-bold">1.8 &nbsp; Packing Est. (if applicable)</div>
+                            <div class="kw-sub-row font-bold"><span class="kw-lbl-min">Name :</span><input pInputText formControlName="packingEstName" class="kw-inp font-bold" /></div>
+                            <div class="kw-sub-row font-bold kw-mt2"><span class="kw-lbl-min">Address:</span><textarea pInputTextarea rows="2" [autoResize]="true" formControlName="packingEstAddress" class="kw-inp font-bold"></textarea></div>
+                            <div class="kw-sub-row font-bold kw-mt2"><input pInputText formControlName="packingEstApprovalNo" class="kw-inp font-bold" /></div>
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.9 Border of Entry | 1.10 Border of Loading ── -->
+                    <tr>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-sub-row font-bold"><span class="kw-fnum">1.9 &nbsp; Border of Entry / Country of Destination :</span><input pInputText formControlName="borderOfEntry" class="kw-inp font-bold" /></div>
+                        </td>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-sub-row font-bold"><span class="kw-fnum">1.10 &nbsp; Border of Loading / Country of :</span><input pInputText formControlName="borderLoadingPlace" class="kw-inp font-bold" /></div>
+                            <div class="kw-sub-row font-bold kw-mt1"><span class="kw-lbl-min">Dispatch : :</span><input pInputText formControlName="borderLoadingCountry" class="kw-inp font-bold" /></div>
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.11 Transport | 1.12 Vehicle ID + 1.13 Temperature ── -->
+                    <tr>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-fnum font-bold">1.11 &nbsp; Means of transport / conveyance</div>
+                            <div class="flex items-center gap-6 kw-mt2">
+                                <label class="kw-cbl font-bold"><span class="mr-2">By Air</span><p-checkbox formControlName="transportByAir" binary="true"></p-checkbox></label>
+                                <label class="kw-cbl font-bold"><span class="mr-2">By Sea</span><p-checkbox formControlName="transportBySea" binary="true"></p-checkbox></label>
+                            </div>
+                        </td>
+                        <td class="kw-td kw-col-half" colspan="2">
+                            <div class="kw-sub-row font-bold"><span class="kw-fnum">1.12 &nbsp; Vehicle Identification No. :</span><input pInputText formControlName="vehicleIdentificationNo" class="kw-inp font-bold" /></div>
+                            <div class="kw-fnum font-bold kw-mt2">1.13 &nbsp; Temperature Of Food Product</div>
+                            <div class="flex items-center gap-6 kw-mt1">
+                                <label class="kw-cbl font-bold"><span class="mr-2">Chilled</span><p-checkbox formControlName="tempChilled" binary="true"></p-checkbox></label>
+                                <label class="kw-cbl font-bold"><span class="mr-2">Frozen</span><p-checkbox formControlName="tempFrozen" binary="true"></p-checkbox></label>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- ── 1.14 Commodities Certified for ── -->
+                    <tr>
+                        <td class="kw-td kw-commodities-td" colspan="4">
+                            <div class="flex items-center gap-6 font-bold text-xs">
+                                <span>1.14 &nbsp; Commodities Certified for:</span>
+                                <label class="kw-cbl"><span class="mr-1">Other</span><p-checkbox formControlName="commoditiesOther" binary="true"></p-checkbox></label>
+                                <label class="kw-cbl"><span class="mr-1">After Further Process</span><p-checkbox formControlName="commoditiesAfterFurtherProcess" binary="true"></p-checkbox></label>
+                                <label class="kw-cbl"><span class="mr-1">Human Consumption Directly:</span><p-checkbox formControlName="commoditiesHumanConsumption" binary="true"></p-checkbox></label>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="kw-footer">
+                <span class="kw-footer-brand"></span>
+                <span class="kw-footer-page"></span>
+            </div>
+        </div>
+
+        <!-- ════ PAGE 2 ════ -->
+        <div class="kw-page last-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="kw-content">
+                <!-- 1.15 Product table -->
+                <div class="font-bold text-xs mb-1">1.15 &nbsp; Identification of Food Products</div>
+                <div class="kw-prod-table-wrap">
+                    <table class="kw-prod-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 22%;">Name &amp; Description<br />Of Food</th>
+                                <th style="width: 10%;">HS Codes</th>
+                                <th style="width: 14%;">Treatment Derived<br />From (Domestic flow,<br />other birds)</th>
+                                <th style="width: 9%;">Brand<br />Name</th>
+                                <th style="width: 9%;">Productio<br />n<br />Date</th>
+                                <th style="width: 9%;">Expiry<br />Date</th>
+                                <th style="width: 7%;">No<br />Packages</th>
+                                <th style="width: 9%;">Batch/Lot<br />No</th>
+                                <th style="width: 9%;">Total<br />Weight</th>
+                                <th class="print-hide" *ngIf="!viewOnly" style="width: 25px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="products">
+                            <tr *ngFor="let product of products.controls; let i = index" [formGroupName]="i">
+                                <td><textarea pInputTextarea formControlName="nameDescription" rows="2" [autoResize]="true" class="kw-cinp font-bold"></textarea></td>
+                                <td><input pInputText formControlName="hsCodes" class="kw-cinp" /></td>
+                                <td><input pInputText formControlName="treatmentDerivedFrom" class="kw-cinp" /></td>
+                                <td><input pInputText formControlName="brandName" class="kw-cinp" /></td>
+                                <td><p-datepicker formControlName="productionDate" class="kw-cinp" appendTo="body" [showIcon]="false"></p-datepicker></td>
+                                <td><p-datepicker formControlName="expiryDate" class="kw-cinp" appendTo="body" [showIcon]="false"></p-datepicker></td>
+                                <td><input pInputText type="number" formControlName="numberPackages" (keypress)="onlyDigits($event)" inputmode="numeric" class="kw-cinp text-right font-bold" /></td>
+                                <td><input pInputText formControlName="batchLotNo" class="kw-cinp" /></td>
+                                <td><input pInputText type="number" step="0.01" formControlName="totalWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="kw-cinp text-right font-bold" /></td>
+                                <td class="print-hide text-center" *ngIf="!viewOnly">
+                                    <button pButton icon="pi pi-trash" class="p-button-danger p-button-xs p-button-text" (click)="removeProduct(i)" *ngIf="products.length > 1"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="kw-total-row">
+                                <td class="font-bold">Total</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class="font-bold text-right">{{ calculateTotalPackages() }}</td>
+                                <td></td>
+                                <td class="font-bold text-right">{{ calculateTotalWeight() | number: '1.2-2' }}</td>
+                                <td *ngIf="!viewOnly" class="print-hide"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="print-hide kw-mt2 flex justify-end" *ngIf="!viewOnly">
+                    <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addProduct()"></p-button>
+                </div>
+
+                <!-- 1.1 Health Attestation -->
+                <div class="border border-black mt-2 p-2 text-xs leading-tight">
+                    <div class="font-bold mb-1">1.1 &nbsp; Health Attestation</div>
+                    <div class="space-y-1 text-justify">
+                        <div>The products of aquatic animal origin are in conformity with the existing GCC requirements.</div>
+                        <div>The products of aquatic animal origin are derived from non toxic species that do not cause any sign of disease.</div>
+                        <div>Where aquatic animals are grown in farms or aquaculture production areas, hygiene requirements are under the control of the Competent Authority.</div>
+                        <div>The products of aquatic animal origin shall meet OIE criteria which related to fitness for human consumption.</div>
+                        <div>The aquatic animals have been fed from feed that is produces in compliance with GMP &amp; HACCP principles or its equivalent and is free from any physical, chemical or biological contaminants that are prohibited internationally.</div>
+                        <div>The cultured aquatic animals have not been fed with feed containing animal protein excluding fish meal from different species than the cultured one.</div>
+                    </div>
+
+                    <div class="font-bold mt-2">Responsible body for signature</div>
+
+                    <div class="flex justify-between items-start mt-2">
+                        <div style="width: 42%;">
+                            <div class="font-bold mb-1">Official Stamp :</div>
+                            <div class="kw-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                            </div>
+                            <div class="font-bold text-xs mt-2">{{ form.get('signatureDate')?.value | date: 'dd/MM/yyyy' }}</div>
+                        </div>
+                        <div style="width: 55%;" class="text-left">
+                            <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2 text-left">
+                                <p-select
+                                    [options]="userOptions"
+                                    formControlName="signatoryUserId"
+                                    placeholder="Select Authorized Officer"
+                                    (onChange)="onSignatoryChange($event.value)"
+                                    styleClass="w-full text-xs"
+                                    appendTo="body"
+                                    class="w-full"
+                                ></p-select>
+                            </div>
+
+                            <div class="kw-sig-box mb-2" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                            </div>
+
+                            <div class="font-bold text-xs">Name: {{ form.get('signatoryName')?.value }}</div>
+                            <div class="font-bold text-xs whitespace-pre-line">{{ form.get('qualification')?.value }}</div>
+                            <div class="font-bold text-xs mt-3 text-center">(Aquatic Animal Health Code – 2012 – OIE)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="kw-footer">
+                <span class="kw-footer-brand"></span>
+                <span class="kw-footer-page"></span>
+            </div>
+        </div>
+
+        <!-- Bottom Actions (Submit at bottom) -->
+        <div class="kw-actions print-hide flex items-center justify-between gap-3 mt-6 mb-8 w-full max-w-[210mm] mx-auto p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs">
+            <p-button
+                *ngIf="!isEmbedded"
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex items-center gap-3">
+                <p-button
+                    *ngIf="isAdmin"
+                    label="Print / Export PDF"
+                    [outlined]="true"
+                    (onClick)="printCertificate()"
+                    icon="pi pi-print"
+                    size="small"
+                ></p-button>
+                <p-button
+                    *ngIf="!viewOnly"
+                    label="Save Certificate"
+                    icon="pi pi-save"
+                    severity="primary"
+                    size="small"
+                    [loading]="isSaving"
+                    [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"
+                    (onClick)="onSubmit()"
+                ></p-button>
+            </div>
+        </div>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

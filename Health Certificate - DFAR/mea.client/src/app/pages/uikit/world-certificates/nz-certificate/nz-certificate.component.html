@@ -1,0 +1,899 @@
+<div class="nz-container">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Navigation & Certificate Presets Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">New Zealand (5-Page DFAR Form with Strikeout Controls)</span>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <span *ngIf="form.get('certificateRefNumber')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('certificateRefNumber')?.value || refNumber }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Load NZ Sample (TB 9530)"
+                icon="pi pi-file"
+                severity="secondary"
+                size="small"
+                [outlined]="true"
+                (onClick)="loadSampleNewZealand()"
+                pTooltip="Load official New Zealand Certificate sample (TB 9530 - Ceylon Fresh Seafood)"
+            ></p-button>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="print()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Interactive Clause Strike-through Presets Toolbar (print-hide) -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide w-full max-w-[210mm]">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold text-slate-700 uppercase mr-1"><i class="pi pi-sliders-h mr-1"></i>Clause Presets:</span>
+            <button
+                type="button"
+                (click)="applyFishPreset()"
+                [ngClass]="activePreset === 'fish' ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                class="px-2.5 py-1 text-xs rounded border border-slate-300 transition-colors cursor-pointer"
+            >
+                🐟 Fish Products (Clauses 3 &amp; 6 Active)
+            </button>
+            <button
+                type="button"
+                (click)="applyMolluscPreset()"
+                [ngClass]="activePreset === 'mollusc' ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                class="px-2.5 py-1 text-xs rounded border border-slate-300 transition-colors cursor-pointer"
+            >
+                🦑 Mollusc / Squid (Clause 13 Active)
+            </button>
+            <button
+                type="button"
+                (click)="clearAllCrossouts()"
+                class="px-2.5 py-1 text-xs rounded border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+                🔄 Uncross All
+            </button>
+            <button
+                type="button"
+                (click)="crossOutAllClauses()"
+                class="px-2.5 py-1 text-xs rounded border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+                ❌ Cross All
+            </button>
+        </div>
+        <div class="text-2xs text-slate-500 italic">
+            Tip: Check the red <strong>[x] Cross Out</strong> box beside any clause or subclause on Pages 3–5 to strike it through.
+        </div>
+    </div>
+
+    <form [formGroup]="form" class="w-full flex flex-col items-center">
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 1 (1/5) ════ -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="nz-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="nz-content">
+                <!-- Header -->
+                <div class="nz-header">
+                    <div class="cert-header-top-row mb-1">
+                        <div class="cert-header-spacer"></div>
+                        <div class="nz-logo-row"><img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" class="nz-logo" /></div>
+                        <div class="cert-header-qr-slot">
+                            <app-certificate-qr
+                                [refNumber]="form.get('certificateRefNumber')?.value || refNumber || ''"
+                                [certificateRequestId]="certificateRequestId"
+                                [consignor]="form.get('consignorName')?.value"
+                                [consignee]="form.get('consigneeName')?.value"
+                                [destination]="'New Zealand'"
+                                [viewOnly]="viewOnly"
+                                [size]="68"
+                            ></app-certificate-qr>
+                        </div>
+                    </div>
+                    <div class="nz-dept">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</div>
+                    <div class="nz-addr">P.O.Box 531, New Secretariat, Maligawatta, Colombo 10, Sri Lanka.</div>
+                    <div class="nz-addr">Telephone: +94 -11- 2449170, 2472186, 2472192</div>
+                    <div class="nz-addr">Fax: +94 -11- 2449170, 2424086,</div>
+                    <div class="nz-addr">E-mail: dgdfar&#64;gmail.com</div>
+                    <h1 class="nz-title">Health Certificate for Export of Aquatic Animal Products to New Zealand</h1>
+                </div>
+
+                <!-- Outer Box with Side Label -->
+                <div class="nz-outer-box">
+                    <div class="nz-side-label">Part 1: Details of dispatched consignment</div>
+                    <div class="nz-main-table-container">
+                        <table class="nz-table nz-table-p1">
+                            <colgroup>
+                                <col style="width: 60%;" />
+                                <col style="width: 40%;" />
+                            </colgroup>
+
+                            <!-- Row 1: Consignor & Certificate Ref -->
+                            <tr>
+                                <td class="nz-td">
+                                    <div class="nz-box-header">1. Consignor (Exporter)</div>
+                                    <div class="nz-field-row">
+                                        <span class="nz-field-label">Name:</span>
+                                        <input pInputText formControlName="consignorName" class="nz-line-input font-bold" />
+                                    </div>
+                                    <div class="nz-field-col mt-1">
+                                        <span class="nz-field-label">Address:</span>
+                                        <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="nz-line-input"></textarea>
+                                    </div>
+                                </td>
+                                <td class="nz-td">
+                                    <div>
+                                        <div class="nz-box-header">2. Certificate reference number</div>
+                                        <div class="nz-ref-display">{{ form.get('certificateRefNumber')?.value || refNumber || '' }}</div>
+                                        <input pInputText formControlName="certificateRefNumber" class="nz-line-input print-hide mt-1 text-sm font-bold" placeholder="Ref Number" [readonly]="!!refNumber || !!certificateRequestId" />
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Row 2: Consignee -->
+                            <tr>
+                                <td class="nz-td" colspan="2">
+                                    <div class="nz-box-header">3. Consignee (Importer)</div>
+                                    <div class="nz-field-row mt-1">
+                                        <span class="nz-field-label">Name:</span>
+                                        <input pInputText formControlName="consigneeName" class="nz-line-input font-bold" />
+                                    </div>
+                                    <div class="nz-field-col mt-1">
+                                        <span class="nz-field-label">Address:</span>
+                                        <textarea pInputTextarea formControlName="consigneeAddress" rows="2" [autoResize]="true" class="nz-line-input"></textarea>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Row 3: Country of Origin -->
+                            <tr>
+                                <td class="nz-td" style="width: 45%;">
+                                    <span class="nz-box-inline-header">4. Country of origin:</span>
+                                </td>
+                                <td class="nz-td" style="width: 55%;">
+                                    <input pInputText formControlName="countryOfOrigin" class="nz-line-input font-bold" />
+                                </td>
+                            </tr>
+
+                            <!-- Row 4: Country of Destination -->
+                            <tr>
+                                <td class="nz-td">
+                                    <span class="nz-box-inline-header">5. Country of destination:</span>
+                                </td>
+                                <td class="nz-td">
+                                    <input pInputText formControlName="countryOfDestination" class="nz-line-input font-bold" />
+                                </td>
+                            </tr>
+
+                            <!-- Row 5: Processor -->
+                            <tr>
+                                <td class="nz-td" colspan="2">
+                                    <div class="nz-box-header">6. Processor</div>
+                                    <div class="nz-field-row mt-1">
+                                        <span class="nz-field-label">Name:</span>
+                                        <input pInputText formControlName="processorName" class="nz-line-input font-bold" />
+                                    </div>
+                                    <div class="nz-field-col mt-1">
+                                        <span class="nz-field-label">Address:</span>
+                                        <textarea pInputTextarea formControlName="processorAddress" rows="2" [autoResize]="true" class="nz-line-input"></textarea>
+                                    </div>
+                                    <div class="nz-field-row mt-2">
+                                        <span class="nz-field-label">Establishment Number:</span>
+                                        <input pInputText formControlName="processorEstablishmentNumber" class="nz-line-input font-bold" style="max-width: 250px;" />
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Row 6: Port dispatched & Date of departure -->
+                            <tr>
+                                <td class="nz-td">
+                                    <div class="nz-box-header">7. Port dispatched from</div>
+                                    <textarea pInputTextarea formControlName="portDispatchedFrom" rows="2" [autoResize]="true" class="nz-line-input font-bold mt-1"></textarea>
+                                </td>
+                                <td class="nz-td">
+                                    <div class="nz-box-header">8. Date of departure</div>
+                                    <div class="print-show font-bold mt-1 text-sm">
+                                        {{ form.get('dateOfDeparture')?.value | date: 'dd/MM/yyyy' }}
+                                    </div>
+                                    <div class="print-hide mt-1">
+                                        <p-datepicker formControlName="dateOfDeparture" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" styleClass="w-full"></p-datepicker>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="nz-page-footer">
+        <span class="nz-page-number">1/5</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 2 (2/5) ════ -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="nz-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="nz-content">
+                <div class="nz-outer-box">
+                    <div class="nz-side-label">Part 1: Details of dispatched consignment</div>
+                    <div class="nz-main-table-container">
+                        <table class="nz-table nz-table-p2">
+                            <colgroup>
+                                <col style="width: 25%;" />
+                                <col style="width: 35%;" />
+                                <col style="width: 20%;" />
+                                <col style="width: 20%;" />
+                            </colgroup>
+
+                            <!-- Top Header Row -->
+                            <tr>
+                                <td class="nz-td font-bold bg-slate-50">Competent Authority</td>
+                                <td class="nz-td">
+                                    <textarea pInputTextarea formControlName="competentAuthority" rows="3" [autoResize]="true" class="nz-line-input font-bold text-xs"></textarea>
+                                </td>
+                                <td class="nz-td font-bold bg-slate-50">Certificate reference number</td>
+                                <td class="nz-td font-bold text-center">
+                                    {{ form.get('certificateRefNumber')?.value || refNumber || '' }}
+                                </td>
+                            </tr>
+
+                            <!-- Transport & Temperature -->
+                            <tr>
+                                <td class="nz-td">
+                                    <div class="nz-box-header">9. Means of transport</div>
+                                </td>
+                                <td class="nz-td">
+                                    <div class="flex flex-col gap-2 py-1">
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                                            <p-checkbox formControlName="transportAeroplan" [binary]="true"></p-checkbox>
+                                            <span>Aeroplan</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold">
+                                            <p-checkbox formControlName="transportShip" [binary]="true"></p-checkbox>
+                                            <span>Ship</span>
+                                        </label>
+                                    </div>
+                                </td>
+                                <td class="nz-td">
+                                    <div class="nz-box-header">10. Temperature of commodities for transport</div>
+                                </td>
+                                <td class="nz-td">
+                                    <input pInputText formControlName="temperatureOfCommodities" class="nz-line-input font-bold text-center" />
+                                </td>
+                            </tr>
+
+                            <!-- Products Table Header (11 to 15) -->
+                            <tr>
+                                <td class="nz-td p-0" colspan="4">
+                                    <table class="nz-product-grid">
+                                        <colgroup>
+                                            <col style="width: 25%;" />
+                                            <col style="width: 30%;" />
+                                            <col style="width: 15%;" />
+                                            <col style="width: 15%;" />
+                                            <col style="width: 15%;" />
+                                            <col class="print-hide" style="width: 35px;" *ngIf="!viewOnly" />
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th>11. Product name</th>
+                                                <th>12. Name of aquatic animal species in the product if required</th>
+                                                <th>13. Number of packages</th>
+                                                <th>14. Net weight (Kg)</th>
+                                                <th>15. HS Code</th>
+                                                <th class="print-hide" *ngIf="!viewOnly"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody formArrayName="products">
+                                            <tr *ngFor="let prod of products.controls; let i = index" [formGroupName]="i">
+                                                <td>
+                                                    <textarea pInputTextarea formControlName="productName" rows="2" [autoResize]="true" class="nz-cell-input font-bold uppercase"></textarea>
+                                                    <div class="text-2xs text-slate-500 mt-1">
+                                                        (Date of production: {{ prod.get('productionDate')?.value | date: 'dd/MM/yyyy' }})
+                                                    </div>
+                                                    <div class="print-hide mt-1">
+                                                        <p-datepicker formControlName="productionDate" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" placeholder="Prod Date" styleClass="w-full text-xs"></p-datepicker>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <textarea pInputTextarea formControlName="aquaticAnimalSpecies" rows="2" [autoResize]="true" class="nz-cell-input italic"></textarea>
+                                                </td>
+                                                <td>
+                                                    <input pInputText formControlName="numberOfPackages" (keypress)="onlyDigits($event)" inputmode="numeric" type="number" class="nz-cell-input text-center" />
+                                                </td>
+                                                <td>
+                                                    <input pInputText formControlName="netWeightKg" (keypress)="onlyDecimals($event)" inputmode="decimal" type="number" step="0.01" class="nz-cell-input text-right font-medium" />
+                                                </td>
+                                                <td>
+                                                    <input pInputText formControlName="hsCode" class="nz-cell-input text-center font-bold" />
+                                                </td>
+                                                <td class="print-hide text-center" *ngIf="!viewOnly">
+                                                    <button pButton icon="pi pi-trash" class="p-button-danger p-button-text p-button-xs" (click)="removeProduct(i)"></button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="nz-total-row">
+                                                <td colspan="2" class="font-bold text-center">TOTAL</td>
+                                                <td class="font-bold text-center">{{ calculateTotalPackages() }}</td>
+                                                <td class="font-bold text-right">{{ calculateTotalWeight() | number: '1.2-2' }}</td>
+                                                <td></td>
+                                                <td class="print-hide" *ngIf="!viewOnly"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    <div class="print-hide p-2 bg-slate-50 border-t border-slate-200" *ngIf="!viewOnly">
+                                        <button pButton label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (click)="addProduct()"></button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Container & Official Seal -->
+                            <tr>
+                                <td class="nz-td font-bold" colspan="2">
+                                    <div class="nz-box-header">16. Container number:</div>
+                                    <input pInputText formControlName="containerNumber" class="nz-line-input font-bold mt-1" />
+                                </td>
+                                <td class="nz-td font-bold" colspan="2">
+                                    <div class="nz-box-header">17. Official seal number:</div>
+                                    <input pInputText formControlName="officialSealNumber" class="nz-line-input font-bold mt-1" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="nz-page-footer">
+        <span class="nz-page-number">2/5</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 3 (3/5) — HEALTH INFORMATION (CLAUSES 1 TO 6) ════════ -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="nz-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="nz-content">
+                <div class="nz-outer-box">
+                    <div class="nz-side-label">Part 2: Health Information</div>
+                    <div class="nz-main-table-container">
+                        <!-- Top Header Row -->
+                        <table class="nz-table nz-table-p3-hdr">
+                            <colgroup>
+                                <col style="width: 25%;" />
+                                <col style="width: 35%;" />
+                                <col style="width: 20%;" />
+                                <col style="width: 20%;" />
+                            </colgroup>
+                            <tr>
+                                <td class="nz-td font-bold bg-slate-50">Competent Authority</td>
+                                <td class="nz-td font-bold text-xs">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</td>
+                                <td class="nz-td font-bold bg-slate-50">Certificate reference number</td>
+                                <td class="nz-td font-bold text-center">{{ form.get('certificateRefNumber')?.value || refNumber || '' }}</td>
+                            </tr>
+                        </table>
+
+                        <!-- Health Information Clauses 1 to 6 -->
+                        <div class="nz-health-content">
+                            <p class="nz-preamble font-bold">
+                                I, the undersigned Certifying Official, certify that the products described below satisfy the following requirements:
+                            </p>
+
+                            <div class="nz-section-hdr font-bold mt-1">GENERAL REQUIREMENTS</div>
+                            <p class="nz-clause">
+                                <strong>(1)</strong> The product was processed at premises that follow Good Manufacturing Practice (GMP) and Hazard Analysis and Critical Control Point (HACCP) programmes to the satisfaction of the Competent Authority of the exporting country.
+                            </p>
+                            <p class="nz-clause">
+                                <strong>(2)</strong> The product was processed at premises that are approved for export of aquatic animal products by the Competent Authority of the exporting country.
+                            </p>
+
+                            <div class="nz-section-hdr font-bold mt-1">SPECIFIC REQUIREMENTS</div>
+
+                            <!-- Clause (3) -->
+                            <div class="nz-clause-wrapper relative">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c3 }">
+                                        <input type="checkbox" [checked]="deletions.c3" (change)="toggleDeletion('c3', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (3)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c3 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (3) Non-salmonid fish products commercially packaged for direct retail sale
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 1 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is derived from a fish species that does not belong to the family Salmonidae.</p>
+                                    <p class="nz-clause-sub">(b) Each package has a net content of:</p>
+                                    <p class="nz-clause-sub italic">(Delete the option not applicable to the consignment)</p>
+                                    
+                                    <div class="relative pl-6 flex items-center justify-between">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c3_b_i }">(i) Not more than 1.0 kg or 1.0 litre; or</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c3_b_i }">
+                                            <input type="checkbox" [checked]="deletions.c3_b_i" (change)="toggleDeletion('c3_b_i', $event)" />
+                                            <span>Cross out (i)</span>
+                                        </label>
+                                    </div>
+                                    <div class="relative pl-6 flex items-center justify-between mt-0.5">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c3_b_ii }">(ii) More than 1.0 kg or 1.0 litre [Note: The importer must have an import permit for this option.]</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c3_b_ii }">
+                                            <input type="checkbox" [checked]="deletions.c3_b_ii" (change)="toggleDeletion('c3_b_ii', $event)" />
+                                            <span>Cross out (ii)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clause (4) -->
+                            <div class="nz-clause-wrapper relative mt-1">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c4 }">
+                                        <input type="checkbox" [checked]="deletions.c4" (change)="toggleDeletion('c4', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (4)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c4 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (4) Heat-treated non-salmonid fish products
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 2 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is derived from a fish species that does not belong to the family Salmonidae.</p>
+                                    <p class="nz-clause-sub">(b) The product has been heat treated to one of the following time/temperature parameters:</p>
+                                    <p class="nz-clause-sub italic">(Delete the option not applicable to the consignment)</p>
+                                    <div class="relative pl-6 flex items-center justify-between">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c4_b_i }">(i) Heat treated to a minimum core temperature of 85°C for a period of not less than 15 minutes; or</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c4_b_i }">
+                                            <input type="checkbox" [checked]="deletions.c4_b_i" (change)="toggleDeletion('c4_b_i', $event)" />
+                                            <span>Cross out (i)</span>
+                                        </label>
+                                    </div>
+                                    <div class="relative pl-6 flex items-center justify-between mt-0.5">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c4_b_ii }">(ii) Heat treated to a minimum core temperature of 90°C for a period of not less than 10 minutes.</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c4_b_ii }">
+                                            <input type="checkbox" [checked]="deletions.c4_b_ii" (change)="toggleDeletion('c4_b_ii', $event)" />
+                                            <span>Cross out (ii)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clause (5) -->
+                            <div class="nz-clause-wrapper relative mt-1">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c5 }">
+                                        <input type="checkbox" [checked]="deletions.c5" (change)="toggleDeletion('c5', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (5)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c5 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (5) Dried non-salmonid fish products
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 3 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is derived from a fish species that does not belong to the family Salmonidae.</p>
+                                    <p class="nz-clause-sub">(b) The product is eviscerated fish.</p>
+                                    <p class="nz-clause-sub">(c) The product was mechanically dried at a minimum core temperature of 100°C for a period of not less than 30 minutes.</p>
+                                </div>
+                            </div>
+
+                            <!-- Clause (6) -->
+                            <div class="nz-clause-wrapper relative mt-1">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c6 }">
+                                        <input type="checkbox" [checked]="deletions.c6" (change)="toggleDeletion('c6', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (6)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c6 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (6) Non-salmonid fish skin-off fish fillets
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 4 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is derived from a fish species that does not belong to the family Salmonidae, and</p>
+                                    <p class="nz-clause-sub italic">(Delete the freezing option not applicable to the consignment)</p>
+                                    <div class="relative pl-6 flex items-center justify-between">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c6_a_i }">(i) Has been frozen to a minimum core temperature of -20°C for a period of not less than 168 hours prior to transport; and/or</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c6_a_i }">
+                                            <input type="checkbox" [checked]="deletions.c6_a_i" (change)="toggleDeletion('c6_a_i', $event)" />
+                                            <span>Cross out (i)</span>
+                                        </label>
+                                    </div>
+                                    <div class="relative pl-6 flex items-center justify-between mt-0.5">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c6_a_ii }">(ii) Will be frozen to a minimum core temperature of -20°C for a period of not less than 168 hours during transport (printouts or data logs of temperature records of the refrigerated container must be submitted to MPI for biosecurity clearance).</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c6_a_ii }">
+                                            <input type="checkbox" [checked]="deletions.c6_a_ii" (change)="toggleDeletion('c6_a_ii', $event)" />
+                                            <span>Cross out (ii)</span>
+                                        </label>
+                                    </div>
+                                    <div class="relative pl-3 flex items-center justify-between mt-0.5">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c6_b }">(b) The product is derived from ____________ that belongs to the family ______________ , which is listed in Schedule 7 of New Zealand’s Import Health Standard: Aquatic Animal Products</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c6_b }">
+                                            <input type="checkbox" [checked]="deletions.c6_b" (change)="toggleDeletion('c6_b', $event)" />
+                                            <span>Cross out (b)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nz-page-footer">
+        <span class="nz-page-number">3/5</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 4 (4/5) — HEALTH INFORMATION (CLAUSES 7 TO 10) ═══════ -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="nz-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="nz-content">
+                <div class="nz-outer-box">
+                    <div class="nz-side-label">Part 2: Health Information</div>
+                    <div class="nz-main-table-container">
+                        <!-- Top Header Row -->
+                        <table class="nz-table nz-table-p3-hdr">
+                            <colgroup>
+                                <col style="width: 25%;" />
+                                <col style="width: 35%;" />
+                                <col style="width: 20%;" />
+                                <col style="width: 20%;" />
+                            </colgroup>
+                            <tr>
+                                <td class="nz-td font-bold bg-slate-50">Competent Authority</td>
+                                <td class="nz-td font-bold text-xs">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</td>
+                                <td class="nz-td font-bold bg-slate-50">Certificate reference number</td>
+                                <td class="nz-td font-bold text-center">{{ form.get('certificateRefNumber')?.value || refNumber || '' }}</td>
+                            </tr>
+                        </table>
+
+                        <!-- Clauses 7 to 10 -->
+                        <div class="nz-health-content">
+                            <!-- Clause (7) -->
+                            <div class="nz-clause-wrapper relative">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c7 }">
+                                        <input type="checkbox" [checked]="deletions.c7" (change)="toggleDeletion('c7', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (7)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c7 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (7) Low-risk, non-salmonid fish products
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 5 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub" [ngClass]="{ 'strikethrough-text': deletions.c7_a }">(a) The product is derived from ______________ &lt;write the full scientific name of the fish species&gt; that belongs to the family ______________ &lt;write the name of the fish family&gt;, which is listed in Schedule 4 of New Zealand’s Import Health Standard: Aquatic Animal Products.</p>
+                                    <p class="nz-clause-sub" [ngClass]="{ 'strikethrough-text': deletions.c7_b }">(b) The product is derived from ______________ &lt;write the full scientific name of the fish species&gt;, a fish species listed in Schedule 5 of New Zealand’s Import Health Standard: Aquatic Animal Products, and</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c7_b_i }">(i) Has been frozen to a minimum core temperature of -18°C for a period of not less than 168 hours prior to transport; or</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c7_b_ii }">(ii) Will be frozen to a minimum core temperature of -18°C for a period of not less than 168 hours during transport (printouts or data logs of temperature records of the refrigerated container must be submitted to MPI for biosecurity clearance).</p>
+                                    <p class="nz-clause-sub" [ngClass]="{ 'strikethrough-text': deletions.c7_c }">(c) The product is derived from ______________ &lt;write the full scientific name of the fish species&gt;, a fish species listed in Schedule 6 of New Zealand’s Import Health Standard: Aquatic Animal Products; and</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c7_c_i }">(i) Has been frozen to a minimum core temperature of -18°C for a period of not less than four months prior to transport; and/or</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c7_c_ii }">(ii) Will be frozen to a minimum core temperature of -18°C for a period of not less than four months during transport (printouts or data logs of temperature records of the refrigerated container must be submitted to MPI for biosecurity clearance)</p>
+                                </div>
+                            </div>
+
+                            <!-- Clause (8) -->
+                            <div class="nz-clause-wrapper relative mt-2">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c8 }">
+                                        <input type="checkbox" [checked]="deletions.c8" (change)="toggleDeletion('c8', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (8)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c8 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (8) Non-salmonid fish for further processing in New Zealand
+                                    </p>
+                                    <p class="nz-clause-sub">[Note: The importer must have an import permit for this option.]</p>
+                                    <p class="nz-clause-sub italic">(Delete product category 6 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The fish species does not belong to the family Salmonidae</p>
+                                    <p class="nz-clause-sub">(b) The consignment comprises of _______________ &lt;write the full scientific name of the fish species&gt;</p>
+                                </div>
+                            </div>
+
+                            <!-- Clause (9) -->
+                            <div class="nz-clause-wrapper relative mt-2">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c9 }">
+                                        <input type="checkbox" [checked]="deletions.c9" (change)="toggleDeletion('c9', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (9)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c9 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (9) Crustacean products commercially packaged for direct retail sale
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 7 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) Each package has a net content of:</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c9_a_i }">(i) Not more than 1.0 kg or 1.0 litre; or</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c9_a_ii }">(ii) More than 1.0 kg or 1.0 litre [Note: The importer must have an import permit for this option.]</p>
+                                </div>
+                            </div>
+
+                            <!-- Clause (10) -->
+                            <div class="nz-clause-wrapper relative mt-2">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c10 }">
+                                        <input type="checkbox" [checked]="deletions.c10" (change)="toggleDeletion('c10', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (10)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c10 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (10) Heat-treated crustacean products
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 8 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is derived from _____________ &lt;write the full scientific name of the crustacean species&gt;, which is listed in Schedule 8 of New Zealand’s Import Health Standard: Aquatic Animal Products, and</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c10_a_i }">(i) Was heat treated to a minimum core temperature of 100°C for period of not less than one minute; or</p>
+                                    <p class="nz-clause-sub-sub" [ngClass]="{ 'strikethrough-text': deletions.c10_a_ii }">(ii) Was heat treated to a minimum core temperature of 90°C for a period of not less than 10 minutes.</p>
+                                    <p class="nz-clause-sub" [ngClass]="{ 'strikethrough-text': deletions.c10_b }">(b) The product is derived from ___________&lt;write the full scientific name of the crustacean species&gt;, which is NOT listed in Schedule 8 of New Zealand’s Import Health Standard: Aquatic Animal Products, and was heat-treated until the protein in the crustacean meat is coagulated.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nz-page-footer">
+        <span class="nz-page-number">4/5</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ════ PAGE 5 (5/5) — HEALTH INFORMATION (CLAUSES 11 TO 14) ══════ -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="nz-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="nz-content">
+                <div class="nz-outer-box">
+                    <div class="nz-side-label">Part 2: Health Information</div>
+                    <div class="nz-main-table-container">
+                        <!-- Top Header Row -->
+                        <table class="nz-table nz-table-p3-hdr">
+                            <colgroup>
+                                <col style="width: 25%;" />
+                                <col style="width: 35%;" />
+                                <col style="width: 20%;" />
+                                <col style="width: 20%;" />
+                            </colgroup>
+                            <tr>
+                                <td class="nz-td font-bold bg-slate-50">Competent Authority</td>
+                                <td class="nz-td font-bold text-xs">DEPARTMENT OF FISHERIES &amp; AQUATIC RESOURCES</td>
+                                <td class="nz-td font-bold bg-slate-50">Certificate reference number</td>
+                                <td class="nz-td font-bold text-center">{{ form.get('certificateRefNumber')?.value || refNumber || '' }}</td>
+                            </tr>
+                        </table>
+
+                        <!-- Clauses 11 to 14 -->
+                        <div class="nz-health-content">
+                            <!-- Clause (11) -->
+                            <div class="nz-clause-wrapper relative">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c11 }">
+                                        <input type="checkbox" [checked]="deletions.c11" (change)="toggleDeletion('c11', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (11)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c11 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (11) Frozen crustacean products
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 9 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub" [ngClass]="{ 'strikethrough-text': deletions.c11_a }">(a) The product is derived from &lt;write the full scientific name of the crustacean species&gt;, which is listed in Schedule 8 of New Zealand’s Import Health Standard: Aquatic Animal Products and has been frozen to a minimum core temperature of -20°C for a period of not less than 72 hours.</p>
+                                    <p class="nz-clause-sub" [ngClass]="{ 'strikethrough-text': deletions.c11_b }">(b) The product is derived from &lt;write the full scientific name of the crustacean species&gt;, which is NOT listed in Schedule 8 of New Zealand’s Import Health Standard: Aquatic Animal Products and has been frozen to a minimum core temperature of -18°C.</p>
+                                </div>
+                            </div>
+
+                            <!-- Clause (12) -->
+                            <div class="nz-clause-wrapper relative mt-1">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c12 }">
+                                        <input type="checkbox" [checked]="deletions.c12" (change)="toggleDeletion('c12', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (12)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c12 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (12) Haliotis spp. (abalone) products
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 10 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is meat derived only from Haliotis spp. (abalone).</p>
+                                    <p class="nz-clause-sub">(b) The shells of the Haliotis spp. (abalone) have been removed completely.</p>
+                                    <p class="nz-clause-sub">(c) The Haliotis spp. (abalone) meat has been heat-treated to a minimum core temperature of 55°C for a period of not less than 10 minutes</p>
+                                </div>
+                            </div>
+
+                            <!-- Clause (13) -->
+                            <div class="nz-clause-wrapper relative mt-1">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c13 }">
+                                        <input type="checkbox" [checked]="deletions.c13" (change)="toggleDeletion('c13', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (13)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c13 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (13) Mollusc products other than Haliotis spp. (abalone)
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 11 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is derived from a mollusc species that is not a Haliotis spp. (abalone)</p>
+                                    <p class="nz-clause-sub">(b) The mollusc meat is cooked, dried, or frozen.</p>
+                                    <p class="nz-clause-sub">(c) The shells (delete the option not applicable to the consignment):</p>
+                                    <div class="relative pl-6 flex items-center justify-between">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c13_c_i }">(i) Have been removed completely and not included in the consignment; or</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c13_c_i }">
+                                            <input type="checkbox" [checked]="deletions.c13_c_i" (change)="toggleDeletion('c13_c_i', $event)" />
+                                            <span>Cross out (i)</span>
+                                        </label>
+                                    </div>
+                                    <div class="relative pl-6 flex items-center justify-between mt-0.5">
+                                        <span [ngClass]="{ 'strikethrough-text': deletions.c13_c_ii }">(ii) Have been cleaned and sanitised, and the mollusc meat put back on to the cleaned and sanitised shells. [Note: The importer must have an import permit for this option.]</span>
+                                        <label class="print-hide nz-sub-crossout-btn" [ngClass]="{ 'active': deletions.c13_c_ii }">
+                                            <input type="checkbox" [checked]="deletions.c13_c_ii" (change)="toggleDeletion('c13_c_ii', $event)" />
+                                            <span>Cross out (ii)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clause (14) -->
+                            <div class="nz-clause-wrapper relative mt-1">
+                                <div class="print-hide absolute right-1 top-0 flex items-center gap-1 z-10">
+                                    <label class="nz-crossout-btn" [ngClass]="{ 'active': deletions.c14 }">
+                                        <input type="checkbox" [checked]="deletions.c14" (change)="toggleDeletion('c14', $event)" class="cursor-pointer" />
+                                        <span>Cross out Clause (14)</span>
+                                    </label>
+                                </div>
+                                <div [ngClass]="{ 'strikethrough-clause': deletions.c14 }" class="nz-clause-block">
+                                    <p class="nz-clause font-bold">
+                                        (14) Aquatic animal meal / aquatic animal oil
+                                    </p>
+                                    <p class="nz-clause-sub italic">(Delete product category 12 if it is not applicable to the consignment)</p>
+                                    <p class="nz-clause-sub">(a) The product is derived only from aquatic animal species.</p>
+                                    <p class="nz-clause-sub">(b) The product was heat treated at a minimum core temperature of 80°C for a period of no less than 20 minutes.</p>
+                                </div>
+                            </div>
+
+                            <!-- Attestation Footer Note -->
+                            <div class="nz-attest-box mt-2">
+                                <p class="italic font-medium text-xs">Note: Certifying official signature and stamp to be applied to all pages</p>
+                                <p class="font-medium text-xs mt-0.5">For the purpose of onward certification, I certify that the products have been processed for human consumption</p>
+                            </div>
+
+                            <!-- Certifying Official Block -->
+                            <div class="nz-signatory-block mt-1">
+                                <div class="font-bold text-xs mb-1">Certifying Official</div>
+                                <table class="nz-sig-table">
+                                    <colgroup>
+                                        <col style="width: 50%;" />
+                                        <col style="width: 50%;" />
+                                    </colgroup>
+                                    <tr>
+                                        <td class="nz-sig-td flex flex-col justify-between" style="min-height: 100px;">
+                                            <div>
+                                                <div class="nz-field-row">
+                                                    <span class="nz-field-label">Name:</span>
+                                                    <span class="font-bold text-xs uppercase">{{ form.get('signatoryName')?.value || 'I.M.W.D. ABEYSOORIYA' }}</span>
+                                                </div>
+                                                <div class="nz-field-col mt-1">
+                                                    <span class="nz-field-label">Designation:</span>
+                                                    <span class="text-xs uppercase font-medium whitespace-pre-line">{{ form.get('qualification')?.value || 'QUALITY CONTROL OFFICER (GRADE II)\nB.Sc.(BIOLOGY),M.Sc.(FOOD SCI & TEC)(SRI LANKA)\nPgDBM(BUSINESS MANAGEMENT)(SRI LANKA).' }}</span>
+                                                </div>
+                                                <div class="print-hide mt-1" *ngIf="shouldShowSignatorySelect">
+                                                    <p-select
+                                                        [options]="userOptions"
+                                                        optionLabel="label"
+                                                        optionValue="value"
+                                                        formControlName="signatoryUserId"
+                                                        placeholder="Select Signatory Officer"
+                                                        styleClass="signatory-select w-full text-xs"
+                                                        appendTo="body"
+                                                        (onChange)="onSignatoryChange($event.value)"
+                                                    ></p-select>
+                                                </div>
+                                            </div>
+
+                                            <!-- Official Stamp Space -->
+                                            <div class="mt-2">
+                                                <span class="nz-field-label">Official Stamp:</span>
+                                                <div class="nz-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="nz-sig-td flex flex-col justify-between" style="min-height: 100px;">
+                                            <div>
+                                                <span class="nz-field-label">Signature</span>
+                                                <!-- Signature Space -->
+                                                <div class="nz-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                                    <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
+                                                </div>
+                                            </div>
+                                            <div class="nz-field-row border-t border-slate-300 pt-1 mt-1">
+                                                <span class="nz-field-label">Date</span>
+                                                <span class="font-bold text-xs">{{ form.get('signatureDate')?.value | date: 'dd/MM/yyyy' }}</span>
+                                                <div class="print-hide ml-2">
+                                                    <p-datepicker formControlName="signatureDate" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" styleClass="text-xs"></p-datepicker>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nz-page-footer">
+        <span class="nz-page-number">5/5</span>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <!-- ════ BOTTOM ACTION BAR (PRINT HIDE) ════ -->
+        <!-- ════════════════════════════════════════════════════════════════ -->
+        <div class="nz-actions print-hide flex items-center justify-between gap-3 w-full max-w-[210mm] mt-6 mb-12 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+            <p-button
+                *ngIf="!isEmbedded"
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex items-center gap-3">
+                <p-button
+                    *ngIf="isAdmin"
+                    label="Print / Export PDF"
+                    icon="pi pi-print"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="print()"
+                ></p-button>
+                <p-button
+                    label="Save Certificate"
+                    icon="pi pi-check"
+                    severity="primary"
+                    [loading]="isSaving"
+                    [disabled]="!isCompany && form.get('signatoryUserId')?.invalid"
+                    (onClick)="onSubmit()"
+                    *ngIf="!viewOnly"
+                ></p-button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Signatory PIN Security Confirmation Dialog -->
+    <app-confirm-password-dialog
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</div>

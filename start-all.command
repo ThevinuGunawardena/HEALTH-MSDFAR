@@ -78,27 +78,36 @@ done
 echo "🏛️  [3/4] Launching MSDFAR Main System..."
 osascript <<EOF
 tell application "Terminal"
-    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Backend (http://localhost:8080) ===' && php -S 0.0.0.0:8080 -t backend/web backend/web/router.php"
+    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Backend (http://localhost:8080) ===' && php -d max_execution_time=600 -d memory_limit=1024M -d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.max_accelerated_files=20000 -d realpath_cache_size=16M -d realpath_cache_ttl=3600 -S 0.0.0.0:8080 -t backend/web backend/web/router.php"
 end tell
 EOF
 
 osascript <<EOF
 tell application "Terminal"
-    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Frontend (http://localhost:8081) ===' && php -S 0.0.0.0:8081 -t frontend/web frontend/web/router.php"
+    do script "cd \"$ROOT_DIR/MSDFAR/dfar_ms\" && echo '=== [MSDFAR] Starting Frontend (http://localhost:8081) ===' && php -d max_execution_time=600 -d memory_limit=1024M -d opcache.enable=1 -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.max_accelerated_files=20000 -d realpath_cache_size=16M -d realpath_cache_ttl=3600 -S 0.0.0.0:8081 -t frontend/web frontend/web/router.php"
 end tell
 EOF
 
 # 4. Launch HEALTH (.NET Backend API + Angular Client)
-echo "🩺 [4/4] Launching HEALTH Certificate Subdomain..."
+if [ -d "$ROOT_DIR/Health Certificate - DFAR/MEA.Server" ]; then
+    HEALTH_DIR="$ROOT_DIR/Health Certificate - DFAR"
+elif [ -d "$ROOT_DIR/HEALTH/MEA.Server" ]; then
+    HEALTH_DIR="$ROOT_DIR/HEALTH"
+else
+    echo "❌ Error: Could not locate Health Certificate project directory."
+    exit 1
+fi
+
+echo "🩺 [4/4] Launching HEALTH Certificate Subdomain ($HEALTH_DIR)..."
 osascript <<EOF
 tell application "Terminal"
-    do script "cd \"$ROOT_DIR/HEALTH/MEA.Server\" && echo '=== [HEALTH] Starting .NET Backend API (https://localhost:7239) ===' && dotnet run --launch-profile https"
+    do script "cd \"$HEALTH_DIR/MEA.Server\" && echo '=== [HEALTH] Starting .NET Backend API (https://localhost:7239) ===' && dotnet run --launch-profile https"
 end tell
 EOF
 
 osascript <<EOF
 tell application "Terminal"
-    do script "cd \"$ROOT_DIR/HEALTH/mea.client\" && echo '=== [HEALTH] Starting Angular Frontend (https://localhost:57549) ===' && npm start"
+    do script "cd \"$HEALTH_DIR/mea.client\" && echo '=== [HEALTH] Starting Angular Frontend (https://localhost:57549) ===' && npm start"
 end tell
 EOF
 

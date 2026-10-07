@@ -1,0 +1,1124 @@
+<form class="ch-container" [formGroup]="form">
+    <p-toast class="print-hide"></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBack()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Health Certificate</span>
+                <span class="text-sm font-semibold text-slate-800">People's Republic of China (CH)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span *ngIf="form.get('refNumber')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('refNumber')?.value }}</span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="!viewOnly"
+                label="Save Certificate"
+                icon="pi pi-save"
+                severity="primary"
+                size="small"
+                [loading]="isSaving"
+                (onClick)="onSubmit()"
+            ></p-button>
+            <p-button
+                *ngIf="isAdmin"
+                label="Print / Export PDF"
+                icon="pi pi-print"
+                severity="secondary"
+                size="small"
+                (onClick)="printCertificate()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- 3 Radio Buttons Selection (print-hide) -->
+    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-white border border-slate-200 rounded-lg shadow-2xs print-hide" *ngIf="!isSubmitted && !viewOnly">
+        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Select Mode:</span>
+        <div class="flex items-center">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="attachment" inputId="vm_attachment"></p-radiobutton>
+            <label for="vm_attachment" class="leading-none ml-2 font-medium text-xs cursor-pointer">FISH AND FISHERY PRODUCTS (ATTACHMENT)</label>
+        </div>
+        <div class="flex items-center">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="single" inputId="vm_single"></p-radiobutton>
+            <label for="vm_single" class="leading-none ml-2 font-medium text-xs cursor-pointer">FISH AND FISHERY PRODUCTS</label>
+        </div>
+        <div class="flex items-center">
+            <p-radiobutton name="viewMode" formControlName="viewMode" value="live"></p-radiobutton>
+            <label for="vm_live" class="leading-none ml-2 font-medium text-xs cursor-pointer">LIVE AQUATIC ANIMALS</label>
+        </div>
+    </div>
+
+    <!-- Active Submitted Format Pill in View Mode -->
+    <div class="flex items-center gap-2 mb-4 p-2.5 bg-blue-50/80 border border-blue-200 rounded-lg print-hide text-xs" *ngIf="isSubmitted || viewOnly">
+        <span class="font-bold text-blue-950 uppercase tracking-wide">Submitted Certificate Format:</span>
+        <span class="px-2.5 py-1 rounded font-semibold bg-blue-600 text-white uppercase text-2xs shadow-2xs">
+            {{ (form.get('viewMode')?.value || viewMode) === 'live' ? 'LIVE AQUATIC ANIMALS' : ((form.get('viewMode')?.value || viewMode) === 'single' ? 'FISH AND FISHERY PRODUCTS (SINGLE)' : 'FISH AND FISHERY PRODUCTS (ATTACHMENT)') }}
+        </span>
+    </div>
+        <!-- ========================================================================= -->
+        <!-- OPTION 1: FISH AND FISHERY PRODUCTS (WITH ATTACHMENT - 4 PAGES)           -->
+        <!-- ========================================================================= -->
+        <ng-container *ngIf="viewMode === 'attachment'">
+            <!-- ═══ PAGE 1/4 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <div class="ch-top-meta flex items-center justify-between">
+                        <div class="ch-ref-block">
+                            <span class="ch-ref-label">证书号 Num.Ref:</span>
+                            <input pInputText formControlName="refNumber" class="ch-ref-input" placeholder="TC 4643" />
+                        </div>
+                        <app-certificate-qr
+                            [refNumber]="form.get('refNumber')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('commodityName')?.value"
+                            [destination]="'CHINA'"
+                            [viewOnly]="viewOnly"
+                            [size]="46">
+                        </app-certificate-qr>
+                        <div class="ch-page-num-top">
+        1/4</div>
+                    </div>
+
+                    <div class="ch-header-titles">
+                        <div class="ch-title-cn">斯里兰卡民主社会主义共和国向中华人民共和国出口水产品卫生证书</div>
+                        <div class="ch-title-en-main">Health Certificate</div>
+                        <div class="ch-title-en-sub">For fish and fishery products intended for export from the Democratic Socialist Republic of Sri Lanka to the People’s Republic of China</div>
+                    </div>
+
+                    <table class="ch-grid-table">
+                        <!-- Section I -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">I.主管当局信息 &nbsp; Information of competent authority</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">输出国 Country of export::</td>
+                            <td class="ch-col-val"><input pInputText formControlName="countryOfExport" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产国 Country of production<sup>1</sup>:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="countryOfProduction" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">主管当局 Competent authority:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="competentAuthority" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">出证部门 Department of certificate insurance:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="departmentOfIssuance" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section II -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">II.水产品信息 &nbsp; Information of the fishery products</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">商品名称 Commodity name:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="commodityName" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">学 &nbsp; 名 Scientific name:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="scientificName" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">包装数量 Number of packages:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="numberOfPackages" class="ch-table-input" placeholder="SEE THE ATTACHMENT" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">净 &nbsp; 重 Net Weight:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="netWeight" class="ch-table-input" placeholder="SEE THE ATTACHMENT" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产日期 Production Date:</td>
+                            <td class="ch-col-val"><p-datepicker formControlName="productionDate" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产批号 Lot No. of products:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="lotNumber" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section III -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">III.水产品来源 &nbsp; Origin of the fishery products</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">原料原产国 Country of origin of raw materials:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="originRawMaterialsCountry" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">加工方式 Processing Type<sup>2</sup>:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="processingType" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产方式 Production Mode</td>
+                            <td class="ch-col-val"><input pInputText formControlName="productionMode" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">养殖 Aquacultured:</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="aq_att_yes" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="aquacultured" [value]="true" formControlName="aquacultured" inputId="aq_att_yes"></p-radiobutton>
+                                        <span>是 Yes</span>
+                                        <span class="ch-print-sq">{{ form.get('aquacultured')?.value === true ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="aq_att_no" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="aquacultured" [value]="false" formControlName="aquacultured" inputId="aq_att_no"></p-radiobutton>
+                                        <span>否 No</span>
+                                        <span class="ch-print-sq">{{ form.get('aquacultured')?.value === false ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">野生捕捞 Wild Caught :</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="wc_att_yes" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="wildCaughtBool" [value]="true" formControlName="wildCaughtBool" inputId="wc_att_yes"></p-radiobutton>
+                                        <span>是 Yes</span>
+                                        <span class="ch-print-sq">{{ form.get('wildCaughtBool')?.value === true ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="wc_att_no" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="wildCaughtBool" [value]="false" formControlName="wildCaughtBool" inputId="wc_att_no"></p-radiobutton>
+                                        <span>否 No</span>
+                                        <span class="ch-print-sq">{{ form.get('wildCaughtBool')?.value === false ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产水域性质 Character of productive water area:</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="pwa_att_fresh" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="productiveWaterArea" value="fresh_water" formControlName="productiveWaterArea" inputId="pwa_att_fresh"></p-radiobutton>
+                                        <span>淡水 Fresh water</span>
+                                        <span class="ch-print-sq">{{ form.get('productiveWaterArea')?.value === 'fresh_water' ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="pwa_att_sea" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="productiveWaterArea" value="sea_water" formControlName="productiveWaterArea" inputId="pwa_att_sea"></p-radiobutton>
+                                        <span>海水 Sea water</span>
+                                        <span class="ch-print-sq">{{ form.get('productiveWaterArea')?.value === 'sea_water' ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">养殖区域 Aquaculture area:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="aquacultureArea" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">捕捞区域 Catch area:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="catchArea" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section IV -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">IV.企业信息 &nbsp; Information of the establishments<sup>3</sup></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">养殖场名称和原料原产国官方批准的注册编号<br />Aquaculture farm name and registration number approved by Country of origin of raw materials:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="aquacultureFarmApprovedReg" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">捕捞渔船船名、注册编号和船籍 Name of Fishing Vessel, Registration number and Flag of the Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="fishingVessel" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">捕捞加工渔船船名、注册编号和船籍 Name of Fishing and Factory Vessel, Registration number and Flag of the Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="fishingAndFactoryVessel" class="ch-table-input" /></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">1/4</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 2/4 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <div class="ch-top-meta">
+                        <div></div>
+                        <div class="ch-page-num-top">
+        2/4</div>
+                    </div>
+
+                    <table class="ch-grid-table">
+                        <tr>
+                            <td class="ch-col-lbl">运输渔船船名、注册编号和船籍 Name of Transport Fishing Vessel, Registration number and Flag of the Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="transportFishingVessel" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">加工厂厂名和注册编号 Name of Processing Plant &amp; Registration number of the Plant:</td>
+                            <td class="ch-col-val">
+                                <textarea pInputTextarea formControlName="processingPlantNameAddress" rows="3" [autoResize]="true" class="ch-table-input"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">原料存放独立冷库名称、注册编号和所属国<br />Name of Independent cold storage for raw materials, Registration number and host country of the Storage:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="coldStorageRawMaterials" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">成品存放独立冷库名称、注册编号和所属国<br />Name of Independent cold storage for products, Registration number and host country of the Storage:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="coldStorageProducts" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section V -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">V.运输信息 &nbsp; Information of Transport</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">发货人名称及地址 Name and address of Consignor:</td>
+                            <td class="ch-col-val">
+                                <input pInputText formControlName="consignorName" class="ch-table-input font-bold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="consignorAddress" rows="2" [autoResize]="true" class="ch-table-input mt-1" placeholder="Address"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">收货人名称及地址 Name and address of Consignee:</td>
+                            <td class="ch-col-val">
+                                <input pInputText formControlName="consigneeName" class="ch-table-input font-bold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="consigneeAddress" rows="3" [autoResize]="true" class="ch-table-input mt-1" placeholder="Address & Tax ID"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">发货地 Place of dispatch production:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="placeOfDispatch" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">目的地 Place of destination:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="placeOfDestination" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">运输工具信息 Means of transport:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="meansOfTransport" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">船只名称 Name of Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="nameOfVessel" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">航班号 Flight Number:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="flightNumber" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">其他运输工具信息 Other transport means:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="otherTransportMeans" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">集装箱号 Container Number:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="containerNumber" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">封识号 Seal Number:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="sealNumber" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">启运日期 Date of departure:</td>
+                            <td class="ch-col-val"><p-datepicker formControlName="dateOfDeparture" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                        </tr>
+
+                        <!-- Section VI -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">VI.健康声明 &nbsp; Health Attestation</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="ch-attestation-block">
+                                <div class="font-bold mb-1">兹证明：This is to certify that:</div>
+                                <p class="ch-attest-para">
+                                    1. 该产品在主管当局推荐在华注册的捕捞渔船、运输渔船、捕捞加工渔船、独立冷库和加工企业捕捞、加工、包装、储存和运输。The products are fished, processed, packaged, stored and transported in fishing vessels, transport fishing vessels, fishing and factory vessels，independent cold storages and processing plants, which are registered in China recommended by the Competent Authority.
+                                </p>
+                                <p class="ch-attest-para">
+                                    2. 该产品在卫生条件下生产、包装、储藏和运输，并置于主管当局监督之下。The products were produced, packed, stored, and transported under sanitary condition, which were under the supervision of competent authority.
+                                </p>
+                                <p class="ch-attest-para">
+                                    3. 该产品经主管当局检验检疫，未发现中国规定的致病微生物、有毒有害物质和异物，及中国和世界动物卫生组织（OIE）所列的疫病。The products were inspected and quarantined by competent authority and not found any diseases, pathogenic microorganism, harmful substances and foreign substances regulated in the P.R.China and the diseases listed by China and OIE.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">2/4</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 3/4 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <div class="ch-top-meta">
+                        <div></div>
+                        <div class="ch-page-num-top">
+        3/4</div>
+                    </div>
+
+                    <table class="ch-grid-table">
+                        <tr>
+                            <td colspan="2" class="ch-attestation-block" style="border-top: 1px solid #000;">
+                                <p class="ch-attest-para">
+                                    4. 该产品符合兽医卫生要求，适合人类食用。The products meet veterinary sanitary requirements and are fit for human consumption.
+                                </p>
+                                <p class="ch-attest-para">
+                                    5. 证书中所载的养殖场、加工厂、捕捞渔船、捕捞加工渔船、运输船、独立冷库均能按照联合国粮农组织和世界卫生组织发布的《新冠肺炎和食品安全：对食品企业指南》，建立有效的食品安全管理体系，做好各项防控措施，确保输华产品未被新冠病毒污染。The aquaculture farm, processing plant, fish vessel, fish and factory vessel, transport vessel and independent cold storage in the certificate have established effective food safety management system according to the <i>COVID-19 and food safety: guidance for businesses</i> announced by FAO/WHO, and enact all kinds of protective measures to ensure that the products are not polluted by the Covid-19 virus.
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-half-left">
+                                <div class="ch-sec-sub-lbl">签发地点 Place of Issue</div>
+                                <input pInputText formControlName="placeOfIssue" class="ch-table-input font-bold" />
+                            </td>
+                            <td class="ch-col-half-right">
+                                <div class="ch-sec-sub-lbl">签发日期 Date of Issue:</div>
+                                <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body"></p-datepicker>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-stamp-box">
+                                <div class="ch-stamp-label">官方印章 Official Stamp</div>
+                                <div class="ch-stamp-box-inner" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                </div>
+                            </td>
+                            <td class="ch-signature-box">
+                                <div class="ch-stamp-label">官方兽医签字 Official Veterinary Signature</div>
+                                <div class="ch-sig-space">
+                                    <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2">
+                                        <p-select
+                                            [options]="userOptions"
+                                            formControlName="signatoryUserId"
+                                            placeholder="Select Authorized Officer"
+                                            (onChange)="onSignatoryUserChange($event)"
+                                            styleClass="w-full text-xs"
+                                            appendTo="body"
+                                        ></p-select>
+                                    </div>
+                                    <div class="sig-details text-center">
+                                        <div class="sig-name font-bold">{{ form.get('signatoryName')?.value }}</div>
+                                        <div class="sig-qual text-xs">{{ form.get('qualification')?.value }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="ch-instructions-cell">
+                                <div class="font-bold mb-2">填写说明 Introduction for filling:</div>
+                                <p class="ch-inst-para">1.生产国是指产品完成最后一道外包装工序的所在国。 Country of production refers to the country where the last outer packing procedure of the product was completed.</p>
+                                <p class="ch-inst-para">2.加工方式是指冰鲜、冷冻、干制、盐渍、熏制、罐装等。 Processing Type refers to Chilled，Frozen，Dried，Salted，Smoked，Canned.</p>
+                                <p class="ch-inst-para">3.输出国主管部门应完整填写从捕捞、加工、包装、存储、运输和出口等全过程中涉及的原料原产国、产品生产国和证书签发国的企业信息，包括养殖场、捕捞渔船（仅限具有冷冻或冷藏功能的捕捞渔船）、捕捞加工渔船、运输渔船、加工厂和独立冷库的名称和注册编号，不得遗漏上述任何环节中涉及的企业信息。The competent authority of the exporting country fill in the establishments information of country of origin of raw material, country of production and country of certificates involved in the whole process of fishing, processing, packaging, storage, transportation and export, including the names and registration numbers of aquaculture farm, fishing vessels（only for the fishing vessels with freezing or refrigeration function）, fishing and factory vessels, transport fishing vessels, processing plants and independent cold storage. The establishments information involved in any of the above links shall not be omitted.</p>
+                                <p class="ch-inst-para">4.此证书内容不适用部分以***填充。If any of the information required is not applicable, then the blank area must be filled with ***.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">3/4</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 4/4 (ATTACHMENT) ═══ -->
+            <div class="ch-page ch-attach-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content ch-attach-content">
+                    <div class="ch-att-heading-block">
+                        <div class="ch-att-title font-bold text-center">
+                            Attachment to the Veterinary certificate number {{ form.get('refNumber')?.value || 'TC 4643' }}
+                        </div>
+                        <div class="ch-att-meta-row flex justify-between items-center mt-3 mb-4">
+                            <div class="ch-att-meta-date font-bold">
+                                <span>Date: </span>
+                                <span class="ch-att-date-display cursor-pointer" (click)="!viewOnly && attDatePick.toggle()" title="Click to change date">
+                                    {{ (form.get('dateOfAttachment')?.value | date: 'dd/MM/yyyy') || (form.get('dateOfIssue')?.value | date: 'dd/MM/yyyy') || '24/08/2026' }}
+                                </span>
+                                <p-datepicker #attDatePick formControlName="dateOfAttachment" dateFormat="dd/mm/yy" appendTo="body" class="hidden"></p-datepicker>
+                            </div>
+                            <div class="ch-att-meta-reg font-bold italic">
+                                <input pInputText formControlName="identificationMarksAttachment" class="ch-att-reg-input font-bold italic" placeholder="DFAR/FPE/98/62" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <table class="ch-attachment-table">
+                        <thead>
+                            <tr>
+                                <th class="ch-att-th-prod font-bold">Product</th>
+                                <th class="ch-att-th-net font-bold text-center">Net weight<br />(kg)</th>
+                                <th class="ch-att-th-boxes font-bold text-center">Number of boxes</th>
+                            </tr>
+                        </thead>
+                        <tbody formArrayName="attachments">
+                            <tr *ngFor="let row of attachments.controls; let i = index" [formGroupName]="i" class="ch-att-tr">
+                                <td class="ch-att-td-prod relative">
+                                    <input pInputText formControlName="product" class="ch-att-prod-input font-bold" />
+                                    <button
+                                        *ngIf="!viewOnly && attachments.length > 1"
+                                        pButton
+                                        type="button"
+                                        icon="pi pi-trash"
+                                        class="p-button-danger p-button-text p-button-xs ch-row-delete-btn print-hide"
+                                        (click)="removeAttachment(i)"
+                                        title="Remove item"
+                                    ></button>
+                                </td>
+                                <td class="ch-att-td-net text-center">
+                                    <input pInputText type="number" formControlName="netWeight" (keypress)="onlyDecimals($event)" inputmode="decimal" class="ch-att-num-input text-center" placeholder="" />
+                                </td>
+                                <td class="ch-att-td-boxes text-center">
+                                    <input pInputText type="number" formControlName="numberOfBoxes" (keypress)="onlyDigits($event)" inputmode="numeric" class="ch-att-num-input text-center" placeholder="" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Attachment Toolbar (print-hide) -->
+                    <div class="print-hide p-2 flex items-center justify-between gap-2 mt-4 bg-slate-50 border border-slate-200 rounded" *ngIf="!viewOnly">
+                        <div class="flex items-center gap-2">
+                            <p-button label="Add Product Row" icon="pi pi-plus" size="small" [outlined]="true" (onClick)="addAttachment()"></p-button>
+                            <p-button label="Load 6 Standard Items" icon="pi pi-refresh" severity="secondary" size="small" [outlined]="true" (onClick)="loadDefaultProducts()"></p-button>
+                        </div>
+                        <button pButton label="Clear All" icon="pi pi-trash" class="p-button-danger p-button-sm p-button-text" (click)="clearProducts()"></button>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- ========================================================================= -->
+        <!-- OPTION 2: FISH AND FISHERY PRODUCTS (SINGLE / FROZEN - 3 PAGES)           -->
+        <!-- ========================================================================= -->
+        <ng-container *ngIf="viewMode === 'single'">
+            <!-- ═══ PAGE 1/3 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <div class="ch-top-meta flex items-center justify-between">
+                        <div class="ch-ref-block">
+                            <span class="ch-ref-label">证书号 Num.Ref:</span>
+                            <input pInputText formControlName="refNumber" class="ch-ref-input" placeholder="TB 6734" />
+                        </div>
+                        <app-certificate-qr
+                            [refNumber]="form.get('refNumber')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('commodityName')?.value"
+                            [destination]="'CHINA'"
+                            [viewOnly]="viewOnly"
+                            [size]="46">
+                        </app-certificate-qr>
+                        <div class="ch-page-num-top">
+        1/3</div>
+                    </div>
+
+                    <div class="ch-header-titles">
+                        <div class="ch-title-cn">斯里兰卡民主社会主义共和国向中华人民共和国出口水产品卫生证书</div>
+                        <div class="ch-title-en-main">Health Certificate</div>
+                        <div class="ch-title-en-sub">For fish and fishery products intended for export from the Democratic Socialist Republic of Sri Lanka to the People’s Republic of China</div>
+                    </div>
+
+                    <table class="ch-grid-table">
+                        <!-- Section I -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">I.主管当局信息 &nbsp; Information of competent authority</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">输出国 Country of export::</td>
+                            <td class="ch-col-val"><input pInputText formControlName="countryOfExport" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产国 Country of production<sup>1</sup>:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="countryOfProduction" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">主管当局 Competent authority:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="competentAuthority" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">出证部门 Department of certificate insurance:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="departmentOfIssuance" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section II -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">II.水产品信息 &nbsp; Information of the fishery products</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">商品名称 Commodity name:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="commodityName" class="ch-table-input" placeholder="Frozen Ribbon Fish" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">学 &nbsp; 名 Scientific name:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="scientificName" class="ch-table-input" placeholder="Lepturacanthus savala" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">包装数量 Number of packages:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="numberOfPackages" class="ch-table-input" placeholder="2545 Cartons" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">净 &nbsp; 重 Net Weight:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="netWeight" class="ch-table-input" placeholder="25450.00 kg" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产日期 Production Date:</td>
+                            <td class="ch-col-val"><p-datepicker formControlName="productionDate" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产批号 Lot No. of products:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="lotNumber" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section III -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">III.水产品来源 &nbsp; Origin of the fishery products</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">原料原产国 Country of origin of raw materials:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="originRawMaterialsCountry" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">加工方式 Processing Type<sup>2</sup>:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="processingType" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产方式 Production Mode</td>
+                            <td class="ch-col-val"><input pInputText formControlName="productionMode" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">养殖 Aquacultured:</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="aq_sng_yes" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="aquacultured" [value]="true" formControlName="aquacultured" inputId="aq_sng_yes"></p-radiobutton>
+                                        <span>是 Yes</span>
+                                        <span class="ch-print-sq">{{ form.get('aquacultured')?.value === true ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="aq_sng_no" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="aquacultured" [value]="false" formControlName="aquacultured" inputId="aq_sng_no"></p-radiobutton>
+                                        <span>否 No</span>
+                                        <span class="ch-print-sq">{{ form.get('aquacultured')?.value === false ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">野生捕捞 Wild Caught :</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="wc_sng_yes" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="wildCaughtBool" [value]="true" formControlName="wildCaughtBool" inputId="wc_sng_yes"></p-radiobutton>
+                                        <span>是 Yes</span>
+                                        <span class="ch-print-sq">{{ form.get('wildCaughtBool')?.value === true ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="wc_sng_no" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="wildCaughtBool" [value]="false" formControlName="wildCaughtBool" inputId="wc_sng_no"></p-radiobutton>
+                                        <span>否 No</span>
+                                        <span class="ch-print-sq">{{ form.get('wildCaughtBool')?.value === false ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产水域性质 Character of productive water area:</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="pwa_sng_fresh" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="productiveWaterArea" value="fresh_water" formControlName="productiveWaterArea" inputId="pwa_sng_fresh"></p-radiobutton>
+                                        <span>淡水 Fresh water</span>
+                                        <span class="ch-print-sq">{{ form.get('productiveWaterArea')?.value === 'fresh_water' ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="pwa_sng_sea" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="productiveWaterArea" value="sea_water" formControlName="productiveWaterArea" inputId="pwa_sng_sea"></p-radiobutton>
+                                        <span>海水 Sea water</span>
+                                        <span class="ch-print-sq">{{ form.get('productiveWaterArea')?.value === 'sea_water' ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">养殖区域 Aquaculture area:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="aquacultureArea" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">捕捞区域 Catch area:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="catchArea" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section IV -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">IV.企业信息 &nbsp; Information of the establishments<sup>3</sup></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">养殖场名称和原料原产国官方批准的注册编号<br />Aquaculture farm name and registration number approved by Country of origin of raw materials:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="aquacultureFarmApprovedReg" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">捕捞渔船船名、注册编号和船籍 Name of Fishing Vessel, Registration number and Flag of the Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="fishingVessel" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">捕捞加工渔船船名、注册编号和船籍 Name of Fishing and Factory Vessel, Registration number and Flag of the Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="fishingAndFactoryVessel" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">运输渔船船名、注册编号和船籍 Name of Transport Fishing Vessel, Registration number and Flag of the Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="transportFishingVessel" class="ch-table-input" /></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">1/3</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 2/3 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <div class="ch-top-meta">
+                        <div></div>
+                        <div class="ch-page-num-top">
+        2/3</div>
+                    </div>
+
+                    <table class="ch-grid-table">
+                        <tr>
+                            <td class="ch-col-lbl">加工厂厂名和注册编号 Name of Processing Plant &amp; Registration number of the Plant:</td>
+                            <td class="ch-col-val">
+                                <textarea pInputTextarea formControlName="processingPlantNameAddress" rows="3" [autoResize]="true" class="ch-table-input"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">原料存放独立冷库名称、注册编号和所属国<br />Name of Independent cold storage for raw materials, Registration number and host country of the Storage:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="coldStorageRawMaterials" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">成品存放独立冷库名称、注册编号和所属国<br />Name of Independent cold storage for products, Registration number and host country of the Storage:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="coldStorageProducts" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section V -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">V.运输信息 &nbsp; Information of Transport</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">发货人名称及地址 Name and address of Consignor:</td>
+                            <td class="ch-col-val">
+                                <input pInputText formControlName="consignorName" class="ch-table-input font-bold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="consignorAddress" rows="3" [autoResize]="true" class="ch-table-input mt-1" placeholder="Address"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">收货人名称及地址 Name and address of Consignee:</td>
+                            <td class="ch-col-val">
+                                <input pInputText formControlName="consigneeName" class="ch-table-input font-bold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="consigneeAddress" rows="3" [autoResize]="true" class="ch-table-input mt-1" placeholder="Address"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">发货地 Place of dispatch production:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="placeOfDispatch" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">目的地 Place of destination:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="placeOfDestination" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">运输工具信息 Means of transport:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="meansOfTransport" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">船只名称 Name of Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="nameOfVessel" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">航班号 Flight Number:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="flightNumber" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">其他运输工具信息 Other transport means:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="otherTransportMeans" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">集装箱号 Container Number:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="containerNumber" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">封识号 Seal Number:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="sealNumber" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">启运日期 Date of departure:</td>
+                            <td class="ch-col-val"><p-datepicker formControlName="dateOfDeparture" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                        </tr>
+
+                        <!-- Section VI -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">VI.健康声明 &nbsp; Health Attestation</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="ch-attestation-block">
+                                <div class="font-bold mb-1">兹证明：This is to certify that:</div>
+                                <p class="ch-attest-para">
+                                    1. 该产品在主管当局推荐在华注册的捕捞渔船、运输渔船、捕捞加工渔船、独立冷库和加工企业捕捞、加工、包装、储存和运输。The products are fished, processed, packaged, stored and transported in fishing vessels, transport fishing vessels, fishing and factory vessels，independent cold storages and processing plants, which are registered in China recommended by the Competent Authority.
+                                </p>
+                                <p class="ch-attest-para">
+                                    2. 该产品在卫生条件下生产、包装、储藏和运输，并置于主管当局监督之下。The products were produced, packed, stored, and transported under sanitary condition, which were under the supervision of competent authority.
+                                </p>
+                                <p class="ch-attest-para">
+                                    3. 该产品经主管当局检验检疫，未发现中国规定的致病微生物、有毒有害物质和异物，及中国和世界动物卫生组织（OIE）所列的疫病。The products were inspected and quarantined by competent authority and not found any diseases, pathogenic microorganism, harmful substances and foreign substances regulated in the P.R.China and the diseases listed by China and OIE.
+                                </p>
+                                <p class="ch-attest-para">
+                                    4. 该产品符合兽医卫生要求，适合人类食用。The products meet veterinary sanitary requirements and are fit for human consumption.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">2/3</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 3/3 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <div class="ch-top-meta">
+                        <div></div>
+                        <div class="ch-page-num-top">
+        3/3</div>
+                    </div>
+
+                    <table class="ch-grid-table">
+                        <tr>
+                            <td colspan="2" class="ch-attestation-block" style="border-top: 1px solid #000;">
+                                <p class="ch-attest-para">
+                                    5. 证书中所载的养殖场、加工厂、捕捞渔船、捕捞加工渔船、运输船、独立冷库均能按照联合国粮农组织和世界卫生组织发布的《新冠肺炎和食品安全：对食品企业指南》，建立有效的食品安全管理体系，做好各项防控措施，确保输华产品未被新冠病毒污染。The aquaculture farm, processing plant, fish vessel, fish and factory vessel, transport vessel and independent cold storage in the certificate have established effective food safety management system according to the <i>COVID-19 and food safety: guidance for businesses</i> announced by FAO/WHO, and enact all kinds of protective measures to ensure that the products are not polluted by the Covid-19 virus.
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-half-left">
+                                <div class="ch-sec-sub-lbl">签发地点 Place of Issue</div>
+                                <input pInputText formControlName="placeOfIssue" class="ch-table-input font-bold" />
+                            </td>
+                            <td class="ch-col-half-right">
+                                <div class="ch-sec-sub-lbl">签发日期 Date of Issue:</div>
+                                <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body"></p-datepicker>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-stamp-box">
+                                <div class="ch-stamp-label">官方印章 Official Stamp</div>
+                                <div class="ch-stamp-box-inner" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                </div>
+                            </td>
+                            <td class="ch-signature-box">
+                                <div class="ch-stamp-label">官方兽医签字 Official Veterinary Signature</div>
+                                <div class="ch-sig-space">
+                                    <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2">
+                                        <p-select
+                                            [options]="userOptions"
+                                            formControlName="signatoryUserId"
+                                            placeholder="Select Authorized Officer"
+                                            (onChange)="onSignatoryUserChange($event)"
+                                            styleClass="w-full text-xs"
+                                            appendTo="body"
+                                        ></p-select>
+                                    </div>
+                                    <div class="sig-details text-center">
+                                        <div class="sig-name font-bold">{{ form.get('signatoryName')?.value }}</div>
+                                        <div class="sig-qual text-xs">{{ form.get('qualification')?.value }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="ch-instructions-cell">
+                                <div class="font-bold mb-2">填写说明 Introduction for filling:</div>
+                                <p class="ch-inst-para">1.生产国是指产品完成最后一道外包装工序的所在国。 Country of production refers to the country where the last outer packing procedure of the product was completed.</p>
+                                <p class="ch-inst-para">2.加工方式是指冰鲜、冷冻、干制、盐渍、熏制、罐装等。 Processing Type refers to Chilled，Frozen，Dried，Salted，Smoked，Canned.</p>
+                                <p class="ch-inst-para">3.输出国主管部门应完整填写从捕捞、加工、包装、存储、运输和出口等全过程中涉及的原料原产国、产品生产国和证书签发国的企业信息，包括养殖场、捕捞渔船（仅限具有冷冻或冷藏功能的捕捞渔船）、捕捞加工渔船、运输渔船、加工厂和独立冷库的名称和注册编号，不得遗漏上述任何环节中涉及的企业信息。The competent authority of the exporting country fill in the establishments information of country of origin of raw material, country of production and country of certificates involved in the whole process of fishing, processing, packaging, storage, transportation and export, including the names and registration numbers of aquaculture farm, fishing vessels（only for the fishing vessels with freezing or refrigeration function）, fishing and factory vessels, transport fishing vessels, processing plants and independent cold storage. The establishments information involved in any of the above links shall not be omitted.</p>
+                                <p class="ch-inst-para">4.此证书内容不适用部分以***填充。If any of the information required is not applicable, then the blank area must be filled with ***.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">3/3</span>
+                </div>
+            </div>
+        </ng-container>
+
+        <!-- ========================================================================= -->
+        <!-- OPTION 3: LIVE AQUATIC ANIMALS (2 PAGES)                                 -->
+        <!-- ========================================================================= -->
+        <ng-container *ngIf="viewMode === 'live'">
+            <!-- ═══ PAGE 1/2 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <div class="ch-top-meta flex items-center justify-between">
+                        <app-certificate-qr
+                            [refNumber]="form.get('refNumber')?.value"
+                            [certificateRequestId]="certificateRequestId"
+                            [consignor]="form.get('consignorName')?.value"
+                            [consignee]="form.get('consigneeName')?.value"
+                            [item]="form.get('commodityName')?.value"
+                            [destination]="'CHINA'"
+                            [viewOnly]="viewOnly"
+                            [size]="46">
+                        </app-certificate-qr>
+                        <div class="ch-ref-block text-right">
+                            <span class="ch-ref-label">Num.Ref:</span>
+                            <input pInputText formControlName="refNumber" class="ch-ref-input" placeholder="TC 4799" />
+                        </div>
+                    </div>
+
+                    <div class="ch-header-titles">
+                        <div class="ch-title-en-main" style="font-size: 11pt; margin-bottom: 8px;">
+                            Health Certificate for fish and fishery products intended for export from Sri Lanka to the People’s Republic of China
+                        </div>
+                    </div>
+
+                    <table class="ch-grid-table">
+                        <!-- Section 1 -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">1. 主管当局信息 &nbsp; Information of competent authority</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">输出国 Country of export ：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="countryOfExport" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">生产国 Country of production:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="countryOfProduction" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">主管当局 Competent authority：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="competentAuthority" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">出证部门 Department of certificate issuance：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="departmentOfIssuance" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section 2 -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">2. 水产品信息 &nbsp; Identification of the fishery products</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">商品名称 Commodity name：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="commodityName" class="ch-table-input font-bold" placeholder="LIVE MUD CRAB – WILD CAUGHT" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">学名 Scientific name：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="scientificName" class="ch-table-input" placeholder="Scylla serrata" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">拉丁名 Latin Name：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="latinName" class="ch-table-input" placeholder="Scylla serrata" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">数量 Number：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="number" (keypress)="onlyDigits($event)" inputmode="numeric" class="ch-table-input" /></td>
+                        </tr>
+
+                        <!-- Section 3 -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">3. 水产品来源 &nbsp; Origin of the fishery products</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">养殖 Artificial culture：</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="ac_live_yes" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="artificialCulture" value="yes" formControlName="artificialCulture" inputId="ac_live_yes"></p-radiobutton>
+                                        <span>是 Yes</span>
+                                        <span class="ch-print-sq">{{ form.get('artificialCulture')?.value === 'yes' ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="ac_live_no" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="artificialCulture" value="no" formControlName="artificialCulture" inputId="ac_live_no"></p-radiobutton>
+                                        <span>否 No</span>
+                                        <span class="ch-print-sq">{{ form.get('artificialCulture')?.value === 'no' ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">野生捕捞 Wild Caught：</td>
+                            <td class="ch-col-val">
+                                <div class="ch-radio-row">
+                                    <label for="wc_live_yes" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="wildCaught" value="yes" formControlName="wildCaught" inputId="wc_live_yes"></p-radiobutton>
+                                        <span>是 Yes</span>
+                                        <span class="ch-print-sq">{{ form.get('wildCaught')?.value === 'yes' ? '☑' : '□' }}</span>
+                                    </label>
+                                    <label for="wc_live_no" class="ch-radio-lbl" [class.ch-disabled]="viewOnly">
+                                        <p-radiobutton name="wildCaught" value="no" formControlName="wildCaught" inputId="wc_live_no"></p-radiobutton>
+                                        <span>否 No</span>
+                                        <span class="ch-print-sq">{{ form.get('wildCaught')?.value === 'no' ? '☑' : '□' }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">捕捞区域 Catch area ：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="catchArea" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">批准包装企业名称 Packaging enterprise name ：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="packagingEnterpriseName" class="ch-table-input font-bold" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">批准包装企业地址 Packaging enterprise address:</td>
+                            <td class="ch-col-val"><textarea pInputTextarea formControlName="packagingEnterpriseAddress" rows="2" [autoResize]="true" class="ch-table-input"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">企业注册编号 Packaging enterprise Registration number：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="packagingEnterpriseRegNumber" class="ch-table-input font-bold" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">启运时间 Date of Departure：</td>
+                            <td class="ch-col-val"><p-datepicker formControlName="dateOfDeparture" [showIcon]="true" appendTo="body"></p-datepicker></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">启运港口 Port of Departure：</td>
+                            <td class="ch-col-val"><input pInputText formControlName="portOfDeparture" class="ch-table-input" /></td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">运输工具名称和编号<br />Name/No of transporting Flight/Vessel:</td>
+                            <td class="ch-col-val"><input pInputText formControlName="identificationDocumentReferences" class="ch-table-input" /></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">1/2</span>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE 2/2 ═══ -->
+            <div class="ch-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <div class="ch-content">
+                    <table class="ch-grid-table" style="margin-top: 10px;">
+                        <!-- Section 4 -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">4. 进口信息 &nbsp; Information of Exportand Import</td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">出口商名称及地址 Name and address of Exporter：</td>
+                            <td class="ch-col-val">
+                                <input pInputText formControlName="exporterName" class="ch-table-input font-bold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="exporterAddress" rows="2" [autoResize]="true" class="ch-table-input mt-1" placeholder="Address"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-lbl">进口商名称及地址 Name and address of Importer：</td>
+                            <td class="ch-col-val">
+                                <input pInputText formControlName="importerName" class="ch-table-input font-bold" placeholder="Name" />
+                                <textarea pInputTextarea formControlName="importerAddress" rows="3" [autoResize]="true" class="ch-table-input mt-1" placeholder="Address"></textarea>
+                            </td>
+                        </tr>
+
+                        <!-- Section 5 -->
+                        <tr class="ch-sec-header">
+                            <td colspan="2">5 声明 &nbsp; Statement</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="ch-attestation-block">
+                                <div class="font-bold mb-1">兹证明：This is to certify that:</div>
+                                <p class="ch-attest-para">
+                                    The relevant capture area and registered enterprises comply with the requirement of the laws and regulations of Sri Lanka, and they are under the supervision of the administrative competent department of Sri Lanka.
+                                </p>
+                                <p class="ch-attest-para">
+                                    The edible aquatic animals are examined clinically by official veterinary within 48 hours before export and found to be healthy and free from any signs of infectious/contagious diseases. The edible aquatic animal is suitable for transport.
+                                </p>
+                                <p class="ch-attest-para">
+                                    The edible aquatic animals have been sampled for random testing prior to export and the test result have not detected pathogenic microorganisms.
+                                </p>
+                                <p class="ch-attest-para">
+                                    The edible aquatic animals to be exported are free of crystal violet, malachite green, oxolinic acid. Chloromycetin and prohibited hormones. Other drug residues and heavy metal such as arsenic, mercury, cadmium and lead are below Chinese limit standard.
+                                </p>
+                                <p class="ch-attest-para">
+                                    The packaging container is completely new or sterilized. The water or ices during the transportation are sanitary, and the package of transporting meets the quarantine requirements.
+                                </p>
+                                <p class="ch-attest-para">
+                                    The edible aquatic animals to be exported fit for human consumption.
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-col-half-left">
+                                <div class="ch-sec-sub-lbl">签发地点 Place of issue</div>
+                                <input pInputText formControlName="placeOfIssue" class="ch-table-input font-bold" />
+                            </td>
+                            <td class="ch-col-half-right">
+                                <div class="ch-sec-sub-lbl">签发日期 Date of issue:</div>
+                                <p-datepicker formControlName="dateOfIssue" [showIcon]="true" appendTo="body"></p-datepicker>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ch-stamp-box">
+                                <div class="ch-stamp-label">官方印章 Official Stamp</div>
+                                <div class="ch-stamp-box-inner" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
+                                </div>
+                            </td>
+                            <td class="ch-signature-box">
+                                <div class="ch-stamp-label">官方兽医签字 Official Veterinary Signature</div>
+                                <div class="ch-sig-space">
+                                    <div *ngIf="!isCompany && !viewOnly" class="signatory-selector print-hide mb-2">
+                                        <p-select
+                                            [options]="userOptions"
+                                            formControlName="signatoryUserId"
+                                            placeholder="Select Authorized Officer"
+                                            (onChange)="onSignatoryUserChange($event)"
+                                            styleClass="w-full text-xs"
+                                            appendTo="body"
+                                        ></p-select>
+                                    </div>
+                                    <div class="sig-details text-center">
+                                        <div class="sig-name font-bold">{{ form.get('signatoryName')?.value }}</div>
+                                        <div class="sig-qual text-xs">{{ form.get('qualification')?.value }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="ch-instructions-cell">
+                                <p class="ch-inst-para font-bold">注释 Note: 2.此证书内容不适用部分以***填充。If any of the information required is not applicable then the blank area must be filled with ***</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ch-footer-bottom">
+                    <span class="ch-footer-page-text">2/2</span>
+                </div>
+            </div>
+        </ng-container>
+
+    <app-confirm-password-dialog
+        class="print-hide"
+        [(visible)]="showPasswordDialog"
+        [userEmail]="pendingSignatoryUserEmail"
+        [userId]="pendingSignatoryUserId || ''"
+        (onConfirm)="onSignatoryConfirmed($event)"
+        (onCancel)="onSignatoryCanceled()"
+    ></app-confirm-password-dialog>
+</form>

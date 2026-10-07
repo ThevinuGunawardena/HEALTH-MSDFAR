@@ -1,0 +1,839 @@
+<div class="form-container">
+    <p-toast></p-toast>
+
+    <!-- Top Action / Navigation Bar -->
+    <div class="top-nav-bar print-hide mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-xs" *ngIf="!isEmbedded">
+        <div class="flex items-center gap-3">
+            <p-button
+                label="Back to Forms Queue"
+                icon="pi pi-arrow-left"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="goBackToPortal()"
+            ></p-button>
+            <div class="flex flex-col">
+                <span class="text-xs text-slate-500 font-medium">Application Step {{ step }} of 4</span>
+                <span class="text-sm font-semibold text-slate-800">{{ step === 1 ? 'Raw Material & Exporter Details' : step === 2 ? 'Consignor & Transport' : step === 3 ? 'Product Specifications' : 'Processing Plant & Declaration' }}</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <span *ngIf="referenceNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ referenceNumber }}</span>
+            <span class="text-xs font-semibold px-2 py-1 rounded" [ngClass]="certificateType === 'EU' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-800'">
+                {{ certificateType === 'EU' ? 'EU Certificate' : ('Non-EU (' + (form.get('countryOrigin')?.value || 'Destination Country') + ')') }}
+            </span>
+            <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
+            <p-button
+                *ngIf="viewModePaymentSlip || paymentSlipFile"
+                label="View Payment Slip"
+                icon="pi pi-receipt"
+                severity="success"
+                size="small"
+                (onClick)="openPaymentSlipPreview()"
+            ></p-button>
+        </div>
+    </div>
+
+    <!-- Locked/View-Only Alert Banner -->
+    <div *ngIf="viewOnly" class="locked-banner print-hide mb-4">
+        <div class="locked-banner-text">
+            <i class="pi pi-lock"></i>
+            <div>
+                <strong>Submitted Certificate Form (Locked)</strong>
+                <p>This form has already been submitted and cannot be edited or resubmitted.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <p-button
+                *ngIf="viewModePaymentSlip || paymentSlipFile"
+                label="View Payment Slip"
+                icon="pi pi-receipt"
+                severity="success"
+                size="small"
+                (onClick)="openPaymentSlipPreview()"
+            ></p-button>
+            <p-button label="Close & Back to Portal" icon="pi pi-arrow-left" severity="secondary" size="small" (onClick)="goBackToPortal()"></p-button>
+        </div>
+    </div>
+
+    
+    <!-- Step 1 -->
+    <form *ngIf="step === 1" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <!-- Attached Payment Slip Banner in Step 1 for instant visibility -->
+        <div *ngIf="viewModePaymentSlip" class="mb-4 print-hide p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+                <img *ngIf="viewModePaymentSlip.isImage" [src]="viewModePaymentSlip.previewUrl" alt="Payment slip" class="w-12 h-12 object-cover rounded border border-green-300" />
+                <div *ngIf="!viewModePaymentSlip.isImage" class="w-12 h-12 rounded border border-green-300 bg-white flex items-center justify-center text-red-600 shrink-0">
+                    <i *ngIf="viewModePaymentSlip.isPdf" class="pi pi-file-pdf text-xl"></i>
+                    <i *ngIf="!viewModePaymentSlip.isPdf" class="pi pi-file text-xl"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <strong class="text-sm text-green-900 block truncate">Attached Payment Slip (Verified)</strong>
+                    <span class="text-xs text-green-700">Stored in database for this request</span>
+                </div>
+            </div>
+            <p-button label="View Full Slip" icon="pi pi-eye" severity="success" size="small" (onClick)="openPaymentSlipPreview()"></p-button>
+        </div>
+
+        <div class="cert-header-top-row mb-3">
+            <div class="cert-header-spacer"></div>
+            <div class="flex justify-center items-center">
+                <img src="/demo/images/srilanka-emblem.png" alt="Sri Lanka Emblem" style="height: 68px;" />
+            </div>
+            <div class="cert-header-qr-slot">
+                <app-certificate-qr
+                    [refNumber]="referenceNumber || form.get('newHC')?.value || form.get('oldHC')?.value"
+                    [certificateRequestId]="form.get('certificateRequestId')?.value"
+                    [consignor]="form.get('supplierNameAddress')?.value || form.get('consignorName')?.value"
+                    [consignee]="form.get('consigneeName')?.value"
+                    [destination]="certificateType === 'EU' ? 'European Union' : (form.get('countryOrigin')?.value || 'Destination Country')"
+                    [viewOnly]="viewOnly"
+                    [size]="68">
+                </app-certificate-qr>
+            </div>
+        </div>
+
+        <p class="title mb-2">
+            Director General <br />
+            Department of Fisheries & Aquatic Resources <br />
+            Colombo.
+        </p>
+
+        <h1 class="text-center mb-2 underline text-lg font-bold">{{ certificateTitle }}</h1>
+        <br />
+        <div class="flex flex-col md:flex-row justify-between items-start gap-6 mt-6 mb-2">
+            <div class="w-full md:w-1/2">
+                <p class="leading-relaxed">I / We request you to issue a Veterinary certificate for the following consignment of fish products at our factory:</p>
+            </div>
+            <div class="border border-black p-3 w-full md:w-5/12 bg-white">
+                <p class="mb-2"><strong>Validity Period of the Exporter’s License</strong></p>
+                <table class="w-full">
+                    <tr>
+                        <td class="py-1 pr-2 whitespace-nowrap font-medium">H/C OLD NO:</td>
+                        <td class="py-1"><input class="w-full" pInputText formControlName="oldHC" type="text" placeholder="Previous H/C No (if applicable)" /></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1 pr-2 whitespace-nowrap font-bold text-slate-800">H/C NEW NO:</td>
+                        <td class="py-1"><input class="w-full bg-slate-100 font-bold text-slate-800 cursor-not-allowed" pInputText formControlName="newHC" type="text" [readonly]="true" placeholder="Auto-generated Ref No" /></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-2 clear-both pt-4">1. Raw material (fish/shrimp) used for the production:</h3>
+
+        <p-accordion [multiple]="true" [value]="['0']" class="w-full block mb-4">
+            <p-accordion-panel value="0">
+                <p-accordion-header><span class="sub-title m-0 font-bold">1.1 For fish/shrimp caught wild:</span></p-accordion-header>
+                <p-accordion-content>
+                    <table class="form-table w-full">
+                        <tr>
+                            <td>a) Landing site:</td>
+                            <td>
+                                <input pInputText formControlName="landingSite" type="text" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>b) Boat identification:</td>
+                            <table class="smalltable">
+                                <tr class="specialtr">
+                                    <td class="specialtd">Name / Registration:</td>
+                                    <td class="specialtd"><input pInputText formControlName="boatRegistration" type="text" /></td>
+                                </tr>
+                                <tr class="specialtr">
+                                    <td class="specialtd">No. of the boat:</td>
+                                    <td class="specialtd"><input pInputText formControlName="boatNumber" type="text" /></td>
+                                </tr>
+                            </table>
+                        </tr>
+                        <tr>
+                            <td>c) Name & address of the supplier:</td>
+                            <td><textarea pTextarea formControlName="supplierNameAddress" type="text" [autoResize]="true" rows="3" cols="30"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td>d) Date & time of arrival of fish at the factory:</td>
+                            <td>
+                                <p-datepicker [iconDisplay]="'input'" formControlName="arrivalAtFactory" placeholder="Ex: 01/01/2025 12.00 AM" inputId="calendar-12h" [showTime]="true" hourFormat="12" [showIcon]="true" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>e) Date of processing:</td>
+                            <td>
+                                <p-datepicker [iconDisplay]="'input'" placeholder="Ex: 01/01/2025" [showIcon]="true" formControlName="processingDate" />
+                            </td>
+                        </tr>
+                    </table>
+                </p-accordion-content>
+            </p-accordion-panel>
+
+            <p-accordion-panel value="1">
+                <p-accordion-header><span class="sub-title m-0 font-bold">1.2 For aquaculture products:</span></p-accordion-header>
+                <p-accordion-content>
+                    <p class="mb-2">Attach a list of farms with the following particulars:</p>
+                    <table class="form-table w-full">
+                        <tr>
+                            <td>a) Location of the farm(s):</td>
+                            <td><input pInputText formControlName="farmLocation" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td>b) Name & address of the farm owner:</td>
+                            <table class="smalltable">
+                                <tr class="specialtr">
+                                    <td class="specialtd">Name:</td>
+                                    <td class="specialtd"><input pInputText formControlName="farmOwnerName" type="text" /></td>
+                                </tr>
+                                <tr class="specialtr">
+                                    <td class="specialtd">Address:</td>
+                                    <td class="specialtd">
+                                        <textarea pTextarea formControlName="farmOwnerAddress" [autoResize]="true" rows="3" cols="30"></textarea>
+                                    </td>
+                                </tr>
+                            </table>
+                        </tr>
+                        <tr>
+                            <td>c) Date of harvesting:</td>
+                            <td>
+                                <p-datepicker [iconDisplay]="'input'" placeholder="Ex: 01/01/2025" [showIcon]="true" formControlName="harvestDate" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>d) Date & time of arrival of product at the factory:</td>
+                            <td>
+                                <p-datepicker [iconDisplay]="'input'" formControlName="arrivalTimeProduct" placeholder="Ex: 01/01/2025 12.00 AM" inputId="calendar-12h" [showTime]="true" hourFormat="12" [showIcon]="true" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>e) Date(s) of processing:</td>
+                            <td>
+                                <p-datepicker [iconDisplay]="'input'" formControlName="processingDates" type="text" placeholder="Ex: 2025-01-12 - 2025-01-14" selectionMode="range" showIcon="true" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>f) Name of the supplier:</td>
+                            <td><input pInputText formControlName="aquaSupplier" type="text" /></td>
+                        </tr>
+                    </table>
+                </p-accordion-content>
+            </p-accordion-panel>
+
+            <p-accordion-panel value="2">
+                <p-accordion-header><span class="sub-title m-0 font-bold">1.3 Imported raw materials:</span></p-accordion-header>
+                <p-accordion-content>
+                    <table class="form-table w-full">
+                        <tr>
+                            <td>a) Country of origin:</td>
+                            <td><input pInputText formControlName="countryOrigin" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td>b) Date & arrival of the consignment at the factory:</td>
+                            <td>
+                                <p-datepicker [iconDisplay]="'input'" formControlName="arrivalConsignment" placeholder="Ex: 01/01/2025 12.00 AM" inputId="calendar-12h" [showTime]="true" hourFormat="12" [showIcon]="true" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>c) Health certificate No:</td>
+                            <td><input pInputText formControlName="healthCertNo" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td>d) Product type:</td>
+                            <td>
+                                <div class="radio-group flex flex-col md:flex-row gap-2 mb-4">
+                                    <div class="flex items-center">
+                                        <p-radiobutton
+                                            name="productType"
+                                            type="radio"
+                                            [binary]="true"
+                                            formControlName="productTypeAquaculture"
+                                            (onClick)="setExclusiveRadio('productTypeAquaculture', ['productTypeAquaculture', 'productTypeWildCaught'])"
+                                        />
+                                        <label class="leading-none ml-2"> Aquaculture</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <p-radiobutton
+                                            name="productType"
+                                            type="radio"
+                                            [binary]="true"
+                                            formControlName="productTypeWildCaught"
+                                            (onClick)="setExclusiveRadio('productTypeWildCaught', ['productTypeAquaculture', 'productTypeWildCaught'])"
+                                        />
+                                        <label class="leading-none ml-2"> Wild Caught</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </p-accordion-content>
+            </p-accordion-panel>
+        </p-accordion>
+    </form>
+
+    <!-- Step 2 -->
+    <form *ngIf="step === 2" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <h3 class="text-lg font-semibold mb-2">2. Destination of the fishery products & origin:</h3>
+
+        <div>
+            <h4 class="text-md mb-2">2.1 Consignor:</h4>
+            <table class="form-table">
+                <tr>
+                    <td>Name:</td>
+                    <td><input pInputText formControlName="consignorName" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>Address:</td>
+                    <td><textarea pInputTextarea [autoResize]="true" formControlName="consignorAddress"></textarea></td>
+                </tr>
+                <tr>
+                    <td>Postal code:</td>
+                    <td><input pInputText formControlName="consignorPostal" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>Tel: No.</td>
+                    <td><input pInputText formControlName="consignorTel" type="number" /></td>
+                </tr>
+            </table>
+
+            <h4 class="sub-title">2.2 Consignee:</h4>
+            <table class="form-table">
+                <tr>
+                    <td>Name:</td>
+                    <td><input pInputText formControlName="consigneeName" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>Address:</td>
+                    <td><textarea pInputTextarea [autoResize]="true" formControlName="consigneeAddress"></textarea></td>
+                </tr>
+                <tr>
+                    <td>Postal code:</td>
+                    <td><input pInputText formControlName="consigneePostal" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>Tel: No.</td>
+                    <td><input pInputText formControlName="consigneeTel" type="number" /></td>
+                </tr>
+            </table>
+
+            <h4 class="sub-title">2.3 Country of origin:</h4>
+            <table class="form-table">
+                <tr>
+                    <td>ISO code:</td>
+                    <td><input pInputText formControlName="countryOriginISO" type="text" /></td>
+                </tr>
+            </table>
+
+            <h4 class="sub-title">2.4 Region of origin:</h4>
+            <table class="form-table">
+                <tr>
+                    <td>ISO code:</td>
+                    <td><input pInputText formControlName="regionOriginISO" type="text" /></td>
+                </tr>
+            </table>
+
+            <h4 class="sub-title">2.5 Country of destination :</h4>
+            <table class="form-table">
+                <tr>
+                    <td>ISO code:</td>
+                    <td><input pInputText formControlName="countryDestinationISO" type="text" /></td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-2">3. Place of origin :</h3>
+
+        <table class="form-table">
+            <tr>
+                <td>3.1 Name of the fish processing establishment:</td>
+                <td><input pInputText formControlName="processingEstName" type="text" /></td>
+            </tr>
+            <tr>
+                <td>3.2 Address:</td>
+                <td><textarea pInputTextarea [autoResize]="true" formControlName="processingEstAddress"></textarea></td>
+            </tr>
+            <tr>
+                <td>3.3 Approval No.:</td>
+                <td><input pInputText formControlName="approvalNo" type="text" /></td>
+            </tr>
+            <tr>
+                <td>3.4 Place of loading :</td>
+                <td><input pInputText formControlName="placeOfLoading" type="text" /></td>
+            </tr>
+            <tr>
+                <td>3.5 Date of departure :</td>
+                <td>
+                    <p-datepicker [iconDisplay]="'input'" placeholder="Ex: 01/01/2025" [showIcon]="true" formControlName="dateOfDeparture" />
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <!-- Step 3 -->
+    <form *ngIf="step === 3" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <h3 class="text-lg font-semibold mb-2">4. Means of transport :</h3>
+        <div>
+            <p class="mb-4">4.1 (Aero plane/Ship/Railway wagon/Road vehicle/other):</p>
+
+            <div class="radio-group flex flex-col md:flex-row gap-4 ml-8 mb-4">
+                <div class="flex items-center">
+                    <p-radiobutton
+                        name="transport"
+                        type="radio"
+                        [binary]="true"
+                        formControlName="transportAeroPlane"
+                        (onClick)="setExclusiveRadio('transportAeroPlane', ['transportAeroPlane', 'transportShip', 'transportRailwayWagon', 'transportRoadVehicle', 'transportOther'])"
+                    />
+                    <label class="leading-none ml-2"> Aero plane</label>
+                </div>
+                <div class="flex items-center">
+                    <p-radiobutton
+                        name="transport"
+                        type="radio"
+                        [binary]="true"
+                        formControlName="transportShip"
+                        (onClick)="setExclusiveRadio('transportShip', ['transportAeroPlane', 'transportShip', 'transportRailwayWagon', 'transportRoadVehicle', 'transportOther'])"
+                    />
+                    <label class="leading-none ml-2"> Ship</label>
+                </div>
+                <div class="flex items-center">
+                    <p-radiobutton
+                        name="transport"
+                        type="radio"
+                        [binary]="true"
+                        formControlName="transportRailwayWagon"
+                        (onClick)="setExclusiveRadio('transportRailwayWagon', ['transportAeroPlane', 'transportShip', 'transportRailwayWagon', 'transportRoadVehicle', 'transportOther'])"
+                    />
+                    <label class="leading-none ml-2"> Railway wagon</label>
+                </div>
+                <div class="flex items-center">
+                    <p-radiobutton
+                        name="transport"
+                        type="radio"
+                        [binary]="true"
+                        formControlName="transportRoadVehicle"
+                        (onClick)="setExclusiveRadio('transportRoadVehicle', ['transportAeroPlane', 'transportShip', 'transportRailwayWagon', 'transportRoadVehicle', 'transportOther'])"
+                    />
+                    <label class="leading-none ml-2"> Road vehicle</label>
+                </div>
+                <div class="flex items-center">
+                    <p-radiobutton
+                        name="transport"
+                        type="radio"
+                        [binary]="true"
+                        formControlName="transportOther"
+                        (onClick)="setExclusiveRadio('transportOther', ['transportAeroPlane', 'transportShip', 'transportRailwayWagon', 'transportRoadVehicle', 'transportOther'])"
+                    />
+                    <label class="leading-none ml-2"> Other</label>
+                </div>
+            </div>
+
+            <table class="form-table">
+                <tr>
+                    <td>4.2 Identification (Flight No./Vessel name):</td>
+                    <td><input pInputText formControlName="transportId" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>4.3 Documentary References (AWB No./Bill of Landing No.):</td>
+                    <td><input pInputText formControlName="docReferences" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>4.4 Entry BIP in EU (Name of the airport at the destination):</td>
+                    <td><input pInputText formControlName="entryBIP" type="text" /></td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 class="text-lg font-semibold mb-2">5. Details identifying the fishery products:</h3>
+
+        <table class="form-table">
+            <ng-container formArrayName="products">
+                <ng-container *ngFor="let productGroup of products.controls; let i = index">
+                    <tr class="product-header-row" [formGroupName]="i">
+                        <td colspan="2">
+                            <div class="product-header">
+                                <strong>Product {{ i + 1 }}</strong>
+                                <p-button *ngIf="!viewOnly && products.length > 1" label="Remove" icon="pi pi-trash" type="button" severity="danger" [outlined]="true" size="small" (onClick)="removeProduct(i)"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.1 Description of commodity (common names):</td>
+                        <td><input pInputText formControlName="descCommon" type="text" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.2 Description of commodity (Scientific names):</td>
+                        <td><input pInputText formControlName="descScientific" type="text" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.3 Type of processing:</td>
+                        <td><input pInputText formControlName="processingType" type="text" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.4 Commodity code (HS code):</td>
+                        <td><input pInputText formControlName="hsCode" type="text" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td class="gap-2 mb-4 align-middle !pt-0">5.5 Temperature of the product:</td>
+                        <td>
+                            <div class="radio-group flex flex-col md:flex-row gap-4 mb-4">
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        [name]="'temperature-' + i"
+                                        type="radio"
+                                        [binary]="true"
+                                        formControlName="temperatureAmbient"
+                                        (onClick)="setExclusiveProductRadio(i, 'temperatureAmbient', ['temperatureAmbient', 'temperatureChilled', 'temperatureFrozen'])"
+                                    />
+                                    <label class="leading-none ml-2"> Ambient</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        [name]="'temperature-' + i"
+                                        type="radio"
+                                        [binary]="true"
+                                        formControlName="temperatureChilled"
+                                        (onClick)="setExclusiveProductRadio(i, 'temperatureChilled', ['temperatureAmbient', 'temperatureChilled', 'temperatureFrozen'])"
+                                    />
+                                    <label class="leading-none ml-2"> Chilled</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        [name]="'temperature-' + i"
+                                        type="radio"
+                                        [binary]="true"
+                                        formControlName="temperatureFrozen"
+                                        (onClick)="setExclusiveProductRadio(i, 'temperatureFrozen', ['temperatureAmbient', 'temperatureChilled', 'temperatureFrozen'])"
+                                    />
+                                    <label class="leading-none ml-2"> Frozen</label>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.6 Quantity :</td>
+                        <td><input pInputText formControlName="quantity" type="number" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.7 Number of packages :</td>
+                        <td><input pInputText formControlName="numPackages" type="number" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.8 Type of packaging:</td>
+                        <td><input pInputText formControlName="packagingType" type="text" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.9 Identification of container No./seal No.:</td>
+                        <td><input pInputText formControlName="containerId" type="text" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.10 Commodities certify for (Human consumption):</td>
+                        <td>
+                            <div class="flex items-center mt-2">
+                                <p-checkbox formControlName="forHumanConsumption" [inputId]="'checkOption' + i" [name]="'option-' + i" [binary]="true" />
+                                <label [for]="'checkOption' + i" class="ml-2">Yes</label>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td>5.11 For import or admission in to EU:</td>
+                        <td><input pInputText formControlName="forImportEU" type="text" /></td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td class="gap-2 mb-4 align-middle !pt-0">5.12 Nature of commodity:</td>
+                        <td>
+                            <div class="radio-group flex flex-col md:flex-row gap-2 mb-4 mt-4">
+                                <div class="flex items-center">
+                                    <p-radiobutton [name]="'nature-' + i" type="radio" [binary]="true" formControlName="natureAquaculture" (onClick)="setExclusiveProductRadio(i, 'natureAquaculture', ['natureAquaculture', 'natureWildOrigin'])" />
+                                    <label class="leading-none ml-2"> Aquaculture</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <p-radiobutton [name]="'nature-' + i" type="radio" [binary]="true" formControlName="natureWildOrigin" (onClick)="setExclusiveProductRadio(i, 'natureWildOrigin', ['natureAquaculture', 'natureWildOrigin'])" />
+                                    <label class="leading-none ml-2"> Wild origin</label>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td class="gap-2 mb-4 align-middle !pt-0">5.13 Treatment type:</td>
+                        <td>
+                            <div class="radio-group flex flex-col md:flex-row gap-2 mb-4 mt-4">
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        [name]="'treatment-' + i"
+                                        type="radio"
+                                        [binary]="true"
+                                        formControlName="treatmentChilled"
+                                        (onClick)="setExclusiveProductRadio(i, 'treatmentChilled', ['treatmentChilled', 'treatmentFrozen', 'treatmentLive'])"
+                                    />
+                                    <label class="leading-none ml-2"> Chilled</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        [name]="'treatment-' + i"
+                                        type="radio"
+                                        [binary]="true"
+                                        formControlName="treatmentFrozen"
+                                        (onClick)="setExclusiveProductRadio(i, 'treatmentFrozen', ['treatmentChilled', 'treatmentFrozen', 'treatmentLive'])"
+                                    />
+                                    <label class="leading-none ml-2"> Frozen</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <p-radiobutton
+                                        [name]="'treatment-' + i"
+                                        type="radio"
+                                        [binary]="true"
+                                        formControlName="treatmentLive"
+                                        (onClick)="setExclusiveProductRadio(i, 'treatmentLive', ['treatmentChilled', 'treatmentFrozen', 'treatmentLive'])"
+                                    />
+                                    <label class="leading-none ml-2"> Live</label>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr [formGroupName]="i">
+                        <td class="gap-2 mb-4 align-middle !pt-0">5.14 Net weight (where applicable):</td>
+                        <td>
+                            <div class="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+                                <input pInputText formControlName="netWeight" type="text" placeholder="Enter net weight (e.g. 500)" class="flex-1" />
+                                <p-select
+                                    [options]="weightUnits"
+                                    formControlName="netWeightUnit"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    placeholder="Unit"
+                                    [style]="{ width: '220px' }"
+                                    [appendTo]="'body'"
+                                >
+                                </p-select>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="i < products.length - 1">
+                        <td colspan="2"><div class="product-divider"></div></td>
+                    </tr>
+                </ng-container>
+            </ng-container>
+            <tr *ngIf="!viewOnly" class="print-hide">
+                <td colspan="2">
+                    <div class="products-toolbar mb-3">
+                        <p-button label="Add Product" icon="pi pi-plus" type="button" severity="secondary" styleClass="add-product-btn" (onClick)="addProduct()"></p-button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <!-- Step 4 -->
+    <form *ngIf="step === 4" [formGroup]="form">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
+        <h3 class="section-title text-lg font-semibold mb-3">6. Health attestation :</h3>
+        <p class="leading-normal text-md mb-3">
+            6.1 I the undersigned, declare that I am aware of the relevant provisions of Regulations (EC) No. 178/2002, (EC) No. 852/2004 and (EC) No. 853/2004 and (EC) No. 854/2004 and certify that the fishery products described above were produced
+            in accordance with those requirements, in particular that they:
+        </p>
+
+        <div class="attestation-help-banner print-hide mb-3">
+            <i class="pi pi-info-circle mr-1"></i>
+            <span>Select the clauses to include in this certificate. Unchecked clauses will be crossed out (struck through) on the official certificate.</span>
+        </div>
+
+        <div class="attestation-list flex flex-col gap-2 mb-5">
+            <div class="attestation-item flex items-start gap-3 p-2.5 rounded-lg border transition-all" [ngClass]="{ 'crossed-out': !form.get('attestation61_1')?.value, 'active-clause': form.get('attestation61_1')?.value }">
+                <p-checkbox formControlName="attestation61_1" [binary]="true" id="att_61_1" class="mt-0.5"></p-checkbox>
+                <label for="att_61_1" class="clause-text leading-relaxed cursor-pointer flex-1 select-none">
+                    come from an establishment(s) implementing a programmed based on the HACCP principles in accordance with Regulation (EC) No. 852/2004;
+                </label>
+                <span *ngIf="!form.get('attestation61_1')?.value" class="strike-tag print-hide">Crossed Out</span>
+            </div>
+
+            <div class="attestation-item flex items-start gap-3 p-2.5 rounded-lg border transition-all" [ngClass]="{ 'crossed-out': !form.get('attestation61_2')?.value, 'active-clause': form.get('attestation61_2')?.value }">
+                <p-checkbox formControlName="attestation61_2" [binary]="true" id="att_61_2" class="mt-0.5"></p-checkbox>
+                <label for="att_61_2" class="clause-text leading-relaxed cursor-pointer flex-1 select-none">
+                    have been caught and handled on board vessels, landed handled and where appropriate prepared, processed, frozen and thawed hygienically in compliance with the requirements laid down in Section VIII, Chapters I to IV of Annex III to Regulation (EC) No. 853/2004;
+                </label>
+                <span *ngIf="!form.get('attestation61_2')?.value" class="strike-tag print-hide">Crossed Out</span>
+            </div>
+
+            <div class="attestation-item flex items-start gap-3 p-2.5 rounded-lg border transition-all" [ngClass]="{ 'crossed-out': !form.get('attestation61_3')?.value, 'active-clause': form.get('attestation61_3')?.value }">
+                <p-checkbox formControlName="attestation61_3" [binary]="true" id="att_61_3" class="mt-0.5"></p-checkbox>
+                <label for="att_61_3" class="clause-text leading-relaxed cursor-pointer flex-1 select-none">
+                    satisfy the health standards laid down in section VIII, Chapter V of Annex III to Regulation (EC) No.853/2004 and the criteria laid down in Regulation (EC) No.2073/2005 on microbiological criteria for foodstuffs;
+                </label>
+                <span *ngIf="!form.get('attestation61_3')?.value" class="strike-tag print-hide">Crossed Out</span>
+            </div>
+
+            <div class="attestation-item flex items-start gap-3 p-2.5 rounded-lg border transition-all" [ngClass]="{ 'crossed-out': !form.get('attestation61_4')?.value, 'active-clause': form.get('attestation61_4')?.value }">
+                <p-checkbox formControlName="attestation61_4" [binary]="true" id="att_61_4" class="mt-0.5"></p-checkbox>
+                <label for="att_61_4" class="clause-text leading-relaxed cursor-pointer flex-1 select-none">
+                    have been packed, stored and transported in compliance with Section VIII, Chapters VI to VIII Of Annex III to Regulation (EC) No. 853/2004;
+                </label>
+                <span *ngIf="!form.get('attestation61_4')?.value" class="strike-tag print-hide">Crossed Out</span>
+            </div>
+
+            <div class="attestation-item flex items-start gap-3 p-2.5 rounded-lg border transition-all" [ngClass]="{ 'crossed-out': !form.get('attestation61_5')?.value, 'active-clause': form.get('attestation61_5')?.value }">
+                <p-checkbox formControlName="attestation61_5" [binary]="true" id="att_61_5" class="mt-0.5"></p-checkbox>
+                <label for="att_61_5" class="clause-text leading-relaxed cursor-pointer flex-1 select-none">
+                    have been marked in accordance with section I of Annex II to Regulation (EC)No.853/2004, the live animals and products there of, if from aquaculture origin are in compliance with the requirements laid down in Directive 96/23/Eec, and in particular Article 29 there of are fulfilled.
+                </label>
+                <span *ngIf="!form.get('attestation61_5')?.value" class="strike-tag print-hide">Crossed Out</span>
+            </div>
+        </div>
+
+        <h4 class="text-lg font-semibold mb-2 mt-6">6.2 Animal health attestation for products of aquaculture origins:</h4>
+        <p class="leading-normal text-md mb-3">I, the undersigned, declare that the fishery products described above originate from fish or crustaceans not alter the animal health status of the products and certify, in particular that:</p>
+
+        <div class="attestation-list flex flex-col gap-2 mb-5">
+            <div class="attestation-item flex items-start gap-3 p-2.5 rounded-lg border transition-all" [ngClass]="{ 'crossed-out': !form.get('attestation62_1')?.value, 'active-clause': form.get('attestation62_1')?.value }">
+                <p-checkbox formControlName="attestation62_1" [binary]="true" id="att_62_1" class="mt-0.5"></p-checkbox>
+                <label for="att_62_1" class="clause-text leading-relaxed cursor-pointer flex-1 select-none">
+                    if from species susceptible to ISA and/or EIHN, they originate from a source considered free from ISA and/or EIHN in accordance with the relevant EU legislation or OIE standard;
+                </label>
+                <span *ngIf="!form.get('attestation62_1')?.value" class="strike-tag print-hide">Crossed Out</span>
+            </div>
+
+            <div class="attestation-item flex items-start gap-3 p-2.5 rounded-lg border transition-all" [ngClass]="{ 'crossed-out': !form.get('attestation62_2')?.value, 'active-clause': form.get('attestation62_2')?.value }">
+                <p-checkbox formControlName="attestation62_2" [binary]="true" id="att_62_2" class="mt-0.5"></p-checkbox>
+                <label for="att_62_2" class="clause-text leading-relaxed cursor-pointer flex-1 select-none">
+                    have been slaughtered and eviscerated.
+                </label>
+                <span *ngIf="!form.get('attestation62_2')?.value" class="strike-tag print-hide">Crossed Out</span>
+            </div>
+        </div>
+
+        <div *ngIf="!viewOnly" class="mb-4 mt-8 print-hide">
+            <h4 class="text-lg font-semibold mb-2">Payment Slip Upload</h4>
+            <div class="p-4 border border-gray-300 rounded-lg bg-gray-50">
+                <div class="flex flex-col gap-4">
+                    <p-fileUpload
+                        name="paymentSlip"
+                        mode="basic"
+                        chooseLabel="Choose Payment Slip"
+                        chooseIcon="pi pi-upload"
+                        accept="image/*,application/pdf"
+                        maxFileSize="5000000"
+                        (onSelect)="onPaymentSlipSelect($event)"
+                        [auto]="false"
+                        styleClass="w-full"
+                    >
+                    </p-fileUpload>
+                    <div *ngIf="paymentSlipFile" class="border border-gray-200 rounded-md p-3 bg-white">
+                        <p class="font-semibold mb-2">Selected file</p>
+                        <div class="flex items-center justify-between gap-3 text-sm">
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                <img *ngIf="isImageFile(paymentSlipFile)" [src]="getPaymentSlipPreviewUrl()" [alt]="paymentSlipFile.name" class="w-10 h-10 object-cover rounded border border-gray-200" />
+                                <div *ngIf="!isImageFile(paymentSlipFile)" class="w-10 h-10 rounded border border-gray-200 bg-white flex items-center justify-center text-red-600">
+                                    <i *ngIf="isPdfFile(paymentSlipFile)" class="pi pi-file-pdf"></i>
+                                    <i *ngIf="!isPdfFile(paymentSlipFile)" class="pi pi-file"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <span class="truncate block">{{ paymentSlipFile.name }}</span>
+                                </div>
+                            </div>
+                            <p-button type="button" label="Remove" icon="pi pi-times" severity="danger" [text]="true" size="small" (onClick)="removePaymentSlipFile()"></p-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="viewModePaymentSlip && !paymentSlipFile" class="mb-4 mt-8 print-hide">
+            <h4 class="text-lg font-semibold mb-2">Attached Payment Slip</h4>
+            <div class="p-4 border border-gray-300 rounded-lg bg-gray-50">
+                <div class="border border-gray-200 rounded-md p-3 bg-white">
+                    <div class="flex items-center justify-between gap-3 text-sm">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <img *ngIf="viewModePaymentSlip.isImage" [src]="viewModePaymentSlip.previewUrl" alt="Payment slip" class="w-10 h-10 object-cover rounded border border-gray-200" />
+                            <div *ngIf="!viewModePaymentSlip.isImage" class="w-10 h-10 rounded border border-gray-200 bg-white flex items-center justify-center text-red-600">
+                                <i *ngIf="viewModePaymentSlip.isPdf" class="pi pi-file-pdf"></i>
+                                <i *ngIf="!viewModePaymentSlip.isPdf" class="pi pi-file"></i>
+                            </div>
+                            <span class="truncate block">Payment slip on file</span>
+                        </div>
+                        <p-button type="button" label="View" icon="pi pi-eye" severity="info" [text]="true" size="small" (onClick)="openPaymentSlipPreview()"></p-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ltables">
+            <table style="width: 50%; margin-top: 20px">
+                <tr>
+                    <td>(Company Seal)</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Date:</td>
+                    <td>
+                        <p-datepicker placeholder="Ex: 01/01/2025" [iconDisplay]="'input'" [showIcon]="true" formControlName="signatureDate" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Time:</td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <p-datepicker [iconDisplay]="'input'" placeholder="Ex: 10:20 AM" hourFormat="12" [showIcon]="true" [timeOnly]="true" inputId="templatedisplay" formControlName="signatureTime">
+                                <ng-template #inputicon let-clickCallBack="clickCallBack">
+                                    <i class="pi pi-clock" (click)="clickCallBack($event)"></i>
+                                </ng-template>
+                            </p-datepicker>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            <table style="width: 40%; margin-top: 20px">
+                <tr>
+                    <td>Yours faithfully,</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Signature:</td>
+                    <td><input pInputText type="text" formControlName="signature" class="signature" /></td>
+                </tr>
+                <tr>
+                    <td>Name:</td>
+                    <td><input pInputText type="text" formControlName="signatoryName" /></td>
+                </tr>
+                <tr>
+                    <td>Designation:</td>
+                    <td><input pInputText type="text" formControlName="designation" /></td>
+                </tr>
+            </table>
+        </div>
+    </form>
+
+    <div class="actions print-hide flex items-center justify-between gap-3 mt-6">
+        <p-button
+            *ngIf="!isEmbedded"
+            label="Back to Forms Queue"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            type="button"
+            (onClick)="goBackToPortal()"
+        >
+        </p-button>
+        <div class="flex items-center gap-2">
+            <p-button label="Previous Step" icon="pi pi-chevron-left" severity="secondary" type="button" (onClick)="prev()" [disabled]="step === 1"></p-button>
+            <p-button label="Next Step" icon="pi pi-chevron-right" iconPos="right" type="button" (onClick)="next()" *ngIf="step < 4"></p-button>
+            <p-button
+                type="button"
+                severity="primary"
+                (onClick)="submit()"
+                *ngIf="step === 4 && !viewOnly"
+                [disabled]="isLoading"
+            >
+                <ng-template pTemplate="content">
+                    <i *ngIf="isLoading" class="pi pi-spinner pi-spin mr-2"></i>
+                    {{ isLoading ? 'Submitting...' : 'Submit Form' }}
+                </ng-template>
+            </p-button>
+        </div>
+    </div>
+
+    <p-dialog [header]="attachmentPreviewTitle || 'Attachment Preview'" [(visible)]="attachmentPreviewDialogVisible" [modal]="true" [style]="{ width: '70vw' }" [breakpoints]="{ '960px': '95vw' }" (onHide)="closeAttachmentPreview()">
+        <div *ngIf="attachmentPreviewUrl" class="w-full">
+            <img *ngIf="isAttachmentPreviewImage()" [src]="attachmentPreviewUrl" [alt]="attachmentPreviewTitle" class="max-w-full max-h-[70vh] mx-auto" />
+            <iframe *ngIf="isAttachmentPreviewPdf() && attachmentPreviewPdfSrc" [src]="attachmentPreviewPdfSrc" class="w-full" style="height: 70vh" title="Attached PDF preview"></iframe>
+            <div *ngIf="!isAttachmentPreviewImage() && !isAttachmentPreviewPdf()" class="text-sm text-gray-600">Preview is supported only for image and PDF files.</div>
+        </div>
+    </p-dialog>
+</div>
