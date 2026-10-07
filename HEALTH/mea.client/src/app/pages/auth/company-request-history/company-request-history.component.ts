@@ -16,6 +16,8 @@ interface CompanyRequestRow {
     countryName: string;
     createdAt: string;
     status: string | number;
+    cancelsAndReplacesRef?: string | null;
+    cancelsAndReplacesDate?: string | null;
 }
 
 @Component({
@@ -52,7 +54,9 @@ export class CompanyRequestHistoryComponent implements OnInit {
                             certificateType: this.formatType(requests.certificateType),
                             countryName: this.getCountryName(requests, countryNameById),
                             createdAt: requests.createdAt,
-                            status: requests.status
+                            status: requests.status,
+                            cancelsAndReplacesRef: requests.cancelsAndReplacesRef,
+                            cancelsAndReplacesDate: requests.cancelsAndReplacesDate
                         }));
                         this.filteredRequests = [...this.requests];
                         this.loading = false;
@@ -129,13 +133,17 @@ export class CompanyRequestHistoryComponent implements OnInit {
     }
 
     onView(request: CompanyRequestRow) {
+        const queryParams: Record<string, string | number> = {
+            requestId: request.id,
+            ref: request.referenceNumber,
+            type: request.certificateType
+        };
+        if (request.countryName && request.countryName !== 'N/A') queryParams['country'] = request.countryName;
+        if (request.cancelsAndReplacesRef) queryParams['cancelsAndReplacesRef'] = request.cancelsAndReplacesRef;
+        if (request.cancelsAndReplacesDate) queryParams['cancelsAndReplacesDate'] = request.cancelsAndReplacesDate;
+
         this.router.navigate(['/uikit/admin/certificate-requests/view'], {
-            queryParams: {
-                requestId: request.id,
-                ref: request.referenceNumber,
-                type: request.certificateType,
-                country: request.countryName !== 'N/A' ? request.countryName : null
-            }
+            queryParams
         });
     }
 

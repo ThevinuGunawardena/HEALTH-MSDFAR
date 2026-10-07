@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -44,8 +45,7 @@ export const DEFAULT_TC4361_PRODUCTS = [
 @Component({
     selector: 'app-tw-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -57,20 +57,26 @@ export const DEFAULT_TC4361_PRODUCTS = [
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './tw-certificate.component.html',
     styleUrls: ['./tw-certificate.component.css', '../certificate-print.css']
 })
 export class TwCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
-    isCompany = false;
     isApproved = false;
+    isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
+    refNumber: string = '';
 
     // View mode: 'fish' | 'shellfish' | 'quality'
     viewMode: 'fish' | 'shellfish' | 'quality' = 'fish';
@@ -132,7 +138,8 @@ export class TwCertificateComponent implements OnInit {
             includeQualityCertificate: [false],
 
             // Certificate Details
-            referenceNo: ['TC 4361'],
+            referenceNo: [''],
+            qualityDocumentReferenceNo: [''],
 
             // Section I: Information of competent authority
             countryOfExport: ['SRI LANKA'],
@@ -191,7 +198,6 @@ export class TwCertificateComponent implements OnInit {
             qualification: [''],
 
             // Quality Certificate Attachment Fields
-            qualityDocumentReferenceNo: ['TC 4361'],
             qualityHumanConsumptionYes: [true],
             qualityHumanConsumptionNo: [false],
             qualityEstablishmentName: ['MAISHA ANISHA LANKA (PVT) LTD'],
@@ -371,6 +377,8 @@ export class TwCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -410,9 +418,20 @@ export class TwCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            referenceNo: req.referenceNumber,
+                            qualityDocumentReferenceNo: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -457,11 +476,18 @@ export class TwCertificateComponent implements OnInit {
                 const firstProd = data.products && data.products.length > 0 ? data.products[0] : null;
                 const hasMultipleProducts = (data.products && data.products.length > 1);
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530', 'TC 4359', 'TC 4035', 'SX 1691', 'TC 4361', 'TA 6894', 'TA 9637'];
+                const cleanCertNo = (data.referenceNo && !dummyValues.includes(data.referenceNo.trim())) ? data.referenceNo : '';
+                const finalCertNo = this.refNumber || (data as any).referenceNumber || cleanCertNo || '';
+                if (finalCertNo && !this.refNumber) {
+                    this.refNumber = finalCertNo;
+                }
+
                 this.form.patchValue({
                     certificateType: certType,
                     includeAttachment: hasMultipleProducts,
-                    referenceNo: data.referenceNo || 'TC 4361',
-                    qualityDocumentReferenceNo: data.referenceNo || 'TC 4361',
+                    referenceNo: finalCertNo,
+                    qualityDocumentReferenceNo: finalCertNo,
                     countryOfExport: data.countryOfExport || 'SRI LANKA',
                     countryOfProduction: data.countryOfProduction || 'SRI LANKA',
                     competentAuthority: data.competentAuthority || 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -549,10 +575,17 @@ export class TwCertificateComponent implements OnInit {
                 const firstProd = vetForm.products && vetForm.products.length > 0 ? vetForm.products[0] : null;
                 const hasMultipleProducts = (vetForm.products && vetForm.products.length > 1);
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530', 'TC 4359', 'TC 4035', 'SX 1691', 'TC 4361', 'TA 6894', 'TA 9637'];
+                const cleanCertNo = (vetForm.healthCertNo && !dummyValues.includes(vetForm.healthCertNo.trim())) ? vetForm.healthCertNo : '';
+                const finalCertNo = this.refNumber || vetForm.referenceNumber || cleanCertNo || '';
+                if (finalCertNo && !this.refNumber) {
+                    this.refNumber = finalCertNo;
+                }
+
                 this.form.patchValue({
                     includeAttachment: hasMultipleProducts,
-                    referenceNo: vetForm.healthCertNo || 'TC 4361',
-                    qualityDocumentReferenceNo: vetForm.healthCertNo || 'TC 4361',
+                    referenceNo: finalCertNo,
+                    qualityDocumentReferenceNo: finalCertNo,
                     countryOfExport: vetForm.countryOrigin || 'SRI LANKA',
                     countryOfProduction: vetForm.countryOrigin || 'SRI LANKA',
                     commodityName: hasMultipleProducts ? 'WILD CAUGHT FRESH CHILLED FISH – SEE THE ATTACHMENT' : (firstProd?.descCommon || vetForm.descCommon || ''),
@@ -629,7 +662,8 @@ export class TwCertificateComponent implements OnInit {
             certificateType: 'shellfish',
             includeAttachment: false,
             includeQualityCertificate: false,
-            referenceNo: 'TA 6894',
+            referenceNo: this.refNumber || 'TA 6894',
+            qualityDocumentReferenceNo: this.refNumber || 'TA 6894',
             countryOfExport: 'SRI LANKA',
             countryOfProduction: 'SRI LANKA',
             competentAuthority: 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -694,7 +728,8 @@ export class TwCertificateComponent implements OnInit {
             certificateType: 'fish',
             includeAttachment: true,
             includeQualityCertificate: false,
-            referenceNo: 'TC 4361',
+            referenceNo: this.refNumber || 'TC 4361',
+            qualityDocumentReferenceNo: this.refNumber || 'TC 4361',
             countryOfExport: 'SRI LANKA',
             countryOfProduction: 'SRI LANKA',
             competentAuthority: 'DEPARTMENT OF FISHERIES AND AQUATIC RESOURCES',
@@ -749,8 +784,8 @@ export class TwCertificateComponent implements OnInit {
      */
     loadSampleQuality(): void {
         this.form.patchValue({
-            referenceNo: 'TA 9637',
-            qualityDocumentReferenceNo: 'TA 9637',
+            referenceNo: this.refNumber || 'TA 9637',
+            qualityDocumentReferenceNo: this.refNumber || 'TA 9637',
             qualityHumanConsumptionYes: true,
             qualityHumanConsumptionNo: false,
             qualityEstablishmentName: 'ANNAI AND SONS (PRIVATE) LIMITED',
@@ -942,11 +977,11 @@ export class TwCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

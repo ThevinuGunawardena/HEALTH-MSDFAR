@@ -16,6 +16,11 @@ namespace MEA.Server.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public string? CancelsAndReplacesRef { get; set; }
+
+        public DateTime? CancelsAndReplacesDate { get; set; }
+
+        public int? ReplacedCertificateRequestId { get; set; }
     }
 }
 

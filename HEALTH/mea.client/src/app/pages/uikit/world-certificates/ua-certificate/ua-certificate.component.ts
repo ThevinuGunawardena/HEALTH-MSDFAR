@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -41,8 +42,7 @@ export const DEFAULT_UA_PRODUCTS = [
 @Component({
     selector: 'app-ua-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -54,20 +54,26 @@ export const DEFAULT_UA_PRODUCTS = [
         Select,
         TooltipModule,
         ConfirmPasswordDialogComponent,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './ua-certificate.component.html',
     styleUrls: ['./ua-certificate.component.css', '../certificate-print.css']
 })
 export class UaCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     certificateRequestId: number | null = null;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
+    refNumber: string = '';
 
     // View mode: 'full' (4/5 pages) | 'attachment_only' (1 page)
     viewMode: 'full' | 'attachment_only' = 'full';
@@ -133,7 +139,7 @@ export class UaCertificateComponent implements OnInit {
             consignorTelNo: [''],
 
             // Certificate Details
-            certificateReferenceNumber: ['SY 7511', Validators.required],
+            certificateReferenceNumber: ['', Validators.required],
             centralCompetentAuthority: ['DEPARTMENT OF FISHERIES & AQUATIC RESOURCES'],
             localCompetentAuthority: ['DEPARTMENT OF FISHERIES & AQUATIC RESOURCES'],
 
@@ -299,6 +305,8 @@ export class UaCertificateComponent implements OnInit {
         });
 
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -311,6 +319,7 @@ export class UaCertificateComponent implements OnInit {
             }
 
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({
                     certificateReferenceNumber: params['ref'],
                     healthCertificateReferenceNumber: params['ref']
@@ -338,9 +347,20 @@ export class UaCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            certificateReferenceNumber: req.referenceNumber,
+                            healthCertificateReferenceNumber: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -357,8 +377,8 @@ export class UaCertificateComponent implements OnInit {
         this.form.patchValue({
             viewMode: 'full',
             includeAttachment: true,
-            certificateReferenceNumber: 'SY 7511',
-            healthCertificateReferenceNumber: 'SY 7511',
+            certificateReferenceNumber: this.refNumber || 'SY 7511',
+            healthCertificateReferenceNumber: this.refNumber || 'SY 7511',
             consignorName: 'LIHINI SEA FOODS (PVT)LTD',
             consignorAddress: 'ST.JUDE MAWATHA,KATUNERIYA,\nSRI LANKA',
             consignorPostalCode: '',
@@ -424,6 +444,13 @@ export class UaCertificateComponent implements OnInit {
                 this.viewMode = mode;
                 const hasMultiple = (data.products && data.products.length > 1);
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530', 'TC 4359', 'TC 4035', 'SX 1691', 'TC 4361', 'TA 6894', 'TA 9637', 'SY 7511'];
+                const cleanCertNo = (data.certificateReferenceNumber && !dummyValues.includes(data.certificateReferenceNumber.trim())) ? data.certificateReferenceNumber : '';
+                const finalCertNo = this.refNumber || (data as any).referenceNumber || cleanCertNo || '';
+                if (finalCertNo && !this.refNumber) {
+                    this.refNumber = finalCertNo;
+                }
+
                 this.form.patchValue({
                     viewMode: mode,
                     includeAttachment: hasMultiple,
@@ -431,8 +458,8 @@ export class UaCertificateComponent implements OnInit {
                     consignorAddress: data.consignorAddress || '',
                     consignorPostalCode: data.consignorPostalCode || '',
                     consignorTelNo: data.consignorTelNo || '',
-                    certificateReferenceNumber: data.certificateReferenceNumber || 'SY 7511',
-                    healthCertificateReferenceNumber: data.certificateReferenceNumber || 'SY 7511',
+                    certificateReferenceNumber: finalCertNo,
+                    healthCertificateReferenceNumber: finalCertNo,
                     centralCompetentAuthority: data.centralCompetentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     localCompetentAuthority: data.localCompetentAuthority || 'DEPARTMENT OF FISHERIES & AQUATIC RESOURCES',
                     consigneeName: data.consigneeName || '',
@@ -521,7 +548,14 @@ export class UaCertificateComponent implements OnInit {
             next: (data: VetFormFieldResponse) => {
                 if (!data) return;
 
-                const certNo = data.healthCertNo || data.newHC || 'SY 7511';
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813', 'TB 9530', 'TC 4359', 'TC 4035', 'SX 1691', 'TC 4361', 'TA 6894', 'TA 9637', 'SY 7511'];
+                const rawNo = data.healthCertNo || data.newHC || '';
+                const cleanCertNo = (rawNo && !dummyValues.includes(rawNo.trim())) ? rawNo : '';
+                const finalCertNo = this.refNumber || data.referenceNumber || cleanCertNo || '';
+                if (finalCertNo && !this.refNumber) {
+                    this.refNumber = finalCertNo;
+                }
+
                 const consignorAddr = `${data.consignorAddress || ''}\n${data.consignorPostal || ''}\nSRI LANKA`.trim();
                 const consigneeAddr = `${data.consigneeAddress || ''}\n${data.consigneePostal || ''}\nUKRAINE`.trim();
                 const plantName = data.processingEstName || data.consignorName || 'LIHINI SEA FOODS (PVT)LTD';
@@ -538,8 +572,8 @@ export class UaCertificateComponent implements OnInit {
 
                 this.form.patchValue({
                     includeAttachment: hasMultiple,
-                    certificateReferenceNumber: certNo,
-                    healthCertificateReferenceNumber: certNo,
+                    certificateReferenceNumber: finalCertNo,
+                    healthCertificateReferenceNumber: finalCertNo,
                     consignorName: data.consignorName || 'LIHINI SEA FOODS (PVT)LTD',
                     consignorAddress: consignorAddr || 'ST.JUDE MAWATHA,KATUNERIYA,\nSRI LANKA',
                     consignorPostalCode: data.consignorPostal || '',
@@ -775,11 +809,11 @@ export class UaCertificateComponent implements OnInit {
     }
 
     printCertificate(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

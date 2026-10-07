@@ -533,7 +533,9 @@
     }
 
     .tw-stamp-placeholder,
-    .tw-sig-placeholder {
+    .tw-sig-placeholder,
+    .tw-stamp-box,
+    .tw-sig-box {
         border: none !important;
         background: transparent !important;
         height: auto !important;

@@ -41,6 +41,9 @@ namespace MEA.Server.Data
 
             // Seed sample submitted certificates across all 22 countries
             await WorldCertificatesSeeder.SeedAllAsync(context, userManager);
+
+            // Clean up sample dummy replacement requests
+            await CleanupSampleReplacementRequestsAsync(context);
         }
 
         private static async Task EnsureSchemaUpdatesAsync(AppDbContext context)
@@ -48,6 +51,40 @@ namespace MEA.Server.Data
             try
             {
                 var sql = @"
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ReplacementRequests')
+BEGIN
+    CREATE TABLE [ReplacementRequests] (
+        [Id] int NOT NULL IDENTITY,
+        [OriginalCertificateRequestId] int NULL,
+        [OriginalReferenceNumber] nvarchar(max) NOT NULL DEFAULT '',
+        [ReplacementReferenceNumber] nvarchar(max) NOT NULL DEFAULT '',
+        [CompanyUserId] nvarchar(max) NOT NULL DEFAULT '',
+        [CompanyName] nvarchar(max) NOT NULL DEFAULT '',
+        [Country] nvarchar(max) NOT NULL DEFAULT '',
+        [CertificateType] nvarchar(max) NOT NULL DEFAULT '',
+        [Reason] nvarchar(max) NOT NULL DEFAULT '',
+        [Remarks] nvarchar(max) NULL,
+        [RejectionReason] nvarchar(max) NULL,
+        [Status] int NOT NULL DEFAULT 0,
+        [CreatedAt] datetime2 NOT NULL DEFAULT '0001-01-01T00:00:00.0000000',
+        [ProcessedAt] datetime2 NULL,
+        [ProcessedByUserId] nvarchar(max) NULL,
+        CONSTRAINT [PK_ReplacementRequests] PRIMARY KEY ([Id])
+    );
+END
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'CertificateRequests')
+BEGIN
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CertificateRequests') AND name = 'CancelsAndReplacesRef')
+        ALTER TABLE [CertificateRequests] ADD [CancelsAndReplacesRef] nvarchar(max) NULL;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CertificateRequests') AND name = 'CancelsAndReplacesDate')
+        ALTER TABLE [CertificateRequests] ADD [CancelsAndReplacesDate] datetime2 NULL;
+
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('CertificateRequests') AND name = 'ReplacedCertificateRequestId')
+        ALTER TABLE [CertificateRequests] ADD [ReplacedCertificateRequestId] int NULL;
+END
+
 IF EXISTS (SELECT * FROM sys.tables WHERE name = 'VetCertificateForms')
 BEGIN
     IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('VetCertificateForms') AND name = 'Attestation61_1')
@@ -1305,6 +1342,26 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'JpCertificates')
             }
 
             await context.SaveChangesAsync();
+        }
+
+        private static async Task CleanupSampleReplacementRequestsAsync(AppDbContext context)
+        {
+            try
+            {
+                var sampleRequests = await context.ReplacementRequests
+                    .Where(r => r.Reason.Contains("physically damaged") || r.Reason.Contains("Typographical error") || r.Reason.Contains("Amended flight transport") || r.OriginalReferenceNumber == "HC-2026-EU-001" || r.OriginalReferenceNumber == "HC-2026-USA-001" || r.OriginalReferenceNumber == "HC-2026-JP-001")
+                    .ToListAsync();
+
+                if (sampleRequests.Count > 0)
+                {
+                    context.ReplacementRequests.RemoveRange(sampleRequests);
+                    await context.SaveChangesAsync();
+                }
+            }
+            catch
+            {
+                // Ignore if table not yet created
+            }
         }
     }
 }

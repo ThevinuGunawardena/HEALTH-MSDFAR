@@ -40,7 +40,23 @@
 
             <ng-template pTemplate="body" let-request>
                 <tr>
-                    <td>{{ request.referenceNumber }}</td>
+                    <td>
+                        <div class="flex flex-col gap-1 items-start">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-bold text-gray-900">{{ request.referenceNumber }}</span>
+                                <span *ngIf="request.cancelsAndReplacesRef || (request.referenceNumber && request.referenceNumber.startsWith('*'))"
+                                      class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-xs"
+                                      title="Replacement Certificate">
+                                    REPLACEMENT
+                                </span>
+                            </div>
+                            <div *ngIf="request.cancelsAndReplacesRef" class="text-[11px] text-gray-600 font-medium flex items-center gap-1">
+                                <span class="text-gray-400">Replaces:</span>
+                                <span class="font-semibold text-gray-700">{{ request.cancelsAndReplacesRef }}</span>
+                                <span *ngIf="request.cancelsAndReplacesDate" class="text-gray-400">({{ request.cancelsAndReplacesDate | date: 'dd/MM/yyyy' }})</span>
+                            </div>
+                        </div>
+                    </td>
                     <td>{{ request.certificateType }}</td>
                     <td>{{ request.countryName }}</td>
                     <td>{{ request.createdAt | date: 'mediumDate' }}</td>

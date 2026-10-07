@@ -127,26 +127,6 @@ export interface PublicVerificationResponse {
                                 </div>
 
                                 <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
-                                    <span class="text-slate-500 font-medium block text-3xs">Consignor (Exporter):</span>
-                                    <span class="text-xs font-bold text-slate-900 mt-0.5 block uppercase">
-                                        {{ verificationData?.consignorName || consignor || 'REGISTERED EXPORTER' }}
-                                    </span>
-                                    <span class="text-3xs text-slate-500 mt-0.5 block" *ngIf="verificationData?.consignorAddress">
-                                        {{ verificationData?.consignorAddress }}
-                                    </span>
-                                </div>
-
-                                <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
-                                    <span class="text-slate-500 font-medium block text-3xs">Consignee (Importer):</span>
-                                    <span class="text-xs font-bold text-slate-900 mt-0.5 block uppercase">
-                                        {{ verificationData?.consigneeName || consignee || 'AUTHORIZED IMPORTER' }}
-                                    </span>
-                                    <span class="text-3xs text-slate-500 mt-0.5 block" *ngIf="verificationData?.consigneeAddress">
-                                        {{ verificationData?.consigneeAddress }}
-                                    </span>
-                                </div>
-
-                                <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
                                     <span class="text-slate-500 font-medium block text-3xs">Destination Country:</span>
                                     <span class="text-xs font-bold text-slate-900 mt-0.5 block uppercase">
                                         {{ verificationData?.countryOfDestination || destination || 'INTERNATIONAL' }}
@@ -371,8 +351,6 @@ export class CertificateQrComponent implements OnInit, OnChanges {
         const params = new URLSearchParams();
         if (this.displayRef) params.set('ref', this.displayRef);
         if (this.certificateRequestId) params.set('id', String(this.certificateRequestId));
-        if (this.consignor) params.set('consignor', this.consignor);
-        if (this.consignee) params.set('consignee', this.consignee);
         if (this.item) params.set('item', this.item);
         if (this.displayDate) params.set('date', this.displayDate);
         if (this.officer) params.set('officer', this.officer);

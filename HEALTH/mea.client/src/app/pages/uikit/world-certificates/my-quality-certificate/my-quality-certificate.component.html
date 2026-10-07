@@ -19,7 +19,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <span *ngIf="form.get('documentReferenceNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('documentReferenceNo')?.value }}</span>
+            <span *ngIf="form.get('documentReferenceNo')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('documentReferenceNo')?.value || refNumber }}</span>
             <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
             <p-button
                 *ngIf="!viewOnly"
@@ -41,13 +41,11 @@
                 (onClick)="onSubmit()"
             ></p-button>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="print()"
             ></p-button>
         </div>
@@ -57,6 +55,7 @@
     <!-- ════ QUALITY CERTIFICATE (1 PAGE) ══════════════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="my-q-page">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="my-q-content">
             <!-- Header -->
             <div class="my-q-hdr">
@@ -66,12 +65,12 @@
                         <div class="my-q-title font-bold">Quality Certificate</div>
                         <div class="my-q-docref-row text-center my-mt2">
                             <span class="font-bold">Document Reference No: </span>
-                            <input pInputText formControlName="documentReferenceNo" class="my-q-inp-inline font-bold" />
+                            <input pInputText formControlName="documentReferenceNo" class="my-q-inp-inline font-bold" [readonly]="!!refNumber || !!certificateRequestId" />
                         </div>
                     </div>
                     <div class="cert-header-qr-slot">
                         <app-certificate-qr
-                            [refNumber]="form.get('documentReferenceNo')?.value"
+                            [refNumber]="form.get('documentReferenceNo')?.value || refNumber || ''"
                             [certificateRequestId]="certificateRequestId"
                             [consignor]="form.get('processingEstablishmentName')?.value"
                             [destination]="'Malaysia'"
@@ -203,13 +202,11 @@
         ></p-button>
         <div class="flex items-center gap-3">
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 [outlined]="true"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="top"
                 (onClick)="print()"
             ></p-button>
             <p-button

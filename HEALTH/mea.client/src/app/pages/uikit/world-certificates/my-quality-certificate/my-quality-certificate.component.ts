@@ -1,3 +1,4 @@
+import { ReplacementBannerComponent } from '@/shared/components/replacement-banner/replacement-banner.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -16,8 +17,7 @@ import { CertificateQrComponent } from '@/shared/components/certificate-qr/certi
 @Component({
     selector: 'app-my-quality-certificate',
     standalone: true,
-    imports: [
-        CommonModule,
+    imports: [CommonModule,
         FormsModule,
         ReactiveFormsModule,
         InputTextModule,
@@ -26,20 +26,26 @@ import { CertificateQrComponent } from '@/shared/components/certificate-qr/certi
         ToastModule,
         CheckboxModule,
         TooltipModule,
-        CertificateQrComponent
-    ],
+        CertificateQrComponent, ReplacementBannerComponent],
     providers: [MessageService],
     templateUrl: './my-quality-certificate.component.html',
     styleUrls: ['./my-quality-certificate.component.css', '../certificate-print.css']
 })
 export class MyQualityCertificateComponent implements OnInit {
+    cancelsAndReplacesRef: string | null = null;
+    cancelsAndReplacesDate: string | Date | null = null;
     form: FormGroup;
     viewOnly = false;
     isEmbedded = false;
     isSaving = false;
     certificateRequestId: number | null = null;
     isCompany = false;
+
+    get isAdmin(): boolean {
+        return (this.authService.getUserRole() || '').toLowerCase() === 'admin';
+    }
     isApproved = false;
+    refNumber: string = '';
 
     onlyDigits(event: KeyboardEvent): boolean {
         const charCode = event.which ? event.which : event.keyCode;
@@ -94,6 +100,8 @@ export class MyQualityCertificateComponent implements OnInit {
     ngOnInit(): void {
         this.isCompany = (this.authService.getUserRole() || '').toLowerCase() === 'company';
         this.route.queryParams.subscribe((params) => {
+            if (params['cancelsAndReplacesRef']) this.cancelsAndReplacesRef = params['cancelsAndReplacesRef'];
+            if (params['cancelsAndReplacesDate']) this.cancelsAndReplacesDate = params['cancelsAndReplacesDate'];
             this.isEmbedded = params['embedded'] === 'true' || (typeof window !== 'undefined' && window.self !== window.top);
             if (params['adminEdit'] === 'true') {
                 this.viewOnly = false;
@@ -101,6 +109,7 @@ export class MyQualityCertificateComponent implements OnInit {
                 this.viewOnly = params['viewOnly'] === 'true' || params['viewOnly'] === true;
             }
             if (params['ref']) {
+                this.refNumber = params['ref'];
                 this.form.patchValue({
                     documentReferenceNo: params['ref']
                 });
@@ -123,7 +132,13 @@ export class MyQualityCertificateComponent implements OnInit {
             next: (vetForm: VetFormFieldResponse) => {
                 if (!vetForm) return;
 
+                const dummyValues = ['Draft', 'ffff', 'FFFF', 'TC 4471', 'TC 4791', 'SX 2008', 'BR 8812', 'ID 8813'];
+                const cleanCertNo = (vetForm.healthCertNo && !dummyValues.includes(vetForm.healthCertNo.trim())) ? vetForm.healthCertNo : 
+                                    (vetForm.newHC && !dummyValues.includes(vetForm.newHC.trim())) ? vetForm.newHC : '';
+                const certNo = this.refNumber || vetForm.referenceNumber || cleanCertNo || '';
+
                 this.form.patchValue({
+                    documentReferenceNo: certNo,
                     processingEstablishmentName: vetForm.processingEstName || '',
                     processingEstablishmentAuthNumber: vetForm.approvalNo || '',
                     countryOfDestination: vetForm.countryDestinationISO || 'MALAYSIA',
@@ -267,9 +282,19 @@ export class MyQualityCertificateComponent implements OnInit {
     private checkRequestApproval(requestId: number): void {
         this.certificateService.getRequestById(requestId).subscribe({
             next: (req) => {
+                    if (req) {
+                        if (req.cancelsAndReplacesRef) this.cancelsAndReplacesRef = req.cancelsAndReplacesRef;
+                        if (req.cancelsAndReplacesDate) this.cancelsAndReplacesDate = req.cancelsAndReplacesDate;
+                    }
                 if (req) {
                     const st = typeof req.status === 'string' ? req.status.toLowerCase() : (req.status === 1 ? 'confirmed' : 'pending');
                     this.isApproved = (st === 'confirmed' || st === 'approved' || req.status === 1);
+                    if (req.referenceNumber) {
+                        this.refNumber = req.referenceNumber;
+                        this.form.patchValue({
+                            documentReferenceNo: req.referenceNumber
+                        });
+                    }
                 }
             },
             error: () => {}
@@ -277,11 +302,11 @@ export class MyQualityCertificateComponent implements OnInit {
     }
 
     print(): void {
-        if (this.isCompany && !this.isApproved) {
+        if (!this.isAdmin) {
             this.messageService.add({
-                severity: 'warn',
-                summary: 'Print Disabled',
-                detail: 'Printing is disabled until this certificate request is approved by DFAR Admin.'
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: 'Only administrators have access to print health certificates.'
             });
             return;
         }

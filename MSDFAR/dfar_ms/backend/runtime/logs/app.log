@@ -12772,3 +12772,50 @@ Stack trace:
 #7 {main}
     in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\controllers\ErrorController.php:74
     in C:\Users\Administrator\Downloads\HEALTH+MSDFAR\MSDFAR\dfar_ms\backend\controllers\ErrorController.php:33
+2026-10-07 01:05:24 [][-][-][error][yii\base\ErrorException:2] yii\base\ErrorException: session_name(): Session name cannot be changed after headers have already been sent (sent from /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/test_bench.php on line 6) in /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Session.php:351
+Stack trace:
+#0 [internal function]: yii\base\ErrorHandler->handleError(2, 'session_name():...', '/Users/mesandas...', 351)
+#1 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Session.php(351): session_name('advanced-backen...')
+#2 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Component.php(183): yii\web\Session->setName('advanced-backen...')
+#3 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/BaseYii.php(562): yii\base\Component->__set('name', 'advanced-backen...')
+#4 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/BaseObject.php(107): yii\BaseYii::configure(Object(yii\web\Session), Array)
+#5 [internal function]: yii\base\BaseObject->__construct(Array)
+#6 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/di/Container.php(426): ReflectionClass->newInstanceArgs(Array)
+#7 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/di/Container.php(174): yii\di\Container->build('yii\\web\\Session', Array, Array)
+#8 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/BaseYii.php(370): yii\di\Container->get('yii\\web\\Session', Array, Array)
+#9 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/di/ServiceLocator.php(137): yii\BaseYii::createObject(Array)
+#10 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Module.php(773): yii\di\ServiceLocator->get('session', true)
+#11 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Application.php(180): yii\base\Module->get('session')
+#12 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/User.php(690): yii\web\Application->getSession()
+#13 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/User.php(200): yii\web\User->renewAuthStatus()
+#14 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/User.php(367): yii\web\User->getIdentity()
+#15 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Component.php(142): yii\web\User->getIsGuest()
+#16 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/test_bench.php(32): yii\base\Component->__get('isGuest')
+#17 {main}
+2026-10-07 01:05:24 [][-][-][error][secure-error] Error reference: ERR-20261007-010524--Q7FXCYA
+HTTP status: 500
+Route: /login
+Exception: yii\base\ErrorException
+Message: session_name(): Session name cannot be changed after headers have already been sent (sent from /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/test_bench.php on line 6)
+File: /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Session.php
+Line: 351
+Stack trace:
+#0 [internal function]: yii\base\ErrorHandler->handleError(2, 'session_name():...', '/Users/mesandas...', 351)
+#1 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Session.php(351): session_name('advanced-backen...')
+#2 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Component.php(183): yii\web\Session->setName('advanced-backen...')
+#3 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/BaseYii.php(562): yii\base\Component->__set('name', 'advanced-backen...')
+#4 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/BaseObject.php(107): yii\BaseYii::configure(Object(yii\web\Session), Array)
+#5 [internal function]: yii\base\BaseObject->__construct(Array)
+#6 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/di/Container.php(426): ReflectionClass->newInstanceArgs(Array)
+#7 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/di/Container.php(174): yii\di\Container->build('yii\\web\\Session', Array, Array)
+#8 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/BaseYii.php(370): yii\di\Container->get('yii\\web\\Session', Array, Array)
+#9 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/di/ServiceLocator.php(137): yii\BaseYii::createObject(Array)
+#10 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Module.php(773): yii\di\ServiceLocator->get('session', true)
+#11 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/Application.php(180): yii\base\Module->get('session')
+#12 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/User.php(690): yii\web\Application->getSession()
+#13 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/User.php(200): yii\web\User->renewAuthStatus()
+#14 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/web/User.php(367): yii\web\User->getIdentity()
+#15 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/vendor/yiisoft/yii2/base/Component.php(142): yii\web\User->getIsGuest()
+#16 /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/test_bench.php(32): yii\base\Component->__get('isGuest')
+#17 {main}
+2026-10-07 01:07:11 [][-][-][error][yii\web\Session::open] session_start(): Session cannot be started after headers have already been sent (sent from /Users/mesandasethumika/Desktop/HEALTH-MSDFAR/MSDFAR/dfar_ms/test_bench.php on line 6)

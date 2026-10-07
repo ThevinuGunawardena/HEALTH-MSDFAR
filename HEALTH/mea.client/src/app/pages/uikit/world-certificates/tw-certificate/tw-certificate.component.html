@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <span *ngIf="form.get('referenceNo')?.value" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('referenceNo')?.value }}</span>
+            <span *ngIf="form.get('referenceNo')?.value || refNumber" class="text-xs font-mono bg-slate-200 text-slate-700 px-2 py-1 rounded">Ref: {{ form.get('referenceNo')?.value || refNumber }}</span>
             <span *ngIf="viewOnly" class="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800"><i class="pi pi-lock text-xs mr-1"></i>Read-Only</span>
             <p-button
                 *ngIf="!viewOnly"
@@ -60,13 +60,11 @@
                 (onClick)="onSubmit()"
             ></p-button>
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 icon="pi pi-print"
                 severity="secondary"
                 size="small"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="bottom"
                 (onClick)="printCertificate()"
             ></p-button>
         </div>
@@ -102,6 +100,7 @@
     <!-- ════ PAGE 1 (HEALTH CERTIFICATE) ═══════════════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="tw-page" *ngIf="viewMode !== 'quality'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="tw-content">
             <!-- Header -->
             <div class="tw-hdr">
@@ -112,7 +111,7 @@
                     </div>
                     <div class="cert-header-qr-slot">
                         <app-certificate-qr
-                            [refNumber]="form.get('certificateNumber')?.value"
+                            [refNumber]="form.get('referenceNo')?.value || refNumber || ''"
                             [certificateRequestId]="certificateRequestId"
                             [consignor]="form.get('consignorNameAddress')?.value"
                             [consignee]="form.get('consigneeNameAddress')?.value"
@@ -129,7 +128,7 @@
                 <div class="tw-addr">E-mail: dgdfar&#64;gmail.com</div>
 
                 <div class="tw-ref-line text-right font-bold text-xs mt-2">
-                    Reference No: <input pInputText formControlName="referenceNo" class="tw-inline-ref font-bold" />
+                    Reference No: <input pInputText formControlName="referenceNo" class="tw-inline-ref font-bold" [readonly]="!!refNumber || !!certificateRequestId" />
                 </div>
 
                 <div class="tw-title">HEALTH CERTIFICATE</div>
@@ -282,6 +281,7 @@
     <!-- ════ PAGE 2 (TRANSPORT & SIGNATURES) ═══════════════════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="tw-page" *ngIf="viewMode !== 'quality'">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="tw-content">
             <table class="tw-tbl w-full border border-black">
                 <!-- Section IV -->
@@ -367,51 +367,8 @@
                     <tr style="min-height: 140px;">
                         <td class="p-2 border-r border-black vertical-top" style="width: 50%;">
                             <div class="font-bold text-xs mb-1">Official stamp</div>
-                            <div
-                                class="tw-stamp-placeholder"
-                                [class.tw-drop-active]="isDraggingStamp"
-                                [class.has-content]="!!form.get('officialStamp')?.value"
-                                (click)="!viewOnly && stampInput.click()"
-                                (dragover)="onStampDragOver($event)"
-                                (dragleave)="onStampDragLeave($event)"
-                                (drop)="onStampDrop($event)"
-                                (paste)="onStampPaste($event)"
-                                tabindex="0"
-                            >
-                                <input type="file" #stampInput (change)="onStampFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                <!-- Empty State -->
-                                <div *ngIf="!form.get('officialStamp')?.value" class="tw-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                    <i class="pi pi-shield text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                    <span class="print-show text-3xs text-slate-400 italic">Official Stamp Area</span>
-                                </div>
-
-                                <!-- Uploaded Image -->
-                                <div *ngIf="form.get('officialStamp')?.value && !isPdf(form.get('officialStamp')?.value)" class="tw-preview-container">
-                                    <img [src]="form.get('officialStamp')?.value" alt="Official Stamp" class="tw-stamp-img" />
-                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
-                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); stampInput.click()" title="Change Stamp">
-                                            <i class="pi pi-pencil text-2xs"></i>
-                                        </button>
-                                        <button type="button" class="tw-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                            <i class="pi pi-trash text-2xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Uploaded PDF -->
-                                <div *ngIf="form.get('officialStamp')?.value && isPdf(form.get('officialStamp')?.value)" class="tw-preview-container">
-                                    <object *ngIf="safeStampPdfUrl" [data]="safeStampPdfUrl" type="application/pdf" class="tw-pdf-preview"></object>
-                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
-                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); stampInput.click()" title="Change Stamp">
-                                            <i class="pi pi-pencil text-2xs"></i>
-                                        </button>
-                                        <button type="button" class="tw-mini-btn danger" (click)="removeStamp($event)" title="Remove Stamp">
-                                            <i class="pi pi-trash text-2xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                            <div class="tw-stamp-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Stamp Space</span>
                             </div>
                         </td>
                         <td class="p-2 vertical-top" style="width: 50%;">
@@ -426,51 +383,8 @@
                                     appendTo="body"
                                 ></p-select>
                             </div>
-                            <div
-                                class="tw-sig-placeholder"
-                                [class.tw-drop-active]="isDraggingSignature"
-                                [class.has-content]="!!form.get('officialSignature')?.value"
-                                (click)="!viewOnly && sigInput.click()"
-                                (dragover)="onSignatureDragOver($event)"
-                                (dragleave)="onSignatureDragLeave($event)"
-                                (drop)="onSignatureDrop($event)"
-                                (paste)="onSignaturePaste($event)"
-                                tabindex="0"
-                            >
-                                <input type="file" #sigInput (change)="onSignatureFileSelected($event)" accept="image/*,application/pdf" class="hidden" />
-
-                                <!-- Empty State -->
-                                <div *ngIf="!form.get('officialSignature')?.value" class="tw-empty-upload flex flex-col items-center justify-center p-2 text-center">
-                                    <i class="pi pi-pencil text-slate-400 text-sm mb-0.5 print-hide"></i>
-                                    <span class="print-hide text-3xs text-slate-500 font-medium">Click, drag &amp; drop, or paste screenshot / PDF</span>
-                                    <span class="print-show text-3xs text-slate-400 italic">Signature Area</span>
-                                </div>
-
-                                <!-- Uploaded Image -->
-                                <div *ngIf="form.get('officialSignature')?.value && !isPdf(form.get('officialSignature')?.value)" class="tw-preview-container">
-                                    <img [src]="form.get('officialSignature')?.value" alt="Signature" class="tw-sig-img" />
-                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
-                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); sigInput.click()" title="Change Signature">
-                                            <i class="pi pi-pencil text-2xs"></i>
-                                        </button>
-                                        <button type="button" class="tw-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                            <i class="pi pi-trash text-2xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Uploaded PDF -->
-                                <div *ngIf="form.get('officialSignature')?.value && isPdf(form.get('officialSignature')?.value)" class="tw-preview-container">
-                                    <object *ngIf="safeSignaturePdfUrl" [data]="safeSignaturePdfUrl" type="application/pdf" class="tw-pdf-preview"></object>
-                                    <div class="tw-action-overlay print-hide" *ngIf="!viewOnly">
-                                        <button type="button" class="tw-mini-btn" (click)="$event.stopPropagation(); sigInput.click()" title="Change Signature">
-                                            <i class="pi pi-pencil text-2xs"></i>
-                                        </button>
-                                        <button type="button" class="tw-mini-btn danger" (click)="removeSignature($event)" title="Remove Signature">
-                                            <i class="pi pi-trash text-2xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                            <div class="tw-sig-box" style="min-height: 110px; border: 1px dashed #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <span class="text-3xs text-slate-400 italic print-hide">Official Signature Space</span>
                             </div>
                             <div class="font-bold text-xs uppercase mt-2">{{ form.get('signatoryName')?.value }}</div>
                             <div class="font-bold text-xs whitespace-pre-line mt-0.5">{{ form.get('qualification')?.value }}</div>
@@ -493,11 +407,12 @@
     <!-- ════ PAGE 3 (ATTACHMENT TO VETERINARY CERTIFICATE) ═════════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="tw-page" *ngIf="viewMode !== 'quality' && form.get('includeAttachment')?.value">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="tw-content">
             <!-- Header matching PDF 2 -->
             <div class="tw-att-title font-bold text-center">
                 Attachment to the Veterinary certificate number
-                <span class="tw-att-ref-val">{{ form.get('referenceNo')?.value || 'TC 4361' }}</span>
+                <span class="tw-att-ref-val">{{ form.get('referenceNo')?.value || refNumber || '' }}</span>
             </div>
             <div class="flex justify-between items-center text-xs font-bold px-1 mb-2">
                 <div class="tw-att-meta">DATE: {{ (form.get('dateOfIssue')?.value || form.get('productionDate')?.value) | date: 'dd/MM/yyyy' }}</div>
@@ -585,6 +500,7 @@
     <!-- ════ QUALITY CERTIFICATE PAGE (ATTACHED OR STANDALONE) ══════════ -->
     <!-- ════════════════════════════════════════════════════════════════ -->
     <div class="tw-page" *ngIf="viewMode === 'quality' || form.get('includeQualityCertificate')?.value">
+        <app-replacement-banner [refNumber]="cancelsAndReplacesRef" [date]="cancelsAndReplacesDate"></app-replacement-banner>
         <div class="tw-content">
             <!-- Header -->
             <div class="tw-q-hdr">
@@ -594,12 +510,12 @@
                         <div class="tw-q-title font-bold">Quality Certificate</div>
                         <div class="tw-q-docref-row text-center my-mt2">
                             <span class="font-bold">Document Reference No: </span>
-                            <input pInputText formControlName="qualityDocumentReferenceNo" class="tw-q-inp-inline font-bold" />
+                            <input pInputText formControlName="qualityDocumentReferenceNo" class="tw-q-inp-inline font-bold" [readonly]="!!refNumber || !!certificateRequestId" />
                         </div>
                     </div>
                     <div class="cert-header-qr-slot">
                         <app-certificate-qr
-                            [refNumber]="form.get('qualityDocumentReferenceNo')?.value || form.get('certificateNumber')?.value"
+                            [refNumber]="form.get('qualityDocumentReferenceNo')?.value || form.get('referenceNo')?.value || refNumber || ''"
                             [certificateRequestId]="certificateRequestId"
                             [consignor]="form.get('qualityEstablishmentName')?.value || form.get('consignorNameAddress')?.value"
                             [destination]="'Taiwan'"
@@ -730,12 +646,10 @@
         ></p-button>
         <div class="flex items-center gap-3">
             <p-button
+                *ngIf="isAdmin"
                 label="Print / Export PDF"
                 [outlined]="true"
                 severity="secondary"
-                [disabled]="isCompany && !isApproved"
-                [pTooltip]="isCompany && !isApproved ? 'Printing is disabled until the certificate is approved by DFAR Admin' : 'Print / Export PDF'"
-                tooltipPosition="top"
                 (onClick)="printCertificate()"
                 icon="pi pi-print"
                 size="small"

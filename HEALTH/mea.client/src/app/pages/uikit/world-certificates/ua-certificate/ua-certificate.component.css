@@ -405,7 +405,9 @@
     }
 
     .ua-stamp-placeholder,
-    .ua-sig-placeholder {
+    .ua-sig-placeholder,
+    .ua-stamp-box,
+    .ua-sig-box {
         border: none !important;
         background: transparent !important;
         height: auto !important;

@@ -237,6 +237,12 @@ export class AppMenu {
                             routerLink: ['/uikit/world-certificates/usa-certificate']
                         }
                     ]
+                },
+                {
+                    label: 'Replacement Requests',
+                    icon: 'pi pi-fw pi-refresh',
+                    data: { roles: ['Admin', 'User'] },
+                    routerLink: ['/uikit/admin/replacement-requests']
                 }
             ]
         },
@@ -262,6 +268,12 @@ export class AppMenu {
                     label: 'Request History',
                     icon: 'pi pi-fw pi-history',
                     routerLink: ['/company-request-history'],
+                    data: { roles: ['Company'] }
+                },
+                {
+                    label: 'Replacement Requests',
+                    icon: 'pi pi-fw pi-refresh',
+                    routerLink: ['/uikit/admin/replacement-requests'],
                     data: { roles: ['Company'] }
                 }
             ]

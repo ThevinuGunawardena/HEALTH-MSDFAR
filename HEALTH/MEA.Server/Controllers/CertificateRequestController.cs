@@ -215,6 +215,31 @@ namespace MEA.Server.Controllers
 
             var countryName = request.CountryId.HasValue ? (await _countryRepository.GetByIdAsync(request.CountryId.Value))?.Name : (request.CertificateType == CertificateType.EU ? "European Union" : null);
 
+            var cancelsRef = request.CancelsAndReplacesRef;
+            var cancelsDate = request.CancelsAndReplacesDate;
+
+            if (string.IsNullOrWhiteSpace(cancelsRef))
+            {
+                if (request.ReplacedCertificateRequestId.HasValue)
+                {
+                    var origReq = await _certificateRequestRepository.GetByIdAsync(request.ReplacedCertificateRequestId.Value);
+                    if (origReq != null)
+                    {
+                        cancelsRef = origReq.ReferenceNumber;
+                        cancelsDate = origReq.CreatedAt;
+                    }
+                }
+                else if (request.ReferenceNumber.StartsWith("*"))
+                {
+                    var repRec = await _context.ReplacementRequests.AsNoTracking().FirstOrDefaultAsync(r => r.ReplacementReferenceNumber == request.ReferenceNumber);
+                    if (repRec != null)
+                    {
+                        cancelsRef = repRec.OriginalReferenceNumber;
+                        cancelsDate = repRec.CreatedAt;
+                    }
+                }
+            }
+
             return Ok(new
             {
                 request.Id,
@@ -223,7 +248,10 @@ namespace MEA.Server.Controllers
                 request.CountryId,
                 CountryName = countryName,
                 request.Status,
-                request.CreatedAt
+                request.CreatedAt,
+                CancelsAndReplacesRef = cancelsRef,
+                CancelsAndReplacesDate = cancelsDate,
+                request.ReplacedCertificateRequestId
             });
         }
 
@@ -538,18 +566,36 @@ namespace MEA.Server.Controllers
             // Filter: ONLY load requests where the company filled the form and pressed SUBMIT
             var filteredRequests = requests.Where(r => submittedIds.Contains(r.Id)).ToList();
 
-            var result = filteredRequests.Select(r => new
+            var repMap = await _context.ReplacementRequests.AsNoTracking()
+                .Where(rp => !string.IsNullOrEmpty(rp.ReplacementReferenceNumber))
+                .ToDictionaryAsync(rp => rp.ReplacementReferenceNumber, rp => rp);
+
+            var result = filteredRequests.Select(r =>
             {
-                r.Id,
-                r.ReferenceNumber,
-                r.CertificateType,
-                r.CountryId,
-                CountryName = r.CountryId.HasValue ? countryLookupMap.GetValueOrDefault(r.CountryId.Value) : (r.CertificateType == CertificateType.EU ? "European Union" : null),
-                r.Status,
-                r.CreatedAt,
-                CompanyName = ResolveCompanyName(r.Id, r.CompanyUserId),
-                PaymentSlip = paymentSlipMap.GetValueOrDefault(r.Id),
-                HasFormSubmitted = submittedIds.Contains(r.Id)
+                var cancelsRef = r.CancelsAndReplacesRef;
+                var cancelsDate = r.CancelsAndReplacesDate;
+                if (string.IsNullOrWhiteSpace(cancelsRef) && repMap.TryGetValue(r.ReferenceNumber, out var rep))
+                {
+                    cancelsRef = rep.OriginalReferenceNumber;
+                    cancelsDate = rep.CreatedAt;
+                }
+
+                return new
+                {
+                    r.Id,
+                    r.ReferenceNumber,
+                    r.CertificateType,
+                    r.CountryId,
+                    CountryName = r.CountryId.HasValue ? countryLookupMap.GetValueOrDefault(r.CountryId.Value) : (r.CertificateType == CertificateType.EU ? "European Union" : null),
+                    r.Status,
+                    r.CreatedAt,
+                    CancelsAndReplacesRef = cancelsRef,
+                    CancelsAndReplacesDate = cancelsDate,
+                    r.ReplacedCertificateRequestId,
+                    CompanyName = ResolveCompanyName(r.Id, r.CompanyUserId),
+                    PaymentSlip = paymentSlipMap.GetValueOrDefault(r.Id),
+                    HasFormSubmitted = submittedIds.Contains(r.Id)
+                };
             }).ToList();
 
             return Ok(result);
@@ -641,12 +687,24 @@ namespace MEA.Server.Controllers
             var countries = await _countryRepository.GetAllAsync();
             var countryMap = countries.ToDictionary(c => c.Id, c => c.Name);
 
+            var myRepMap = await _context.ReplacementRequests.AsNoTracking()
+                .Where(rp => !string.IsNullOrEmpty(rp.ReplacementReferenceNumber))
+                .ToDictionaryAsync(rp => rp.ReplacementReferenceNumber, rp => rp);
+
             var now = DateTime.UtcNow;
             var result = requests.Select(r =>
             {
                 var isSubmitted = submittedIds.Contains(r.Id);
                 var expiresAt = CalculateMidnightExpirationUtc(r.CreatedAt);
                 var isExpired = !isSubmitted && now > expiresAt;
+
+                var cancelsRef = r.CancelsAndReplacesRef;
+                var cancelsDate = r.CancelsAndReplacesDate;
+                if (string.IsNullOrWhiteSpace(cancelsRef) && myRepMap.TryGetValue(r.ReferenceNumber, out var rep))
+                {
+                    cancelsRef = rep.OriginalReferenceNumber;
+                    cancelsDate = rep.CreatedAt;
+                }
 
                 return new
                 {
@@ -657,6 +715,9 @@ namespace MEA.Server.Controllers
                     CountryName = r.CountryId.HasValue ? countryMap.GetValueOrDefault(r.CountryId.Value) : (r.CertificateType == CertificateType.EU ? "European Union" : null),
                     r.Status,
                     r.CreatedAt,
+                    CancelsAndReplacesRef = cancelsRef,
+                    CancelsAndReplacesDate = cancelsDate,
+                    r.ReplacedCertificateRequestId,
                     ExpiresAt = expiresAt,
                     IsExpired = isExpired,
                     HasFormSubmitted = isSubmitted
@@ -733,12 +794,23 @@ namespace MEA.Server.Controllers
                 products.AddRange(legacyProducts);
             }
 
+            string? refNumber = null;
+            if (vetForm.CertificateRequestId.HasValue)
+            {
+                var req = await _certificateRequestRepository.GetByIdAsync(vetForm.CertificateRequestId.Value);
+                if (req != null && !string.IsNullOrEmpty(req.ReferenceNumber))
+                {
+                    refNumber = req.ReferenceNumber;
+                }
+            }
+
             var result = new
             {
                 vetForm.Id,
                 vetForm.CertificateRequestId,
+                ReferenceNumber = refNumber,
                 vetForm.OldHC,
-                vetForm.NewHC,
+                NewHC = refNumber ?? vetForm.NewHC,
                 vetForm.LandingSite,
                 vetForm.BoatRegistration,
                 vetForm.BoatNumber,
@@ -754,7 +826,7 @@ namespace MEA.Server.Controllers
                 vetForm.AquaSupplier,
                 vetForm.CountryOrigin,
                 vetForm.ArrivalConsignment,
-                vetForm.HealthCertNo,
+                HealthCertNo = refNumber ?? vetForm.HealthCertNo,
                 vetForm.ProductTypeAquaculture,
                 vetForm.ProductTypeWildCaught,
                 UploadedCertificateFile = (vetForm.UploadedCertificateFile != null && vetForm.UploadedCertificateFile.Length > 0)
@@ -940,6 +1012,1728 @@ namespace MEA.Server.Controllers
             return Ok(new { request.Id, request.ReferenceNumber, request.Status });
         }
 
+        [HttpPost("certificate-requests/{id}/create-replacement")]
+        [HttpPost("createreplacement/{id}")]
+        [Authorize(Roles = "Admin,Company")]
+        public async Task<IActionResult> CreateReplacementCertificateRequest(int id)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var originalReq = await _certificateRequestRepository.GetByIdAsync(id);
+            if (originalReq == null)
+                return NotFound(new { Message = "Original certificate request not found." });
+
+            var countryName = originalReq.CountryId.HasValue ? (await _countryRepository.GetByIdAsync(originalReq.CountryId.Value))?.Name : (originalReq.CertificateType == CertificateType.EU ? "European Union" : null);
+
+            // Generate new unique reference number (EU sequence for EU/UK, NonEU sequence for other countries) with star sign '*'
+            var baseRefNumber = await _certificateRequestRepository.GenerateUniqueReferenceNumberAsync(originalReq.CertificateType, originalReq.CountryId);
+            var newRefNumber = baseRefNumber.StartsWith("*") ? baseRefNumber : $"*{baseRefNumber}";
+
+            // Create replacement CertificateRequest
+            var newReq = new CertificateRequest
+            {
+                ReferenceNumber = newRefNumber,
+                CertificateType = originalReq.CertificateType,
+                CountryId = originalReq.CountryId,
+                CompanyUserId = originalReq.CompanyUserId,
+                Status = CertificateStatus.Confirmed,
+                CreatedAt = DateTime.UtcNow,
+                CancelsAndReplacesRef = originalReq.ReferenceNumber,
+                CancelsAndReplacesDate = originalReq.CreatedAt,
+                ReplacedCertificateRequestId = originalReq.Id
+            };
+            await _certificateRequestRepository.CreateAsync(newReq);
+
+            // 1. Clone VetCertificateForm if present
+            var origVetForm = await _context.VetCertificateForms
+                .Include(v => v.Products)
+                .Include(v => v.Attachments)
+                .FirstOrDefaultAsync(v => v.CertificateRequestId == originalReq.Id);
+
+            if (origVetForm != null)
+            {
+                var newVetForm = new VetCertificateForm
+                {
+                    CertificateRequestId = newReq.Id,
+                    CompanyUserId = origVetForm.CompanyUserId,
+                    HealthCertNo = newRefNumber,
+                    OldHC = origVetForm.HealthCertNo ?? origVetForm.OldHC,
+                    NewHC = newRefNumber,
+                    LandingSite = origVetForm.LandingSite,
+                    BoatRegistration = origVetForm.BoatRegistration,
+                    BoatNumber = origVetForm.BoatNumber,
+                    SupplierNameAddress = origVetForm.SupplierNameAddress,
+                    ArrivalAtFactory = origVetForm.ArrivalAtFactory,
+                    ProcessingDate = origVetForm.ProcessingDate,
+                    FarmLocation = origVetForm.FarmLocation,
+                    FarmOwnerName = origVetForm.FarmOwnerName,
+                    FarmOwnerAddress = origVetForm.FarmOwnerAddress,
+                    HarvestDate = origVetForm.HarvestDate,
+                    ArrivalTimeProduct = origVetForm.ArrivalTimeProduct,
+                    ProcessingDates = origVetForm.ProcessingDates,
+                    AquaSupplier = origVetForm.AquaSupplier,
+                    CountryOrigin = origVetForm.CountryOrigin,
+                    ArrivalConsignment = origVetForm.ArrivalConsignment,
+                    ProductTypeAquaculture = origVetForm.ProductTypeAquaculture,
+                    ProductTypeWildCaught = origVetForm.ProductTypeWildCaught,
+                    UploadedCertificateFile = origVetForm.UploadedCertificateFile,
+                    ConsignorName = origVetForm.ConsignorName,
+                    ConsignorAddress = origVetForm.ConsignorAddress,
+                    ConsignorPostal = origVetForm.ConsignorPostal,
+                    ConsignorTel = origVetForm.ConsignorTel,
+                    ConsigneeName = origVetForm.ConsigneeName,
+                    ConsigneeAddress = origVetForm.ConsigneeAddress,
+                    ConsigneePostal = origVetForm.ConsigneePostal,
+                    ConsigneeTel = origVetForm.ConsigneeTel,
+                    CountryOriginISO = origVetForm.CountryOriginISO,
+                    RegionOriginISO = origVetForm.RegionOriginISO,
+                    CountryDestinationISO = origVetForm.CountryDestinationISO,
+                    ProcessingEstName = origVetForm.ProcessingEstName,
+                    ProcessingEstAddress = origVetForm.ProcessingEstAddress,
+                    ApprovalNo = origVetForm.ApprovalNo,
+                    PlaceOfLoading = origVetForm.PlaceOfLoading,
+                    DateOfDeparture = origVetForm.DateOfDeparture,
+                    TransportAeroPlane = origVetForm.TransportAeroPlane,
+                    TransportShip = origVetForm.TransportShip,
+                    TransportRailwayWagon = origVetForm.TransportRailwayWagon,
+                    TransportRoadVehicle = origVetForm.TransportRoadVehicle,
+                    TransportOther = origVetForm.TransportOther,
+                    TransportId = origVetForm.TransportId,
+                    DocReferences = origVetForm.DocReferences,
+                    EntryBIP = origVetForm.EntryBIP,
+                    DescCommon = origVetForm.DescCommon,
+                    DescScientific = origVetForm.DescScientific,
+                    ProcessingType = origVetForm.ProcessingType,
+                    HsCode = origVetForm.HsCode,
+                    TemperatureAmbient = origVetForm.TemperatureAmbient,
+                    TemperatureChilled = origVetForm.TemperatureChilled,
+                    TemperatureFrozen = origVetForm.TemperatureFrozen,
+                    Quantity = origVetForm.Quantity,
+                    NumPackages = origVetForm.NumPackages,
+                    PackagingType = origVetForm.PackagingType,
+                    ContainerId = origVetForm.ContainerId,
+                    ForHumanConsumption = origVetForm.ForHumanConsumption,
+                    ForImportEU = origVetForm.ForImportEU,
+                    NatureAquaculture = origVetForm.NatureAquaculture,
+                    NatureWildOrigin = origVetForm.NatureWildOrigin,
+                    TreatmentChilled = origVetForm.TreatmentChilled,
+                    TreatmentFrozen = origVetForm.TreatmentFrozen,
+                    TreatmentLive = origVetForm.TreatmentLive,
+                    NetWeight = origVetForm.NetWeight,
+                    PaymentSlipFile = origVetForm.PaymentSlipFile,
+                    Signature = origVetForm.Signature,
+                    SignatoryName = origVetForm.SignatoryName,
+                    Designation = origVetForm.Designation,
+                    SignatureDate = origVetForm.SignatureDate,
+                    SignatureTime = origVetForm.SignatureTime,
+                    Attestation61_1 = origVetForm.Attestation61_1,
+                    Attestation61_2 = origVetForm.Attestation61_2,
+                    Attestation61_3 = origVetForm.Attestation61_3,
+                    Attestation61_4 = origVetForm.Attestation61_4,
+                    Attestation61_5 = origVetForm.Attestation61_5,
+                    Attestation62_1 = origVetForm.Attestation62_1,
+                    Attestation62_2 = origVetForm.Attestation62_2,
+                    CreatedAt = DateTime.UtcNow,
+                    Products = origVetForm.Products?.Select(p => new VetCertificateProduct
+                    {
+                        ProductOrder = p.ProductOrder,
+                        DescCommon = p.DescCommon,
+                        DescScientific = p.DescScientific,
+                        ProcessingType = p.ProcessingType,
+                        HsCode = p.HsCode,
+                        TemperatureAmbient = p.TemperatureAmbient,
+                        TemperatureChilled = p.TemperatureChilled,
+                        TemperatureFrozen = p.TemperatureFrozen,
+                        Quantity = p.Quantity,
+                        NumPackages = p.NumPackages,
+                        PackagingType = p.PackagingType,
+                        ContainerId = p.ContainerId,
+                        ForHumanConsumption = p.ForHumanConsumption,
+                        ForImportEU = p.ForImportEU,
+                        NatureAquaculture = p.NatureAquaculture,
+                        NatureWildOrigin = p.NatureWildOrigin,
+                        TreatmentChilled = p.TreatmentChilled,
+                        TreatmentFrozen = p.TreatmentFrozen,
+                        TreatmentLive = p.TreatmentLive,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<VetCertificateProduct>(),
+                    Attachments = origVetForm.Attachments?.Select(a => new VetCertificateAttachment
+                    {
+                        OriginalFileName = a.OriginalFileName,
+                        SecondaryFileName = a.SecondaryFileName,
+                        ContentType = a.ContentType,
+                        FileContent = a.FileContent,
+                        FileOrder = a.FileOrder
+                    }).ToList() ?? new List<VetCertificateAttachment>()
+                };
+                _context.VetCertificateForms.Add(newVetForm);
+            }
+
+            // 2. Clone Country Certificates if exists
+            await CloneCountryCertificateIfExistsAsync(originalReq.Id, newReq.Id, newRefNumber);
+
+            // 3. Audit record in ReplacementRequests
+            string companyNameResolved = "Company User";
+            if (origVetForm != null && !string.IsNullOrWhiteSpace(origVetForm.ConsignorName))
+            {
+                companyNameResolved = origVetForm.ConsignorName.Trim();
+            }
+            else if (!string.IsNullOrEmpty(originalReq.CompanyUserId))
+            {
+                var user = await _context.AppUsers.FirstOrDefaultAsync(u => u.Id == originalReq.CompanyUserId);
+                if (user != null && !string.IsNullOrWhiteSpace(user.FullName) && user.FullName != "Admin User")
+                {
+                    companyNameResolved = user.FullName;
+                }
+            }
+
+            var rep = new ReplacementRequest
+            {
+                OriginalCertificateRequestId = originalReq.Id,
+                OriginalReferenceNumber = originalReq.ReferenceNumber,
+                ReplacementReferenceNumber = newRefNumber,
+                CompanyUserId = originalReq.CompanyUserId,
+                CompanyName = companyNameResolved,
+                Country = countryName ?? (originalReq.CertificateType == CertificateType.EU ? "European Union" : "N/A"),
+                CertificateType = originalReq.CertificateType.ToString(),
+                Reason = "Admin issued replacement health certificate",
+                Remarks = $"Replacement issued for {originalReq.ReferenceNumber}",
+                Status = ReplacementStatus.Approved,
+                CreatedAt = DateTime.UtcNow,
+                ProcessedAt = DateTime.UtcNow,
+                ProcessedByUserId = userId
+            };
+            _context.ReplacementRequests.Add(rep);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                newRequestId = newReq.Id,
+                newReferenceNumber = newRefNumber,
+                originalReferenceNumber = originalReq.ReferenceNumber,
+                originalDate = originalReq.CreatedAt,
+                countryName = countryName ?? (originalReq.CertificateType == CertificateType.EU ? "European Union" : null),
+                certificateType = originalReq.CertificateType.ToString()
+            });
+        }
+
+        private async Task CloneCountryCertificateIfExistsAsync(int originalId, int newId, string newRefNumber)
+        {
+            // UK
+            var origUk = await _context.UkCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origUk != null)
+            {
+                var newUk = new UkCertificate
+                {
+                    CertificateRequestId = newId,
+                    CertificateReferenceNo = newRefNumber,
+                    CompanyUserId = origUk.CompanyUserId,
+                    ConsignorName = origUk.ConsignorName,
+                    ConsignorAddress = origUk.ConsignorAddress,
+                    ConsignorTel = origUk.ConsignorTel,
+                    ConsigneeName = origUk.ConsigneeName,
+                    ConsigneeAddress = origUk.ConsigneeAddress,
+                    ConsigneeTel = origUk.ConsigneeTel,
+                    OperatorName = origUk.OperatorName,
+                    OperatorAddress = origUk.OperatorAddress,
+                    OperatorTel = origUk.OperatorTel,
+                    CountryOfOrigin = origUk.CountryOfOrigin,
+                    CountryOfOriginISO = origUk.CountryOfOriginISO,
+                    RegionOfOrigin = origUk.RegionOfOrigin,
+                    RegionOfOriginCode = origUk.RegionOfOriginCode,
+                    CountryOfDestination = origUk.CountryOfDestination,
+                    CountryOfDestinationISO = origUk.CountryOfDestinationISO,
+                    RegionOfDestination = origUk.RegionOfDestination,
+                    RegionOfDestinationCode = origUk.RegionOfDestinationCode,
+                    PlaceOfDispatchName = origUk.PlaceOfDispatchName,
+                    PlaceOfDispatchApprovalNo = origUk.PlaceOfDispatchApprovalNo,
+                    PlaceOfDispatchAddress = origUk.PlaceOfDispatchAddress,
+                    PlaceOfDestinationName = origUk.PlaceOfDestinationName,
+                    PlaceOfDestinationAddress = origUk.PlaceOfDestinationAddress,
+                    PlaceOfLoading = origUk.PlaceOfLoading,
+                    DateOfDeparture = origUk.DateOfDeparture,
+                    TimeOfDeparture = origUk.TimeOfDeparture,
+                    TransportAeroplane = origUk.TransportAeroplane,
+                    TransportVessel = origUk.TransportVessel,
+                    TransportRailway = origUk.TransportRailway,
+                    TransportRoadVehicle = origUk.TransportRoadVehicle,
+                    TransportOther = origUk.TransportOther,
+                    TransportIdentification = origUk.TransportIdentification,
+                    EntryBCP = origUk.EntryBCP,
+                    AccompDocType = origUk.AccompDocType,
+                    AccompDocNo = origUk.AccompDocNo,
+                    TempAmbient = origUk.TempAmbient,
+                    TempChilled = origUk.TempChilled,
+                    TempFrozen = origUk.TempFrozen,
+                    ContainerSealNo = origUk.ContainerSealNo,
+                    GoodsCanningIndustry = origUk.GoodsCanningIndustry,
+                    GoodsHumanConsumption = origUk.GoodsHumanConsumption,
+                    Field21 = origUk.Field21,
+                    Field22 = origUk.Field22,
+                    TotalNumberOfPackages = origUk.TotalNumberOfPackages,
+                    TotalNetWeight = origUk.TotalNetWeight,
+                    TotalGrossWeight = origUk.TotalGrossWeight,
+                    FinalConsumer = origUk.FinalConsumer,
+                    StrikeAnimalHealthAll = origUk.StrikeAnimalHealthAll,
+                    StrikeAhT153 = origUk.StrikeAhT153,
+                    StrikeAhT154 = origUk.StrikeAhT154,
+                    StrikeAhT155 = origUk.StrikeAhT155,
+                    StrikeAhT155_Either = origUk.StrikeAhT155_Either,
+                    StrikeAhT155_D_Bkd = origUk.StrikeAhT155_D_Bkd,
+                    StrikeAhT155_D_SvcGs = origUk.StrikeAhT155_D_SvcGs,
+                    StrikeAhT155_D_SvcBkd = origUk.StrikeAhT155_D_SvcBkd,
+                    StrikeAhT155_GsSalinity = origUk.StrikeAhT155_GsSalinity,
+                    StrikeAhT155_GsEggs = origUk.StrikeAhT155_GsEggs,
+                    StrikeAhP502 = origUk.StrikeAhP502,
+                    SignatoryName = origUk.SignatoryName,
+                    Qualification = origUk.Qualification,
+                    CertifiedDate = origUk.CertifiedDate,
+                    SignatoryUserId = origUk.SignatoryUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    Products = origUk.Products?.Select(p => new UkCertificateProduct
+                    {
+                        Species = p.Species,
+                        NatureOfCommodity = p.NatureOfCommodity,
+                        TreatmentType = p.TreatmentType,
+                        VesselPlant = p.VesselPlant,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight,
+                        BatchNo = p.BatchNo,
+                        TypeOfPackaging = p.TypeOfPackaging
+                    }).ToList() ?? new List<UkCertificateProduct>()
+                };
+                _context.UkCertificates.Add(newUk);
+            }
+
+            // AU
+            var origAu = await _context.AuCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origAu != null)
+            {
+                var newAu = new AuCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origAu.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    ConsignorName = origAu.ConsignorName,
+                    ConsignorAddress = origAu.ConsignorAddress,
+                    ConsignorPostal = origAu.ConsignorPostal,
+                    ConsignorTel = origAu.ConsignorTel,
+                    CertRefNumber = newRefNumber,
+                    CertRefNumberA = origAu.CertRefNumberA,
+                    CentralCompetentAuthority = origAu.CentralCompetentAuthority,
+                    LocalCompetentAuthority = origAu.LocalCompetentAuthority,
+                    ConsigneeName = origAu.ConsigneeName,
+                    ConsigneeAddress = origAu.ConsigneeAddress,
+                    ConsigneePostal = origAu.ConsigneePostal,
+                    ConsigneeTel = origAu.ConsigneeTel,
+                    Consignee6 = origAu.Consignee6,
+                    CountryOrigin = origAu.CountryOrigin,
+                    CountryOriginISO = origAu.CountryOriginISO,
+                    RegionOrigin = origAu.RegionOrigin,
+                    RegionOriginISO = origAu.RegionOriginISO,
+                    CountryDestination = origAu.CountryDestination,
+                    CountryDestinationISO = origAu.CountryDestinationISO,
+                    CountryDestination110 = origAu.CountryDestination110,
+                    PlaceOfOriginName = origAu.PlaceOfOriginName,
+                    PlaceOfOriginAddress = origAu.PlaceOfOriginAddress,
+                    PlaceOfOriginApprovalNo = origAu.PlaceOfOriginApprovalNo,
+                    CountryDestination112 = origAu.CountryDestination112,
+                    PlaceOfLoading = origAu.PlaceOfLoading,
+                    DateOfDeparture = origAu.DateOfDeparture,
+                    TransportAeroPlane = origAu.TransportAeroPlane,
+                    TransportShip = origAu.TransportShip,
+                    TransportRailwayWagon = origAu.TransportRailwayWagon,
+                    TransportRoadVehicle = origAu.TransportRoadVehicle,
+                    TransportOther = origAu.TransportOther,
+                    DocReferences = origAu.DocReferences,
+                    EntryBIP = origAu.EntryBIP,
+                    Field117 = origAu.Field117,
+                    DescCommon = origAu.DescCommon,
+                    HsCode = origAu.HsCode,
+                    Quantity = origAu.Quantity,
+                    TemperatureAmbient = origAu.TemperatureAmbient,
+                    TemperatureChilled = origAu.TemperatureChilled,
+                    TemperatureFrozen = origAu.TemperatureFrozen,
+                    NumPackages = origAu.NumPackages,
+                    ContainerId = origAu.ContainerId,
+                    PackagingType = origAu.PackagingType,
+                    ForHumanConsumption = origAu.ForHumanConsumption,
+                    Field126 = origAu.Field126,
+                    ForImportEU = origAu.ForImportEU,
+                    HealthCertNo = newRefNumber,
+                    HealthCertNoB = origAu.HealthCertNoB,
+                    ExportApprovalNumber = origAu.ExportApprovalNumber,
+                    SignatoryUserId = origAu.SignatoryUserId,
+                    SignatoryName = origAu.SignatoryName,
+                    Qualification = origAu.Qualification,
+                    SignatureDate = origAu.SignatureDate,
+                    Stamp = origAu.Stamp,
+                    Signature = origAu.Signature,
+                    CertificateType = origAu.CertificateType,
+                    Products = origAu.Products?.Select(p => new AuCertificateProduct
+                    {
+                        SpeciesScientificName = p.SpeciesScientificName,
+                        NatureOfCommodity = p.NatureOfCommodity,
+                        TreatmentType = p.TreatmentType,
+                        ApprovalNumberOfEstablishments = p.ApprovalNumberOfEstablishments,
+                        ManufacturingPlant = p.ManufacturingPlant,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<AuCertificateProduct>()
+                };
+                _context.AuCertificates.Add(newAu);
+            }
+
+            // USA
+            var origUsa = await _context.UsaCertificates.Include(c => c.ProductsAttachment).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origUsa != null)
+            {
+                var newUsa = new UsaCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origUsa.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    MyRef = origUsa.MyRef,
+                    YourRef = origUsa.YourRef,
+                    Date = origUsa.Date,
+                    ItemName = origUsa.ItemName,
+                    NumberOfPackages = origUsa.NumberOfPackages,
+                    NetWeight = origUsa.NetWeight,
+                    ProcessingPlantName = origUsa.ProcessingPlantName,
+                    ProcessingPlantAddress = origUsa.ProcessingPlantAddress,
+                    CompetentAuthorityRegNo = origUsa.CompetentAuthorityRegNo,
+                    ConsignorName = origUsa.ConsignorName,
+                    ConsignorAddress = origUsa.ConsignorAddress,
+                    ConsigneeName = origUsa.ConsigneeName,
+                    ConsigneeAddress = origUsa.ConsigneeAddress,
+                    DespatchFrom = origUsa.DespatchFrom,
+                    DespatchTo = origUsa.DespatchTo,
+                    DespatchByShip = origUsa.DespatchByShip,
+                    CertificateNumber = newRefNumber,
+                    CompetentAuthority = origUsa.CompetentAuthority,
+                    CertifyingBody = origUsa.CertifyingBody,
+                    CountryOfOrigin = origUsa.CountryOfOrigin,
+                    CountryOfOriginISO = origUsa.CountryOfOriginISO,
+                    CountryOfDestination = origUsa.CountryOfDestination,
+                    CountryOfDestinationISO = origUsa.CountryOfDestinationISO,
+                    PlaceOfLoading = origUsa.PlaceOfLoading,
+                    TransportAeroPlane = origUsa.TransportAeroPlane,
+                    TransportShip = origUsa.TransportShip,
+                    TransportRailway = origUsa.TransportRailway,
+                    TransportRoad = origUsa.TransportRoad,
+                    TransportOther = origUsa.TransportOther,
+                    PointsOfEntry = origUsa.PointsOfEntry,
+                    ConditionsOfStorage = origUsa.ConditionsOfStorage,
+                    TotalQuantity = origUsa.TotalQuantity,
+                    SealNumber = origUsa.SealNumber,
+                    TotalNumberOfPackages = origUsa.TotalNumberOfPackages,
+                    ApprovalNumberOfEstablishments = origUsa.ApprovalNumberOfEstablishments,
+                    DescriptionOfCommodity = origUsa.DescriptionOfCommodity,
+                    SignatoryUserId = origUsa.SignatoryUserId,
+                    SignatoryName = origUsa.SignatoryName,
+                    Designation = origUsa.Designation,
+                    Qualification = origUsa.Qualification,
+                    CompanyRegistrationNo = origUsa.CompanyRegistrationNo,
+                    OfficialStamp = origUsa.OfficialStamp,
+                    OfficialSignature = origUsa.OfficialSignature,
+                    CertificateType = origUsa.CertificateType,
+                    ProductsAttachment = origUsa.ProductsAttachment?.Select(p => new UsaCertificateProductAttachment
+                    {
+                        Product = p.Product,
+                        LotIdentifier = p.LotIdentifier,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfKgs = p.NumberOfKgs,
+                        NumberOfBoxes = p.NumberOfBoxes
+                    }).ToList() ?? new List<UsaCertificateProductAttachment>()
+                };
+                _context.UsaCertificates.Add(newUsa);
+            }
+
+            // CA (Canada)
+            var origCa = await _context.CaCertificates.Include(c => c.ProductsAttachment).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origCa != null)
+            {
+                var newCa = new CaCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origCa.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    MyRef = origCa.MyRef,
+                    YourRef = origCa.YourRef,
+                    Date = origCa.Date,
+                    CertificateNumber = newRefNumber,
+                    CompetentAuthority = origCa.CompetentAuthority,
+                    CertifyingBody = origCa.CertifyingBody,
+                    ConsignorName = origCa.ConsignorName,
+                    ConsignorAddress = origCa.ConsignorAddress,
+                    ConsigneeName = origCa.ConsigneeName,
+                    ConsigneeAddress = origCa.ConsigneeAddress,
+                    CountryOfOrigin = origCa.CountryOfOrigin,
+                    CountryOfOriginISO = origCa.CountryOfOriginISO,
+                    CountryOfDestination = origCa.CountryOfDestination,
+                    CountryOfDestinationISO = origCa.CountryOfDestinationISO,
+                    PlaceOfLoading = origCa.PlaceOfLoading,
+                    TransportAeroPlane = origCa.TransportAeroPlane,
+                    TransportShip = origCa.TransportShip,
+                    TransportRailway = origCa.TransportRailway,
+                    TransportRoad = origCa.TransportRoad,
+                    TransportOther = origCa.TransportOther,
+                    DespatchFrom = origCa.DespatchFrom,
+                    DespatchTo = origCa.DespatchTo,
+                    DespatchByShip = origCa.DespatchByShip,
+                    ItemName = origCa.ItemName,
+                    NumberOfPackages = origCa.NumberOfPackages,
+                    NetWeight = origCa.NetWeight,
+                    ProcessingPlantName = origCa.ProcessingPlantName,
+                    ProcessingPlantAddress = origCa.ProcessingPlantAddress,
+                    CompetentAuthorityRegNo = origCa.CompetentAuthorityRegNo,
+                    PointsOfEntry = origCa.PointsOfEntry,
+                    ConditionsOfStorage = origCa.ConditionsOfStorage,
+                    TotalQuantity = origCa.TotalQuantity,
+                    SealNumber = origCa.SealNumber,
+                    TotalNumberOfPackages = origCa.TotalNumberOfPackages,
+                    ApprovalNumberOfEstablishments = origCa.ApprovalNumberOfEstablishments,
+                    DescriptionOfCommodity = origCa.DescriptionOfCommodity,
+                    SignatoryUserId = origCa.SignatoryUserId,
+                    SignatoryName = origCa.SignatoryName,
+                    Designation = origCa.Designation,
+                    Qualification = origCa.Qualification,
+                    CompanyRegistrationNo = origCa.CompanyRegistrationNo,
+                    OfficialStamp = origCa.OfficialStamp,
+                    OfficialSignature = origCa.OfficialSignature,
+                    CertificateType = origCa.CertificateType,
+                    ProductsAttachment = origCa.ProductsAttachment?.Select(p => new CaCertificateProductAttachment
+                    {
+                        Product = p.Product,
+                        LotIdentifier = p.LotIdentifier,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfKgs = p.NumberOfKgs,
+                        NumberOfBoxes = p.NumberOfBoxes
+                    }).ToList() ?? new List<CaCertificateProductAttachment>()
+                };
+                _context.CaCertificates.Add(newCa);
+            }
+
+            // BR (Brazil)
+            var origBr = await _context.BrCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origBr != null)
+            {
+                var newBr = new BrCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origBr.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    RefNumber = newRefNumber,
+                    CertificateNo = newRefNumber,
+                    CountryOfExport = origBr.CountryOfExport,
+                    CompetentAuthority = origBr.CompetentAuthority,
+                    LocalCompetentAuthority = origBr.LocalCompetentAuthority,
+                    ExporterName = origBr.ExporterName,
+                    ExporterAddress = origBr.ExporterAddress,
+                    ImporterName = origBr.ImporterName,
+                    ImporterAddress = origBr.ImporterAddress,
+                    CountryOrigin = origBr.CountryOrigin,
+                    CountryOriginISO = origBr.CountryOriginISO,
+                    CountryOfDestination = origBr.CountryOfDestination,
+                    CountryDestinationISO = origBr.CountryDestinationISO,
+                    PlaceOfLoading = origBr.PlaceOfLoading,
+                    TransportAeroPlane = origBr.TransportAeroPlane,
+                    TransportShip = origBr.TransportShip,
+                    TransportRailwayWagon = origBr.TransportRailwayWagon,
+                    TransportRoadVehicle = origBr.TransportRoadVehicle,
+                    TransportOther = origBr.TransportOther,
+                    DeclaredPointOfEntry = origBr.DeclaredPointOfEntry,
+                    ConditionsForTransportStorage = origBr.ConditionsForTransportStorage,
+                    IdentificationOfContainers = origBr.IdentificationOfContainers,
+                    IdentificationOfFoodProducts = origBr.IdentificationOfFoodProducts,
+                    ProducerDetails = origBr.ProducerDetails,
+                    HsCode = origBr.HsCode,
+                    IntendedPurpose = origBr.IntendedPurpose,
+                    TotalNetWeight = origBr.TotalNetWeight,
+                    PlaceAndDate = origBr.PlaceAndDate,
+                    DateOfIssue = origBr.DateOfIssue,
+                    OfficialStamp = origBr.OfficialStamp,
+                    SignatoryUserId = origBr.SignatoryUserId,
+                    SignatoryName = origBr.SignatoryName,
+                    Qualification = origBr.Qualification,
+                    ModeloConformeCircularNo = origBr.ModeloConformeCircularNo,
+                    SanitaryCertification = origBr.SanitaryCertification,
+                    Products = origBr.Products?.Select(p => new BrCertificateProduct
+                    {
+                        NameOfTheProduct = p.NameOfTheProduct,
+                        ScientificName = p.ScientificName,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<BrCertificateProduct>()
+                };
+                _context.BrCertificates.Add(newBr);
+            }
+
+            // CH (China/Switzerland)
+            var origCh = await _context.ChCertificates.Include(c => c.Attachments).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origCh != null)
+            {
+                var newCh = new ChCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origCh.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateType = origCh.CertificateType,
+                    RefNumber = newRefNumber,
+                    CountryOfExport = origCh.CountryOfExport,
+                    CountryOfProduction = origCh.CountryOfProduction,
+                    CompetentAuthority = origCh.CompetentAuthority,
+                    DepartmentOfIssuance = origCh.DepartmentOfIssuance,
+                    CommodityName = origCh.CommodityName,
+                    ScientificName = origCh.ScientificName,
+                    LatinName = origCh.LatinName,
+                    Number = origCh.Number,
+                    NumberOfPackages = origCh.NumberOfPackages,
+                    NetWeight = origCh.NetWeight,
+                    ProductionDate = origCh.ProductionDate,
+                    LotNumber = origCh.LotNumber,
+                    OriginRawMaterialsCountry = origCh.OriginRawMaterialsCountry,
+                    ProcessingType = origCh.ProcessingType,
+                    ProductionMode = origCh.ProductionMode,
+                    Aquacultured = origCh.Aquacultured,
+                    WildCaughtBool = origCh.WildCaughtBool,
+                    ProductiveWaterArea = origCh.ProductiveWaterArea,
+                    AquacultureArea = origCh.AquacultureArea,
+                    CatchArea = origCh.CatchArea,
+                    ArtificialCulture = origCh.ArtificialCulture,
+                    WildCaught = origCh.WildCaught,
+                    AquacultureFarmApprovedReg = origCh.AquacultureFarmApprovedReg,
+                    FishingVessel = origCh.FishingVessel,
+                    FishingAndFactoryVessel = origCh.FishingAndFactoryVessel,
+                    TransportFishingVessel = origCh.TransportFishingVessel,
+                    ProcessingPlantNameAddress = origCh.ProcessingPlantNameAddress,
+                    ProcessingPlantRegNo = origCh.ProcessingPlantRegNo,
+                    ColdStorageRawMaterials = origCh.ColdStorageRawMaterials,
+                    ColdStorageProducts = origCh.ColdStorageProducts,
+                    PackagingEnterpriseName = origCh.PackagingEnterpriseName,
+                    PackagingEnterpriseAddress = origCh.PackagingEnterpriseAddress,
+                    PackagingEnterpriseRegNumber = origCh.PackagingEnterpriseRegNumber,
+                    ConsignorName = origCh.ConsignorName,
+                    ConsignorAddress = origCh.ConsignorAddress,
+                    ConsigneeName = origCh.ConsigneeName,
+                    ConsigneeAddress = origCh.ConsigneeAddress,
+                    PlaceOfDispatch = origCh.PlaceOfDispatch,
+                    PlaceOfDestination = origCh.PlaceOfDestination,
+                    MeansOfTransport = origCh.MeansOfTransport,
+                    NameOfVessel = origCh.NameOfVessel,
+                    FlightNumber = origCh.FlightNumber,
+                    OtherTransportMeans = origCh.OtherTransportMeans,
+                    ContainerNumber = origCh.ContainerNumber,
+                    SealNumber = origCh.SealNumber,
+                    DateOfDeparture = origCh.DateOfDeparture,
+                    PortOfDeparture = origCh.PortOfDeparture,
+                    TransportAeroPlane = origCh.TransportAeroPlane,
+                    TransportShip = origCh.TransportShip,
+                    TransportRailwayWagon = origCh.TransportRailwayWagon,
+                    TransportRoadVehicle = origCh.TransportRoadVehicle,
+                    TransportOther = origCh.TransportOther,
+                    IdentificationDocumentReferences = origCh.IdentificationDocumentReferences,
+                    ExporterName = origCh.ExporterName,
+                    ExporterAddress = origCh.ExporterAddress,
+                    ImporterName = origCh.ImporterName,
+                    ImporterAddress = origCh.ImporterAddress,
+                    PlaceOfIssue = origCh.PlaceOfIssue,
+                    DateOfIssue = origCh.DateOfIssue,
+                    OfficialStamp = origCh.OfficialStamp,
+                    SignatoryUserId = origCh.SignatoryUserId,
+                    SignatoryName = origCh.SignatoryName,
+                    Qualification = origCh.Qualification,
+                    DateOfAttachment = origCh.DateOfAttachment,
+                    IdentificationMarksAttachment = origCh.IdentificationMarksAttachment,
+                    Attachments = origCh.Attachments?.Select(a => new ChAttachment
+                    {
+                        Product = a.Product,
+                        NetWeight = a.NetWeight,
+                        NumberOfBoxes = a.NumberOfBoxes
+                    }).ToList() ?? new List<ChAttachment>()
+                };
+                _context.ChCertificates.Add(newCh);
+            }
+
+            // AM (Armenia)
+            var origAm = await _context.AmCertificates.Include(c => c.PreExportCertificates).Include(c => c.Attachments).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origAm != null)
+            {
+                var newAm = new AmCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origAm.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertRefNumber = newRefNumber,
+                    CertRefNumberA = origAm.CertRefNumberA,
+                    CentralCompetentAuthority = origAm.CentralCompetentAuthority,
+                    LocalCompetentAuthority = origAm.LocalCompetentAuthority,
+                    ConsignorName = origAm.ConsignorName,
+                    ConsignorAddress = origAm.ConsignorAddress,
+                    ConsignorPostal = origAm.ConsignorPostal,
+                    ConsignorTel = origAm.ConsignorTel,
+                    ConsigneeName = origAm.ConsigneeName,
+                    ConsigneeAddress = origAm.ConsigneeAddress,
+                    ConsigneePostal = origAm.ConsigneePostal,
+                    ConsigneeTel = origAm.ConsigneeTel,
+                    Consignee6 = origAm.Consignee6,
+                    CountryOrigin = origAm.CountryOrigin,
+                    CountryOriginISO = origAm.CountryOriginISO,
+                    RegionOrigin = origAm.RegionOrigin,
+                    RegionOriginISO = origAm.RegionOriginISO,
+                    CountryDestination = origAm.CountryDestination,
+                    CountryDestinationISO = origAm.CountryDestinationISO,
+                    CountryDestination110 = origAm.CountryDestination110,
+                    PlaceOfOriginName = origAm.PlaceOfOriginName,
+                    PlaceOfOriginAddress = origAm.PlaceOfOriginAddress,
+                    PlaceOfOriginApprovalNo = origAm.PlaceOfOriginApprovalNo,
+                    CountryDestination112 = origAm.CountryDestination112,
+                    PlaceOfLoading = origAm.PlaceOfLoading,
+                    DateOfDeparture = origAm.DateOfDeparture,
+                    TransportAeroPlane = origAm.TransportAeroPlane,
+                    TransportShip = origAm.TransportShip,
+                    TransportRailwayWagon = origAm.TransportRailwayWagon,
+                    TransportRoadVehicle = origAm.TransportRoadVehicle,
+                    TransportOther = origAm.TransportOther,
+                    TransportId = origAm.TransportId,
+                    EntryBIP = origAm.EntryBIP,
+                    Field117 = origAm.Field117,
+                    DescCommon = origAm.DescCommon,
+                    HsCode = origAm.HsCode,
+                    Quantity = origAm.Quantity,
+                    TemperatureAmbient = origAm.TemperatureAmbient,
+                    TemperatureChilled = origAm.TemperatureChilled,
+                    TemperatureFrozen = origAm.TemperatureFrozen,
+                    NumPackages = origAm.NumPackages,
+                    ContainerId = origAm.ContainerId,
+                    PackagingType = origAm.PackagingType,
+                    ForHumanConsumption = origAm.ForHumanConsumption,
+                    Field126 = origAm.Field126,
+                    ForImportEU = origAm.ForImportEU,
+                    ProcessingEstName = origAm.ProcessingEstName,
+                    ProcessingEstRegNo = origAm.ProcessingEstRegNo,
+                    ProcessingEstAddress = origAm.ProcessingEstAddress,
+                    HealthCertNo = newRefNumber,
+                    HealthCertNoB = origAm.HealthCertNoB,
+                    CertificateNo = newRefNumber,
+                    CountryIssuing = origAm.CountryIssuing,
+                    CompetentAuthorityExporting = origAm.CompetentAuthorityExporting,
+                    OrganizationIssuing = origAm.OrganizationIssuing,
+                    CountryOfTransit = origAm.CountryOfTransit,
+                    PointOfCrossingBorder = origAm.PointOfCrossingBorder,
+                    ProductName = origAm.ProductName,
+                    ProductionDate = origAm.ProductionDate,
+                    NetWeight = origAm.NetWeight,
+                    NumberOfSeal = origAm.NumberOfSeal,
+                    IdentificationMarks = origAm.IdentificationMarks,
+                    StorageConditions = origAm.StorageConditions,
+                    FactoryVessel = origAm.FactoryVessel,
+                    ColdStore = origAm.ColdStore,
+                    AdministrativeUnit = origAm.AdministrativeUnit,
+                    PlaceOfIssue = origAm.PlaceOfIssue,
+                    DateOfIssue = origAm.DateOfIssue,
+                    DateOfAttachment = origAm.DateOfAttachment,
+                    IdentificationMarksAttachment = origAm.IdentificationMarksAttachment,
+                    ExportApprovalNumber = origAm.ExportApprovalNumber,
+                    SignatoryUserId = origAm.SignatoryUserId,
+                    SignatoryName = origAm.SignatoryName,
+                    Qualification = origAm.Qualification,
+                    SignatureDate = origAm.SignatureDate,
+                    Stamp = origAm.Stamp,
+                    Signature = origAm.Signature,
+                    PreExportCertificates = origAm.PreExportCertificates?.Select(p => new AmPreExportCertificate
+                    {
+                        Date = p.Date,
+                        Number = p.Number,
+                        CountryOfOrigin = p.CountryOfOrigin,
+                        AdministrativeTerritory = p.AdministrativeTerritory,
+                        ApprovalNumber = p.ApprovalNumber,
+                        ProductNameAndQuantity = p.ProductNameAndQuantity
+                    }).ToList() ?? new List<AmPreExportCertificate>(),
+                    Attachments = origAm.Attachments?.Select(a => new AmAttachment
+                    {
+                        Product = a.Product,
+                        NumberOfKgs = a.NumberOfKgs,
+                        NumberOfBoxes = a.NumberOfBoxes
+                    }).ToList() ?? new List<AmAttachment>()
+                };
+                _context.AmCertificates.Add(newAm);
+            }
+
+            // HK (Hong Kong)
+            var origHk = await _context.HkCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origHk != null)
+            {
+                var newHk = new HkCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origHk.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateType = origHk.CertificateType,
+                    IdentificationNumber = newRefNumber,
+                    CountryOfDispatch = origHk.CountryOfDispatch,
+                    CompetentAuthority = origHk.CompetentAuthority,
+                    CertifyingBody = origHk.CertifyingBody,
+                    ContainerNumber = origHk.ContainerNumber,
+                    SealNumber = origHk.SealNumber,
+                    SealIdentificationNumber = origHk.SealIdentificationNumber,
+                    StorageTemperature = origHk.StorageTemperature,
+                    ApprovalNumber = origHk.ApprovalNumber,
+                    ProcessingEstablishment = origHk.ProcessingEstablishment,
+                    ProvenanceDetails = origHk.ProvenanceDetails,
+                    ConsignorName = origHk.ConsignorName,
+                    ConsignorAddress = origHk.ConsignorAddress,
+                    PlaceOfDispatch = origHk.PlaceOfDispatch,
+                    DestinationCountryPlace = origHk.DestinationCountryPlace,
+                    MeansOfTransport = origHk.MeansOfTransport,
+                    ConsigneeName = origHk.ConsigneeName,
+                    ConsigneeAddress = origHk.ConsigneeAddress,
+                    DateOfAttachment = origHk.DateOfAttachment,
+                    AttachmentRegNo = origHk.AttachmentRegNo,
+                    PlaceOfIssue = origHk.PlaceOfIssue,
+                    DateOfIssue = origHk.DateOfIssue,
+                    SignatoryUserId = origHk.SignatoryUserId,
+                    SignatoryName = origHk.SignatoryName,
+                    Qualification = origHk.Qualification,
+                    OfficialSignature = origHk.OfficialSignature,
+                    OfficerTel = origHk.OfficerTel,
+                    OfficerFax = origHk.OfficerFax,
+                    OfficerEmail = origHk.OfficerEmail,
+                    Products = origHk.Products?.Select(p => new HkCertificateProduct
+                    {
+                        Description = p.Description,
+                        Species = p.Species,
+                        ProcessingType = p.ProcessingType,
+                        PackagingType = p.PackagingType,
+                        LotCode = p.LotCode,
+                        NumberOfPackages = p.NumberOfPackages,
+                        PackagesUnit = p.PackagesUnit,
+                        NetWeight = p.NetWeight,
+                        NetWeightUnit = p.NetWeightUnit
+                    }).ToList() ?? new List<HkCertificateProduct>()
+                };
+                _context.HkCertificates.Add(newHk);
+            }
+
+            // ID (Indonesia)
+            var origIdCert = await _context.IdCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origIdCert != null)
+            {
+                var newIdCert = new IdCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origIdCert.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    NumberNomor = newRefNumber,
+                    ConsignorName = origIdCert.ConsignorName,
+                    ConsignorAddress = origIdCert.ConsignorAddress,
+                    ConsigneeName = origIdCert.ConsigneeName,
+                    ConsigneeAddress = origIdCert.ConsigneeAddress,
+                    CompetentAuthority = origIdCert.CompetentAuthority,
+                    EstablishmentAquaculture = origIdCert.EstablishmentAquaculture,
+                    EstablishmentProcessing = origIdCert.EstablishmentProcessing,
+                    EstablishmentOther = origIdCert.EstablishmentOther,
+                    EstablishmentName = origIdCert.EstablishmentName,
+                    EstablishmentRegNo = origIdCert.EstablishmentRegNo,
+                    EstablishmentAddress = origIdCert.EstablishmentAddress,
+                    CountryRegionOrigin = origIdCert.CountryRegionOrigin,
+                    SourceFarmRaised = origIdCert.SourceFarmRaised,
+                    SourceWildCaught = origIdCert.SourceWildCaught,
+                    PortOfShipment = origIdCert.PortOfShipment,
+                    TransportAir = origIdCert.TransportAir,
+                    TransportSea = origIdCert.TransportSea,
+                    TransportRoad = origIdCert.TransportRoad,
+                    CommodityDescription = origIdCert.CommodityDescription,
+                    TempAmbient = origIdCert.TempAmbient,
+                    TempFrozen = origIdCert.TempFrozen,
+                    TempChilled = origIdCert.TempChilled,
+                    IntendedHumanConsumption = origIdCert.IntendedHumanConsumption,
+                    IntendedCultureBreeding = origIdCert.IntendedCultureBreeding,
+                    IntendedTrade = origIdCert.IntendedTrade,
+                    IntendedResearch = origIdCert.IntendedResearch,
+                    IntendedFishFeed = origIdCert.IntendedFishFeed,
+                    IntendedExhibition = origIdCert.IntendedExhibition,
+                    IntendedOther = origIdCert.IntendedOther,
+                    TotalPackages = origIdCert.TotalPackages,
+                    PackagingType = origIdCert.PackagingType,
+                    TotalQuantityKg = origIdCert.TotalQuantityKg,
+                    ContainerSealNumber = origIdCert.ContainerSealNumber,
+                    PortOfDestination = origIdCert.PortOfDestination,
+                    TransportVesselName = origIdCert.TransportVesselName,
+                    TransportVoyageNumber = origIdCert.TransportVoyageNumber,
+                    DateOfDeparture = origIdCert.DateOfDeparture,
+                    TestingLaboratory = origIdCert.TestingLaboratory,
+                    LaboratoryAddress = origIdCert.LaboratoryAddress,
+                    ApprovingOfficerName = origIdCert.ApprovingOfficerName,
+                    TestResultNumber = origIdCert.TestResultNumber,
+                    AttestationRefNumber = newRefNumber,
+                    AttestFinfish = origIdCert.AttestFinfish,
+                    AttestMollusca = origIdCert.AttestMollusca,
+                    AttestCrustacea = origIdCert.AttestCrustacea,
+                    AttestFisheryProducts = origIdCert.AttestFisheryProducts,
+                    AttestOther = origIdCert.AttestOther,
+                    AttestClauseA = origIdCert.AttestClauseA,
+                    AttestClauseB = origIdCert.AttestClauseB,
+                    AttestClauseC = origIdCert.AttestClauseC,
+                    AttestClauseCCrustacean = origIdCert.AttestClauseCCrustacean,
+                    AttestClauseCCyprinidae = origIdCert.AttestClauseCCyprinidae,
+                    AttestClauseCTilapia = origIdCert.AttestClauseCTilapia,
+                    AttestClauseCCatfish = origIdCert.AttestClauseCCatfish,
+                    AttestClauseCOtherFish = origIdCert.AttestClauseCOtherFish,
+                    AttestClauseCVisibleSigns = origIdCert.AttestClauseCVisibleSigns,
+                    AttestClauseCPackagedContainers = origIdCert.AttestClauseCPackagedContainers,
+                    AttestClauseD = origIdCert.AttestClauseD,
+                    AttestClauseE = origIdCert.AttestClauseE,
+                    AdditionalInformation = origIdCert.AdditionalInformation,
+                    SignatoryUserId = origIdCert.SignatoryUserId,
+                    SignatoryName = origIdCert.SignatoryName,
+                    Qualification = origIdCert.Qualification,
+                    CertifiedIssuedAt = origIdCert.CertifiedIssuedAt,
+                    CertifiedDate = origIdCert.CertifiedDate,
+                    CertifiedPosition = origIdCert.CertifiedPosition,
+                    CertifiedPhone = origIdCert.CertifiedPhone,
+                    CertifiedFax = origIdCert.CertifiedFax,
+                    CertifiedEmail = origIdCert.CertifiedEmail,
+                    CertifiedAddress = origIdCert.CertifiedAddress,
+                    Products = origIdCert.Products?.Select(p => new IdCertificateProduct
+                    {
+                        No = p.No,
+                        CommonName = p.CommonName,
+                        ScientificName = p.ScientificName,
+                        HsCode = p.HsCode,
+                        Quantity = p.Quantity,
+                        Unit = p.Unit
+                    }).ToList() ?? new List<IdCertificateProduct>()
+                };
+                _context.IdCertificates.Add(newIdCert);
+            }
+
+            // IND (India)
+            var origInd = await _context.IndCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origInd != null)
+            {
+                var newInd = new IndCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origInd.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateType = origInd.CertificateType,
+                    CountryOfDispatch = origInd.CountryOfDispatch,
+                    CertificateNumber = newRefNumber,
+                    MyRef = newRefNumber,
+                    YourRef = origInd.YourRef,
+                    ConsignorName = origInd.ConsignorName,
+                    ConsignorAddress = origInd.ConsignorAddress,
+                    ConsignorTel = origInd.ConsignorTel,
+                    CompetentAuthorityDetails = origInd.CompetentAuthorityDetails,
+                    ConsigneeName = origInd.ConsigneeName,
+                    ConsigneeAddress = origInd.ConsigneeAddress,
+                    ConsigneeTel = origInd.ConsigneeTel,
+                    CountryOfOrigin = origInd.CountryOfOrigin,
+                    CountryOfOriginIso = origInd.CountryOfOriginIso,
+                    CountryOfDestination = origInd.CountryOfDestination,
+                    CountryOfDestinationIso = origInd.CountryOfDestinationIso,
+                    PlaceOfLoading = origInd.PlaceOfLoading,
+                    MeansOfTransport = origInd.MeansOfTransport,
+                    DeclaredPointOfEntry = origInd.DeclaredPointOfEntry,
+                    ConditionsForTransportStorage = origInd.ConditionsForTransportStorage,
+                    TotalQuantity = origInd.TotalQuantity,
+                    InvoiceNoDate = origInd.InvoiceNoDate,
+                    FoodDescription = origInd.FoodDescription,
+                    IntendedPurpose = origInd.IntendedPurpose,
+                    ProducerNameAddress = origInd.ProducerNameAddress,
+                    ApprovalNumberDetails = origInd.ApprovalNumberDetails,
+                    DateOfManufacture = origInd.DateOfManufacture,
+                    BestBefore = origInd.BestBefore,
+                    DateOfExpiry = origInd.DateOfExpiry,
+                    ItemDescription = origInd.ItemDescription,
+                    NumberOfPackagesStr = origInd.NumberOfPackagesStr,
+                    NetWeightStr = origInd.NetWeightStr,
+                    ProcessingPlantNameAddress = origInd.ProcessingPlantNameAddress,
+                    ProcessingPlantRegNo = origInd.ProcessingPlantRegNo,
+                    DispatchFrom = origInd.DispatchFrom,
+                    DispatchTo = origInd.DispatchTo,
+                    ModeOfTransport = origInd.ModeOfTransport,
+                    HsCode = origInd.HsCode,
+                    SpeciesName = origInd.SpeciesName,
+                    PreviousCertRef = origInd.PreviousCertRef,
+                    ConsignmentIdentificationDetails = origInd.ConsignmentIdentificationDetails,
+                    ProductDescription = origInd.ProductDescription,
+                    AttestationPlace = origInd.AttestationPlace,
+                    AttestationDate = origInd.AttestationDate,
+                    SignatoryUserId = origInd.SignatoryUserId,
+                    SignatoryName = origInd.SignatoryName,
+                    Qualification = origInd.Qualification,
+                    AuthorizedOfficialDate = origInd.AuthorizedOfficialDate,
+                    AuthorizedOfficialSignature = origInd.AuthorizedOfficialSignature,
+                    OfficialStamp = origInd.OfficialStamp,
+                    Products = origInd.Products?.Select(p => new IndCertificateProduct
+                    {
+                        NameOfProduct = p.NameOfProduct,
+                        LotNo = p.LotNo,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<IndCertificateProduct>()
+                };
+                _context.IndCertificates.Add(newInd);
+            }
+
+            // JP (Japan)
+            var origJp = await _context.JpCertificates.FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origJp != null)
+            {
+                var newJp = new JpCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origJp.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    MyRef = newRefNumber,
+                    YourRef = origJp.YourRef,
+                    Date = origJp.Date,
+                    ItemName = origJp.ItemName,
+                    NumberOfPackages = origJp.NumberOfPackages,
+                    NetWeight = origJp.NetWeight,
+                    ProcessingPlantName = origJp.ProcessingPlantName,
+                    ProcessingPlantAddress = origJp.ProcessingPlantAddress,
+                    CompetentAuthorityRegNo = origJp.CompetentAuthorityRegNo,
+                    ConsignorName = origJp.ConsignorName,
+                    ConsignorAddress = origJp.ConsignorAddress,
+                    ConsigneeName = origJp.ConsigneeName,
+                    ConsigneeAddress = origJp.ConsigneeAddress,
+                    DespatchFrom = origJp.DespatchFrom,
+                    DespatchTo = origJp.DespatchTo,
+                    DespatchByShip = origJp.DespatchByShip,
+                    OfficialStamp = origJp.OfficialStamp,
+                    OfficialSignature = origJp.OfficialSignature,
+                    SignatoryUserId = origJp.SignatoryUserId,
+                    SignatoryName = origJp.SignatoryName,
+                    Qualification = origJp.Qualification,
+                    CertificateType = origJp.CertificateType
+                };
+                _context.JpCertificates.Add(newJp);
+            }
+
+            // KW (Kuwait)
+            var origKw = await _context.KwCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origKw != null)
+            {
+                var newKw = new KwCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origKw.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    ConsignorName = origKw.ConsignorName,
+                    ConsignorAddress = origKw.ConsignorAddress,
+                    CertificateReferenceNo = newRefNumber,
+                    PlaceOfIssue = origKw.PlaceOfIssue,
+                    DateOfIssue = origKw.DateOfIssue,
+                    ConsigneeName = origKw.ConsigneeName,
+                    ConsigneeAddress = origKw.ConsigneeAddress,
+                    CompetentAuthority = origKw.CompetentAuthority,
+                    CompetentAuthorityAddress = origKw.CompetentAuthorityAddress,
+                    CountryOfOrigin = origKw.CountryOfOrigin,
+                    CountryOfOriginIso = origKw.CountryOfOriginIso,
+                    CountryOfDestination = origKw.CountryOfDestination,
+                    CountryOfDestinationIso = origKw.CountryOfDestinationIso,
+                    ProducerName = origKw.ProducerName,
+                    ProducerAddress = origKw.ProducerAddress,
+                    PackingEstName = origKw.PackingEstName,
+                    PackingEstAddress = origKw.PackingEstAddress,
+                    PackingEstApprovalNo = origKw.PackingEstApprovalNo,
+                    BorderOfEntry = origKw.BorderOfEntry,
+                    BorderLoadingCountry = origKw.BorderLoadingCountry,
+                    BorderLoadingPlace = origKw.BorderLoadingPlace,
+                    TransportByAir = origKw.TransportByAir,
+                    TransportBySea = origKw.TransportBySea,
+                    VehicleIdentificationNo = origKw.VehicleIdentificationNo,
+                    TempChilled = origKw.TempChilled,
+                    TempFrozen = origKw.TempFrozen,
+                    CommoditiesOther = origKw.CommoditiesOther,
+                    CommoditiesAfterFurtherProcess = origKw.CommoditiesAfterFurtherProcess,
+                    CommoditiesHumanConsumption = origKw.CommoditiesHumanConsumption,
+                    SignatoryUserId = origKw.SignatoryUserId,
+                    SignatoryName = origKw.SignatoryName,
+                    Qualification = origKw.Qualification,
+                    OfficialStamp = origKw.OfficialStamp,
+                    OfficialSignature = origKw.OfficialSignature,
+                    SignatureDate = origKw.SignatureDate,
+                    CertificateType = origKw.CertificateType,
+                    Products = origKw.Products?.Select(p => new KwCertificateProduct
+                    {
+                        NameDescription = p.NameDescription,
+                        HsCodes = p.HsCodes,
+                        TreatmentDerivedFrom = p.TreatmentDerivedFrom,
+                        BrandName = p.BrandName,
+                        ProductionDate = p.ProductionDate,
+                        ExpiryDate = p.ExpiryDate,
+                        NumberPackages = p.NumberPackages,
+                        BatchLotNo = p.BatchLotNo,
+                        TotalWeight = p.TotalWeight
+                    }).ToList() ?? new List<KwCertificateProduct>()
+                };
+                _context.KwCertificates.Add(newKw);
+            }
+
+            // MY (Malaysia)
+            var origMy = await _context.MyCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origMy != null)
+            {
+                var newMy = new MyCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origMy.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    ExporterName = origMy.ExporterName,
+                    CertificateReferenceNo = newRefNumber,
+                    QualityCertificateNo = origMy.QualityCertificateNo,
+                    CompetentAuthority = origMy.CompetentAuthority,
+                    LocalAuthority = origMy.LocalAuthority,
+                    ImporterDetails = origMy.ImporterDetails,
+                    CountryOfOrigin = origMy.CountryOfOrigin,
+                    CountryOfOriginIso = origMy.CountryOfOriginIso,
+                    CountryOfDestination = origMy.CountryOfDestination,
+                    CountryOfDestinationIso = origMy.CountryOfDestinationIso,
+                    ProcessingEstablishment = origMy.ProcessingEstablishment,
+                    AuthorizationNo = origMy.AuthorizationNo,
+                    PlaceOfLoading = origMy.PlaceOfLoading,
+                    TransportAir = origMy.TransportAir,
+                    TransportShip = origMy.TransportShip,
+                    TransportRail = origMy.TransportRail,
+                    TransportRoad = origMy.TransportRoad,
+                    TransportOther = origMy.TransportOther,
+                    PortOfEntry = origMy.PortOfEntry,
+                    TransportCompany = origMy.TransportCompany,
+                    ConditionAmbient = origMy.ConditionAmbient,
+                    ConditionChilled = origMy.ConditionChilled,
+                    ConditionFrozen = origMy.ConditionFrozen,
+                    ContainerSealIdentification = origMy.ContainerSealIdentification,
+                    InvoiceNo = origMy.InvoiceNo,
+                    TransitCountry = origMy.TransitCountry,
+                    DepartureDate = origMy.DepartureDate,
+                    CertifyingOfficialDate = origMy.CertifyingOfficialDate,
+                    CertificateReferenceNoPage2 = newRefNumber,
+                    ProductBrand = origMy.ProductBrand,
+                    OriginFisheries = origMy.OriginFisheries,
+                    OriginAquaculture = origMy.OriginAquaculture,
+                    CertifiedProductFor = origMy.CertifiedProductFor,
+                    TreatmentType = origMy.TreatmentType,
+                    CertificateReferenceNoPage3 = newRefNumber,
+                    AdditionalInformation = origMy.AdditionalInformation,
+                    SignatoryUserId = origMy.SignatoryUserId,
+                    SignatoryName = origMy.SignatoryName,
+                    Qualification = origMy.Qualification,
+                    OfficialStamp = origMy.OfficialStamp,
+                    OfficialSignature = origMy.OfficialSignature,
+                    CertificateType = origMy.CertificateType,
+                    Products = origMy.Products?.Select(p => new MyCertificateProduct
+                    {
+                        HsCode = p.HsCode,
+                        Description = p.Description,
+                        ScientificName = p.ScientificName,
+                        BatchCode = p.BatchCode,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<MyCertificateProduct>()
+                };
+                _context.MyCertificates.Add(newMy);
+            }
+
+            // NZ (New Zealand)
+            var origNz = await _context.NzCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origNz != null)
+            {
+                var newNz = new NzCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origNz.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    ConsignorName = origNz.ConsignorName,
+                    ConsignorAddress = origNz.ConsignorAddress,
+                    CertificateRefNumber = newRefNumber,
+                    ConsigneeName = origNz.ConsigneeName,
+                    ConsigneeAddress = origNz.ConsigneeAddress,
+                    CountryOfOrigin = origNz.CountryOfOrigin,
+                    CountryOfDestination = origNz.CountryOfDestination,
+                    ProcessorName = origNz.ProcessorName,
+                    ProcessorAddress = origNz.ProcessorAddress,
+                    ProcessorEstablishmentNumber = origNz.ProcessorEstablishmentNumber,
+                    PortDispatchedFrom = origNz.PortDispatchedFrom,
+                    DateOfDeparture = origNz.DateOfDeparture,
+                    CompetentAuthority = origNz.CompetentAuthority,
+                    MeansOfTransport = origNz.MeansOfTransport,
+                    TransportAeroplan = origNz.TransportAeroplan,
+                    TransportShip = origNz.TransportShip,
+                    TemperatureOfCommodities = origNz.TemperatureOfCommodities,
+                    ContainerNumber = origNz.ContainerNumber,
+                    OfficialSealNumber = origNz.OfficialSealNumber,
+                    OfficialStamp = origNz.OfficialStamp,
+                    OfficialSignature = origNz.OfficialSignature,
+                    SignatoryUserId = origNz.SignatoryUserId,
+                    SignatoryName = origNz.SignatoryName,
+                    Qualification = origNz.Qualification,
+                    SignatureDate = origNz.SignatureDate,
+                    CertificateType = origNz.CertificateType,
+                    Products = origNz.Products?.Select(p => new NzCertificateProduct
+                    {
+                        ProductName = p.ProductName,
+                        AquaticAnimalSpecies = p.AquaticAnimalSpecies,
+                        ProductionDate = p.ProductionDate,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeightKg = p.NetWeightKg,
+                        HsCode = p.HsCode
+                    }).ToList() ?? new List<NzCertificateProduct>()
+                };
+                _context.NzCertificates.Add(newNz);
+            }
+
+            // RU (Russia)
+            var origRu = await _context.RuCertificates.Include(c => c.Attachments).Include(c => c.PreExportCertificates).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origRu != null)
+            {
+                var newRu = new RuCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origRu.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateNo = newRefNumber,
+                    ConsignorNameAddress = origRu.ConsignorNameAddress,
+                    ConsigneeNameAddress = origRu.ConsigneeNameAddress,
+                    MeansOfTransport = origRu.MeansOfTransport,
+                    CountryOfTransit = origRu.CountryOfTransit,
+                    CountryOfOrigin = origRu.CountryOfOrigin,
+                    CountryIssuing = origRu.CountryIssuing,
+                    CompetentAuthorityExporting = origRu.CompetentAuthorityExporting,
+                    OrganizationIssuing = origRu.OrganizationIssuing,
+                    PointOfCrossingBorder = origRu.PointOfCrossingBorder,
+                    ProductName = origRu.ProductName,
+                    ProductionDate = origRu.ProductionDate,
+                    TypeOfPackage = origRu.TypeOfPackage,
+                    NumberOfPackages = origRu.NumberOfPackages,
+                    NetWeight = origRu.NetWeight,
+                    NumberOfSeal = origRu.NumberOfSeal,
+                    IdentificationMarks = origRu.IdentificationMarks,
+                    StorageConditions = origRu.StorageConditions,
+                    EstablishmentNameAddressRegNo = origRu.EstablishmentNameAddressRegNo,
+                    FactoryVessel = origRu.FactoryVessel,
+                    ColdStore = origRu.ColdStore,
+                    AdministrativeUnit = origRu.AdministrativeUnit,
+                    PlaceOfIssue = origRu.PlaceOfIssue,
+                    DateOfIssue = origRu.DateOfIssue,
+                    OfficialStamp = origRu.OfficialStamp,
+                    OfficialSignature = origRu.OfficialSignature,
+                    SignatoryUserId = origRu.SignatoryUserId,
+                    SignatoryName = origRu.SignatoryName,
+                    Qualification = origRu.Qualification,
+                    CertificateType = origRu.CertificateType,
+                    DateOfAttachment = origRu.DateOfAttachment,
+                    IdentificationMarksAttachment = origRu.IdentificationMarksAttachment,
+                    PreExportCertificates = origRu.PreExportCertificates?.Select(p => new RuPreExportCertificate
+                    {
+                        Date = p.Date,
+                        Number = p.Number,
+                        CountryOfOrigin = p.CountryOfOrigin,
+                        AdministrativeTerritory = p.AdministrativeTerritory,
+                        ApprovalNumber = p.ApprovalNumber,
+                        ProductNameAndQuantity = p.ProductNameAndQuantity
+                    }).ToList() ?? new List<RuPreExportCertificate>(),
+                    Attachments = origRu.Attachments?.Select(a => new RuAttachment
+                    {
+                        Product = a.Product,
+                        NumberOfKgs = a.NumberOfKgs,
+                        NumberOfBoxes = a.NumberOfBoxes
+                    }).ToList() ?? new List<RuAttachment>()
+                };
+                _context.RuCertificates.Add(newRu);
+            }
+
+            // KZ (Kazakhstan)
+            var origKz = await _context.KzCertificates.Include(c => c.Attachments).Include(c => c.PreExportCertificates).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origKz != null)
+            {
+                var newKz = new KzCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origKz.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateNo = newRefNumber,
+                    ConsignorNameAddress = origKz.ConsignorNameAddress,
+                    ConsigneeNameAddress = origKz.ConsigneeNameAddress,
+                    MeansOfTransport = origKz.MeansOfTransport,
+                    CountryOfTransit = origKz.CountryOfTransit,
+                    CountryOfOrigin = origKz.CountryOfOrigin,
+                    CountryIssuing = origKz.CountryIssuing,
+                    CompetentAuthorityExporting = origKz.CompetentAuthorityExporting,
+                    OrganizationIssuing = origKz.OrganizationIssuing,
+                    PointOfCrossingBorder = origKz.PointOfCrossingBorder,
+                    ProductName = origKz.ProductName,
+                    ProductionDate = origKz.ProductionDate,
+                    TypeOfPackage = origKz.TypeOfPackage,
+                    NumberOfPackages = origKz.NumberOfPackages,
+                    NetWeight = origKz.NetWeight,
+                    NumberOfSeal = origKz.NumberOfSeal,
+                    IdentificationMarks = origKz.IdentificationMarks,
+                    StorageConditions = origKz.StorageConditions,
+                    EstablishmentNameAddressRegNo = origKz.EstablishmentNameAddressRegNo,
+                    FactoryVessel = origKz.FactoryVessel,
+                    ColdStore = origKz.ColdStore,
+                    AdministrativeUnit = origKz.AdministrativeUnit,
+                    PlaceOfIssue = origKz.PlaceOfIssue,
+                    DateOfIssue = origKz.DateOfIssue,
+                    OfficialStamp = origKz.OfficialStamp,
+                    OfficialSignature = origKz.OfficialSignature,
+                    SignatoryUserId = origKz.SignatoryUserId,
+                    SignatoryName = origKz.SignatoryName,
+                    Qualification = origKz.Qualification,
+                    CertificateType = origKz.CertificateType,
+                    DateOfAttachment = origKz.DateOfAttachment,
+                    IdentificationMarksAttachment = origKz.IdentificationMarksAttachment,
+                    PreExportCertificates = origKz.PreExportCertificates?.Select(p => new KzPreExportCertificate
+                    {
+                        Date = p.Date,
+                        Number = p.Number,
+                        CountryOfOrigin = p.CountryOfOrigin,
+                        AdministrativeTerritory = p.AdministrativeTerritory,
+                        ApprovalNumber = p.ApprovalNumber,
+                        ProductNameAndQuantity = p.ProductNameAndQuantity
+                    }).ToList() ?? new List<KzPreExportCertificate>(),
+                    Attachments = origKz.Attachments?.Select(a => new KzAttachment
+                    {
+                        Product = a.Product,
+                        NumberOfKgs = a.NumberOfKgs,
+                        NumberOfBoxes = a.NumberOfBoxes
+                    }).ToList() ?? new List<KzAttachment>()
+                };
+                _context.KzCertificates.Add(newKz);
+            }
+
+            // TW (Taiwan)
+            var origTw = await _context.TwCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origTw != null)
+            {
+                var newTw = new TwCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origTw.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    ReferenceNo = newRefNumber,
+                    CountryOfExport = origTw.CountryOfExport,
+                    CountryOfProduction = origTw.CountryOfProduction,
+                    CompetentAuthority = origTw.CompetentAuthority,
+                    DepartmentIssuance = origTw.DepartmentIssuance,
+                    ProductionPlace = origTw.ProductionPlace,
+                    ProcessingType = origTw.ProcessingType,
+                    ProductionMode = origTw.ProductionMode,
+                    AquaculturedYes = origTw.AquaculturedYes,
+                    AquaculturedNo = origTw.AquaculturedNo,
+                    WildCaughtYes = origTw.WildCaughtYes,
+                    WildCaughtNo = origTw.WildCaughtNo,
+                    AquacultureArea = origTw.AquacultureArea,
+                    CatchArea = origTw.CatchArea,
+                    HarvestingArea = origTw.HarvestingArea,
+                    VesselName = origTw.VesselName,
+                    EnterpriseName = origTw.EnterpriseName,
+                    EnterpriseRegistrationNo = origTw.EnterpriseRegistrationNo,
+                    ProductionDate = origTw.ProductionDate,
+                    ConsignorName = origTw.ConsignorName,
+                    ConsignorAddress = origTw.ConsignorAddress,
+                    ConsigneeName = origTw.ConsigneeName,
+                    ConsigneeAddress = origTw.ConsigneeAddress,
+                    PlaceOfDispatch = origTw.PlaceOfDispatch,
+                    PlaceOfDestination = origTw.PlaceOfDestination,
+                    MeansOfTransport = origTw.MeansOfTransport,
+                    VesselNameTransport = origTw.VesselNameTransport,
+                    FlightNumber = origTw.FlightNumber,
+                    OtherTransportMeans = origTw.OtherTransportMeans,
+                    ContainerNumber = origTw.ContainerNumber,
+                    SealNumber = origTw.SealNumber,
+                    PlaceOfIssue = origTw.PlaceOfIssue,
+                    DateOfIssue = origTw.DateOfIssue,
+                    OfficialStamp = origTw.OfficialStamp,
+                    OfficialSignature = origTw.OfficialSignature,
+                    SignatoryUserId = origTw.SignatoryUserId,
+                    SignatoryName = origTw.SignatoryName,
+                    Qualification = origTw.Qualification,
+                    CertificateType = origTw.CertificateType,
+                    Products = origTw.Products?.Select(p => new TwCertificateProduct
+                    {
+                        CommodityName = p.CommodityName,
+                        HsCode = p.HsCode,
+                        ScientificName = p.ScientificName,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<TwCertificateProduct>()
+                };
+                _context.TwCertificates.Add(newTw);
+            }
+
+            // UA (Ukraine)
+            var origUa = await _context.UaCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origUa != null)
+            {
+                var newUa = new UaCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origUa.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateReferenceNumber = newRefNumber,
+                    ConsignorName = origUa.ConsignorName,
+                    ConsignorAddress = origUa.ConsignorAddress,
+                    ConsignorPostalCode = origUa.ConsignorPostalCode,
+                    ConsignorTelNo = origUa.ConsignorTelNo,
+                    CentralCompetentAuthority = origUa.CentralCompetentAuthority,
+                    LocalCompetentAuthority = origUa.LocalCompetentAuthority,
+                    ConsigneeName = origUa.ConsigneeName,
+                    ConsigneeAddress = origUa.ConsigneeAddress,
+                    ConsigneePostalCode = origUa.ConsigneePostalCode,
+                    ConsigneeTel = origUa.ConsigneeTel,
+                    PersonResponsibleName = origUa.PersonResponsibleName,
+                    PersonResponsibleAddress = origUa.PersonResponsibleAddress,
+                    PersonResponsiblePostalCode = origUa.PersonResponsiblePostalCode,
+                    PersonResponsibleTel = origUa.PersonResponsibleTel,
+                    CountryOfOriginName = origUa.CountryOfOriginName,
+                    CountryOfOriginISO = origUa.CountryOfOriginISO,
+                    CountryOfOriginISOCode = origUa.CountryOfOriginISOCode,
+                    CountryOfOriginZone = origUa.CountryOfOriginZone,
+                    ZoneOrigin = origUa.ZoneOrigin,
+                    ZoneOriginCode = origUa.ZoneOriginCode,
+                    CountryDestinationName = origUa.CountryDestinationName,
+                    CountryDestinationISO = origUa.CountryDestinationISO,
+                    CountryDestinationISOCode = origUa.CountryDestinationISOCode,
+                    CountryDestinationZone = origUa.CountryDestinationZone,
+                    ZoneDestination = origUa.ZoneDestination,
+                    ZoneDestinationCode = origUa.ZoneDestinationCode,
+                    PlaceOriginName = origUa.PlaceOriginName,
+                    PlaceOriginApprovalNumber = origUa.PlaceOriginApprovalNumber,
+                    PlaceOriginAddress = origUa.PlaceOriginAddress,
+                    Field112 = origUa.Field112,
+                    PlaceLoadingAddress = origUa.PlaceLoadingAddress,
+                    DateOfDeparture = origUa.DateOfDeparture,
+                    TransportAeroplane = origUa.TransportAeroplane,
+                    TransportShip = origUa.TransportShip,
+                    TransportRailwayWagon = origUa.TransportRailwayWagon,
+                    TransportRoadVehicle = origUa.TransportRoadVehicle,
+                    TransportOther = origUa.TransportOther,
+                    TransportIdentification = origUa.TransportIdentification,
+                    TransportDocumentReferences = origUa.TransportDocumentReferences,
+                    EntryBIPUkraine = origUa.EntryBIPUkraine,
+                    DescriptionOfCommodity = origUa.DescriptionOfCommodity,
+                    CommodityCodeHS = origUa.CommodityCodeHS,
+                    Quantity = origUa.Quantity,
+                    TemperatureAmbient = origUa.TemperatureAmbient,
+                    TemperatureChilled = origUa.TemperatureChilled,
+                    TemperatureFrozen = origUa.TemperatureFrozen,
+                    NumberOfPackages = origUa.NumberOfPackages,
+                    SealContainerNo = origUa.SealContainerNo,
+                    TypeOfPackaging = origUa.TypeOfPackaging,
+                    CommoditiesHumanConsumption = origUa.CommoditiesHumanConsumption,
+                    Field126 = origUa.Field126,
+                    ForImportIntoUkraine = origUa.ForImportIntoUkraine,
+                    HealthInfoNotes = origUa.HealthInfoNotes,
+                    HealthCertificateReferenceNumber = origUa.HealthCertificateReferenceNumber,
+                    AdditionalInformation = origUa.AdditionalInformation,
+                    SignatoryUserId = origUa.SignatoryUserId,
+                    SignatoryName = origUa.SignatoryName,
+                    Qualification = origUa.Qualification,
+                    OfficialStamp = origUa.OfficialStamp,
+                    OfficialSignature = origUa.OfficialSignature,
+                    CertifiedDate = origUa.CertifiedDate,
+                    CertificateType = origUa.CertificateType,
+                    Products = origUa.Products?.Select(p => new UaCertificateProduct
+                    {
+                        Species = p.Species,
+                        NatureOfCommodity = p.NatureOfCommodity,
+                        TreatmentApprovalNumber = p.TreatmentApprovalNumber,
+                        ManufacturingPlant = p.ManufacturingPlant,
+                        NumberOfPackaging = p.NumberOfPackaging,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<UaCertificateProduct>()
+                };
+                _context.UaCertificates.Add(newUa);
+            }
+
+            // MV (Maldives)
+            var origMv = await _context.MvCertificates.Include(c => c.Products).Include(c => c.ProductsSecond).Include(c => c.ProductsAttachment).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origMv != null)
+            {
+                var newMv = new MvCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origMv.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateNumber = newRefNumber,
+                    CompetentAuthority = origMv.CompetentAuthority,
+                    CertifyingBody = origMv.CertifyingBody,
+                    ConsignorExporter = origMv.ConsignorExporter,
+                    ConsigneeImporter = origMv.ConsigneeImporter,
+                    CountryOfOrigin = origMv.CountryOfOrigin,
+                    CountryOfOriginISO = origMv.CountryOfOriginISO,
+                    CountryOfDestination = origMv.CountryOfDestination,
+                    CountryOfDestinationISO = origMv.CountryOfDestinationISO,
+                    PlaceOfLoading = origMv.PlaceOfLoading,
+                    TransportAeroPlane = origMv.TransportAeroPlane,
+                    TransportShip = origMv.TransportShip,
+                    TransportRailway = origMv.TransportRailway,
+                    TransportRoad = origMv.TransportRoad,
+                    TransportOther = origMv.TransportOther,
+                    PointsOfEntry = origMv.PointsOfEntry,
+                    ConditionsOfStorage = origMv.ConditionsOfStorage,
+                    TotalQuantity = origMv.TotalQuantity,
+                    SealNumber = origMv.SealNumber,
+                    TotalNumberOfPackages = origMv.TotalNumberOfPackages,
+                    ApprovalNumberOfEstablishments = origMv.ApprovalNumberOfEstablishments,
+                    DescriptionOfCommodity = origMv.DescriptionOfCommodity,
+                    CertifyingOfficerName = origMv.CertifyingOfficerName,
+                    CertifyingOfficerDate = origMv.CertifyingOfficerDate,
+                    SignatoryUserId = origMv.SignatoryUserId,
+                    SignatoryName = origMv.SignatoryName,
+                    Qualification = origMv.Qualification,
+                    CompanyRegistrationNo = origMv.CompanyRegistrationNo,
+                    OfficialStamp = origMv.OfficialStamp,
+                    OfficialSignature = origMv.OfficialSignature,
+                    CertificateType = origMv.CertificateType,
+                    Products = origMv.Products?.Select(p => new MvCertificateProduct
+                    {
+                        No = p.No,
+                        NatureOfCommodity = p.NatureOfCommodity,
+                        Species = p.Species,
+                        PurposeOfUse = p.PurposeOfUse
+                    }).ToList() ?? new List<MvCertificateProduct>(),
+                    ProductsSecond = origMv.ProductsSecond?.Select(p => new MvCertificateProductSecond
+                    {
+                        No = p.No,
+                        NameOfTheProduct = p.NameOfTheProduct,
+                        LotIdentifier = p.LotIdentifier,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight
+                    }).ToList() ?? new List<MvCertificateProductSecond>(),
+                    ProductsAttachment = origMv.ProductsAttachment?.Select(p => new MvCertificateProductAttachment
+                    {
+                        Product = p.Product,
+                        LotIdentifier = p.LotIdentifier,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfKgs = p.NumberOfKgs,
+                        NumberOfBoxes = p.NumberOfBoxes
+                    }).ToList() ?? new List<MvCertificateProductAttachment>()
+                };
+                _context.MvCertificates.Add(newMv);
+            }
+
+            // SA (Saudi Arabia)
+            var origSa = await _context.SaCertificates.Include(c => c.ProductsAttachment).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origSa != null)
+            {
+                var newSa = new SaCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origSa.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateNumber = newRefNumber,
+                    MyRef = origSa.MyRef,
+                    YourRef = origSa.YourRef,
+                    Date = origSa.Date,
+                    CompetentAuthority = origSa.CompetentAuthority,
+                    CertifyingBody = origSa.CertifyingBody,
+                    ConsignorName = origSa.ConsignorName,
+                    ConsignorAddress = origSa.ConsignorAddress,
+                    ConsigneeName = origSa.ConsigneeName,
+                    ConsigneeAddress = origSa.ConsigneeAddress,
+                    CountryOfOrigin = origSa.CountryOfOrigin,
+                    CountryOfOriginISO = origSa.CountryOfOriginISO,
+                    CountryOfDestination = origSa.CountryOfDestination,
+                    CountryOfDestinationISO = origSa.CountryOfDestinationISO,
+                    PlaceOfLoading = origSa.PlaceOfLoading,
+                    TransportAeroPlane = origSa.TransportAeroPlane,
+                    TransportShip = origSa.TransportShip,
+                    TransportRailway = origSa.TransportRailway,
+                    TransportRoad = origSa.TransportRoad,
+                    TransportOther = origSa.TransportOther,
+                    DespatchFrom = origSa.DespatchFrom,
+                    DespatchTo = origSa.DespatchTo,
+                    DespatchByShip = origSa.DespatchByShip,
+                    ItemName = origSa.ItemName,
+                    NumberOfPackages = origSa.NumberOfPackages,
+                    NetWeight = origSa.NetWeight,
+                    ProcessingPlantName = origSa.ProcessingPlantName,
+                    ProcessingPlantAddress = origSa.ProcessingPlantAddress,
+                    CompetentAuthorityRegNo = origSa.CompetentAuthorityRegNo,
+                    PointsOfEntry = origSa.PointsOfEntry,
+                    ConditionsOfStorage = origSa.ConditionsOfStorage,
+                    TotalQuantity = origSa.TotalQuantity,
+                    SealNumber = origSa.SealNumber,
+                    TotalNumberOfPackages = origSa.TotalNumberOfPackages,
+                    ApprovalNumberOfEstablishments = origSa.ApprovalNumberOfEstablishments,
+                    DescriptionOfCommodity = origSa.DescriptionOfCommodity,
+                    SignatoryUserId = origSa.SignatoryUserId,
+                    SignatoryName = origSa.SignatoryName,
+                    Designation = origSa.Designation,
+                    Qualification = origSa.Qualification,
+                    CompanyRegistrationNo = origSa.CompanyRegistrationNo,
+                    OfficialStamp = origSa.OfficialStamp,
+                    OfficialSignature = origSa.OfficialSignature,
+                    CertificateType = origSa.CertificateType,
+                    ProductsAttachment = origSa.ProductsAttachment?.Select(p => new SaCertificateProductAttachment
+                    {
+                        Product = p.Product,
+                        LotIdentifier = p.LotIdentifier,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfKgs = p.NumberOfKgs,
+                        NumberOfBoxes = p.NumberOfBoxes
+                    }).ToList() ?? new List<SaCertificateProductAttachment>()
+                };
+                _context.SaCertificates.Add(newSa);
+            }
+
+            // ZA (South Africa)
+            var origZa = await _context.ZaCertificates.Include(c => c.ProductsAttachment).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origZa != null)
+            {
+                var newZa = new ZaCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origZa.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificateNumber = newRefNumber,
+                    MyRef = origZa.MyRef,
+                    YourRef = origZa.YourRef,
+                    Date = origZa.Date,
+                    CompetentAuthority = origZa.CompetentAuthority,
+                    CertifyingBody = origZa.CertifyingBody,
+                    ConsignorName = origZa.ConsignorName,
+                    ConsignorAddress = origZa.ConsignorAddress,
+                    ConsigneeName = origZa.ConsigneeName,
+                    ConsigneeAddress = origZa.ConsigneeAddress,
+                    CountryOfOrigin = origZa.CountryOfOrigin,
+                    CountryOfOriginISO = origZa.CountryOfOriginISO,
+                    CountryOfDestination = origZa.CountryOfDestination,
+                    CountryOfDestinationISO = origZa.CountryOfDestinationISO,
+                    PlaceOfLoading = origZa.PlaceOfLoading,
+                    TransportAeroPlane = origZa.TransportAeroPlane,
+                    TransportShip = origZa.TransportShip,
+                    TransportRailway = origZa.TransportRailway,
+                    TransportRoad = origZa.TransportRoad,
+                    TransportOther = origZa.TransportOther,
+                    DespatchFrom = origZa.DespatchFrom,
+                    DespatchTo = origZa.DespatchTo,
+                    DespatchByShip = origZa.DespatchByShip,
+                    ItemName = origZa.ItemName,
+                    NumberOfPackages = origZa.NumberOfPackages,
+                    NetWeight = origZa.NetWeight,
+                    ProcessingPlantName = origZa.ProcessingPlantName,
+                    ProcessingPlantAddress = origZa.ProcessingPlantAddress,
+                    CompetentAuthorityRegNo = origZa.CompetentAuthorityRegNo,
+                    PointsOfEntry = origZa.PointsOfEntry,
+                    ConditionsOfStorage = origZa.ConditionsOfStorage,
+                    TotalQuantity = origZa.TotalQuantity,
+                    SealNumber = origZa.SealNumber,
+                    TotalNumberOfPackages = origZa.TotalNumberOfPackages,
+                    ApprovalNumberOfEstablishments = origZa.ApprovalNumberOfEstablishments,
+                    DescriptionOfCommodity = origZa.DescriptionOfCommodity,
+                    SignatoryUserId = origZa.SignatoryUserId,
+                    SignatoryName = origZa.SignatoryName,
+                    Designation = origZa.Designation,
+                    Qualification = origZa.Qualification,
+                    CompanyRegistrationNo = origZa.CompanyRegistrationNo,
+                    OfficialStamp = origZa.OfficialStamp,
+                    OfficialSignature = origZa.OfficialSignature,
+                    CertificateType = origZa.CertificateType,
+                    ProductsAttachment = origZa.ProductsAttachment?.Select(p => new ZaCertificateProductAttachment
+                    {
+                        Product = p.Product,
+                        LotIdentifier = p.LotIdentifier,
+                        TypeOfPackaging = p.TypeOfPackaging,
+                        NumberOfKgs = p.NumberOfKgs,
+                        NumberOfBoxes = p.NumberOfBoxes
+                    }).ToList() ?? new List<ZaCertificateProductAttachment>()
+                };
+                _context.ZaCertificates.Add(newZa);
+            }
+
+            // IL (Israel)
+            var origIl = await _context.IlCertificates.Include(c => c.Products).FirstOrDefaultAsync(c => c.CertificateRequestId == originalId);
+            if (origIl != null)
+            {
+                var newIl = new IlCertificate
+                {
+                    CertificateRequestId = newId,
+                    CompanyUserId = origIl.CompanyUserId,
+                    CreatedAt = DateTime.UtcNow,
+                    CertificationNo = newRefNumber,
+                    CertificateType = origIl.CertificateType,
+                    CentralCompetentAuthority = origIl.CentralCompetentAuthority,
+                    CentralCompetentAuthorityEmail = origIl.CentralCompetentAuthorityEmail,
+                    LocalCompetentAuthority = origIl.LocalCompetentAuthority,
+                    CountryOfOrigin = origIl.CountryOfOrigin,
+                    PlaceOfOriginName = origIl.PlaceOfOriginName,
+                    PlaceOfOriginAddress = origIl.PlaceOfOriginAddress,
+                    PlaceOfOriginApprovalNo = origIl.PlaceOfOriginApprovalNo,
+                    ConsignorName = origIl.ConsignorName,
+                    ConsignorAddress = origIl.ConsignorAddress,
+                    PostalCodeConsignor = origIl.PostalCodeConsignor,
+                    TelNoConsignor = origIl.TelNoConsignor,
+                    EmailConsignor = origIl.EmailConsignor,
+                    ConsigneeName = origIl.ConsigneeName,
+                    ConsigneeAddress = origIl.ConsigneeAddress,
+                    PostalCodeConsignee = origIl.PostalCodeConsignee,
+                    TelNoConsignee = origIl.TelNoConsignee,
+                    EmailConsignee = origIl.EmailConsignee,
+                    PlaceOfLoading = origIl.PlaceOfLoading,
+                    PortOfEntry = origIl.PortOfEntry,
+                    DateOfArrival = origIl.DateOfArrival,
+                    PlaceOfArrival = origIl.PlaceOfArrival,
+                    PlaceOfArrivalAddress = origIl.PlaceOfArrivalAddress,
+                    PlaceOfDestinationName = origIl.PlaceOfDestinationName,
+                    PlaceOfDestinationAddress = origIl.PlaceOfDestinationAddress,
+                    PlaceOfDestinationApprovalNo = origIl.PlaceOfDestinationApprovalNo,
+                    DateOfContainerization = origIl.DateOfContainerization,
+                    DateOfDeparture = origIl.DateOfDeparture,
+                    TransportSea = origIl.TransportSea,
+                    TransportAir = origIl.TransportAir,
+                    TransportRail = origIl.TransportRail,
+                    TransportRoad = origIl.TransportRoad,
+                    TransportOther = origIl.TransportOther,
+                    BillOfLading = origIl.BillOfLading,
+                    Awb = origIl.Awb,
+                    MeansOfTransportIdentification = origIl.MeansOfTransportIdentification,
+                    ContainerNo = origIl.ContainerNo,
+                    SealNo = origIl.SealNo,
+                    MeansOfTransportReference = origIl.MeansOfTransportReference,
+                    EntryBIP = origIl.EntryBIP,
+                    ReadyToEat = origIl.ReadyToEat,
+                    NonReadyToEat = origIl.NonReadyToEat,
+                    ShipmentNumber = origIl.ShipmentNumber,
+                    Remarks = origIl.Remarks,
+                    PlaceOfIssue = origIl.PlaceOfIssue,
+                    SignatoryName = origIl.SignatoryName,
+                    Qualification = origIl.Qualification,
+                    SignatureDate = origIl.SignatureDate,
+                    Stamp = origIl.Stamp,
+                    Signature = origIl.Signature,
+                    SignatoryUserId = origIl.SignatoryUserId,
+                    Products = origIl.Products?.Select(p => new IlCertificateProduct
+                    {
+                        DescriptionOfCommodity = p.DescriptionOfCommodity,
+                        SpeciesScientificName = p.SpeciesScientificName,
+                        NatureOfCommodity = p.NatureOfCommodity,
+                        TreatmentType = p.TreatmentType,
+                        ApprovalNo = p.ApprovalNo,
+                        NumberOfPackages = p.NumberOfPackages,
+                        NetWeight = p.NetWeight,
+                        HarvestingDate = p.HarvestingDate,
+                        ProductionDate = p.ProductionDate,
+                        BestBefore = p.BestBefore,
+                        LotNo = p.LotNo
+                    }).ToList() ?? new List<IlCertificateProduct>()
+                };
+                _context.IlCertificates.Add(newIl);
+            }
+        }
+
         [HttpPost("vet-certificate-forms")]
         [Authorize(Roles = "Admin,Company")]
         public async Task<IActionResult> CreateVetCertificateForm()
@@ -1104,19 +2898,22 @@ namespace MEA.Server.Controllers
 
             var attachments = finalAttachments ?? await ParseVetAttachments(form);
             entity.Attachments = attachments;
-            entity.UploadedCertificateFile = attachments.FirstOrDefault()?.FileContent;
-
-            await _vetCertificateFormRepository.CreateAsync(entity);
-
             if (certRequestId.HasValue)
             {
                 var req = await _certificateRequestRepository.GetByIdAsync(certRequestId.Value);
                 if (req != null)
                 {
-                    req.Status = CertificateStatus.Confirmed;
+                    req.Status = CertificateStatus.Pending;
+                    if (!string.IsNullOrEmpty(req.ReferenceNumber))
+                    {
+                        entity.NewHC = req.ReferenceNumber;
+                        entity.HealthCertNo = req.ReferenceNumber;
+                    }
                     await _certificateRequestRepository.UpdateAsync(req);
                 }
             }
+
+            await _vetCertificateFormRepository.CreateAsync(entity);
 
             return Ok(new { entity.Id, entity.CertificateRequestId, entity.CreatedAt });
         }

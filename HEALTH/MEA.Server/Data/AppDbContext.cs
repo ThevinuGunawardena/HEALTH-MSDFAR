@@ -69,6 +69,7 @@ namespace MEA.Server.Data
         public DbSet<MvCertificateProductSecond> MvCertificateProductSecond { get; set; }
         public DbSet<MvCertificateProductAttachment> MvCertificateProductAttachments { get; set; }
         public DbSet<ReferenceSequence> ReferenceSequences { get; set; }
+        public DbSet<ReplacementRequest> ReplacementRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

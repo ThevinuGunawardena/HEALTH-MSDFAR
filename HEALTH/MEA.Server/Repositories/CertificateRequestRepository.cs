@@ -54,7 +54,7 @@ namespace MEA.Server.Repositories
             if (normalized == "hong kong" || normalized == "hongkong") return "HK";
             if (normalized == "china") return "CH";
             if (normalized == "united states" || normalized == "united states of america" || normalized == "usa") return "USA";
-            if (normalized == "united kingdom" || normalized == "uk" || normalized == "great britain") return "UK";
+            if (normalized == "united kingdom" || normalized == "uk" || normalized == "great britain") return "EU";
             if (normalized == "australia") return "AU";
             if (normalized == "canada") return "CA";
             if (normalized == "russia" || normalized == "russian federation") return "RU";
@@ -93,6 +93,10 @@ namespace MEA.Server.Repositories
                 if (!string.IsNullOrWhiteSpace(countryCode))
                 {
                     code = countryCode.Trim().ToUpperInvariant();
+                    if (code == "UK" || code == "GB" || code == "GREAT BRITAIN" || code == "UNITED KINGDOM")
+                    {
+                        code = "EU";
+                    }
                 }
                 else if (type == CertificateType.EU)
                 {
@@ -120,19 +124,23 @@ namespace MEA.Server.Repositories
 
                 var existingRefs = await _context.CertificateRequests
                     .AsNoTracking()
-                    .Where(r => r.ReferenceNumber != null && r.ReferenceNumber.StartsWith(prefix))
+                    .Where(r => r.ReferenceNumber != null && (r.ReferenceNumber.StartsWith(prefix) || r.ReferenceNumber.StartsWith("*" + prefix)))
                     .Select(r => r.ReferenceNumber)
                     .ToListAsync();
 
                 int maxSeq = 0;
                 foreach (var r in existingRefs)
                 {
-                    if (r != null && r.Length > prefix.Length)
+                    if (r != null)
                     {
-                        var suffix = r.Substring(prefix.Length);
-                        if (int.TryParse(suffix, out int parsedSeq))
+                        var cleanRef = r.TrimStart('*');
+                        if (cleanRef.Length > prefix.Length)
                         {
-                            if (parsedSeq > maxSeq) maxSeq = parsedSeq;
+                            var suffix = cleanRef.Substring(prefix.Length);
+                            if (int.TryParse(suffix, out int parsedSeq))
+                            {
+                                if (parsedSeq > maxSeq) maxSeq = parsedSeq;
+                            }
                         }
                     }
                 }

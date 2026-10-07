@@ -50,68 +50,7 @@ export interface FormBatch {
     forms: ActiveFormRequest[];
 }
 
-const COUNTRY_FORM_ROUTES: Record<string, string> = {
-    Australia: '/uikit/world-certificates/au-certificate',
-    Brazil: '/uikit/world-certificates/br-certificate',
-    China: '/uikit/world-certificates/ch-certificate',
-    Armenia: '/uikit/world-certificates/am-certificate',
-    'Hong Kong': '/uikit/world-certificates/hk-certificate',
-    India: '/uikit/world-certificates/in-certificate',
-    Indonesia: '/uikit/world-certificates/id-certificate',
-    Malaysia: '/uikit/world-certificates/my-certificate',
-    Kuwait: '/uikit/world-certificates/kw-certificate',
-    Taiwan: '/uikit/world-certificates/tw-certificate',
-    Ukraine: '/uikit/world-certificates/ua-certificate',
-    Russia: '/uikit/world-certificates/ru-certificate',
-    Kazakhstan: '/uikit/world-certificates/kz-certificate',
-    'Republic of Kazakhstan': '/uikit/world-certificates/kz-certificate',
-    Japan: '/uikit/world-certificates/jp-certificate',
-    'New Zealand': '/uikit/world-certificates/nz-certificate',
-    USA: '/uikit/world-certificates/usa-certificate',
-    'United States of America': '/uikit/world-certificates/usa-certificate',
-    'United States': '/uikit/world-certificates/usa-certificate',
-    UK: '/uikit/world-certificates/uk-certificate',
-    'United Kingdom': '/uikit/world-certificates/uk-certificate',
-    'Great Britain': '/uikit/world-certificates/uk-certificate',
-    Israel: '/uikit/world-certificates/il-certificate',
-    Maldives: '/uikit/world-certificates/mv-certificate',
-    Canada: '/uikit/world-certificates/ca-certificate',
-    'Saudi Arabia': '/uikit/world-certificates/sa-certificate',
-    'South Africa': '/uikit/world-certificates/za-certificate'
-};
 
-function getCountryCertificateRoute(countryName?: string | null): string | null {
-    if (!countryName) return null;
-    const normalized = countryName.trim().toLowerCase();
-
-    if (normalized === 'australia') return '/uikit/world-certificates/au-certificate';
-    if (normalized === 'usa' || normalized === 'united states' || normalized === 'united states of america') return '/uikit/world-certificates/usa-certificate';
-    if (normalized === 'uk' || normalized === 'united kingdom' || normalized === 'great britain') return '/uikit/world-certificates/uk-certificate';
-    if (normalized === 'brazil') return '/uikit/world-certificates/br-certificate';
-    if (normalized === 'china') return '/uikit/world-certificates/ch-certificate';
-    if (normalized === 'armenia') return '/uikit/world-certificates/am-certificate';
-    if (normalized === 'hong kong' || normalized === 'hongkong') return '/uikit/world-certificates/hk-certificate';
-    if (normalized === 'india') return '/uikit/world-certificates/in-certificate';
-    if (normalized === 'indonesia') return '/uikit/world-certificates/id-certificate';
-    if (normalized === 'malaysia') return '/uikit/world-certificates/my-certificate';
-    if (normalized === 'kuwait') return '/uikit/world-certificates/kw-certificate';
-    if (normalized === 'taiwan') return '/uikit/world-certificates/tw-certificate';
-    if (normalized === 'ukraine') return '/uikit/world-certificates/ua-certificate';
-    if (normalized === 'russia') return '/uikit/world-certificates/ru-certificate';
-    if (normalized === 'kazakhstan' || normalized === 'republic of kazakhstan') return '/uikit/world-certificates/kz-certificate';
-    if (normalized === 'japan') return '/uikit/world-certificates/jp-certificate';
-    if (normalized === 'new zealand' || normalized === 'newzealand') return '/uikit/world-certificates/nz-certificate';
-    if (normalized === 'israel') return '/uikit/world-certificates/il-certificate';
-    if (normalized === 'maldives') return '/uikit/world-certificates/mv-certificate';
-    if (normalized === 'canada') return '/uikit/world-certificates/ca-certificate';
-    if (normalized === 'saudi arabia' || normalized === 'saudi') return '/uikit/world-certificates/sa-certificate';
-    if (normalized === 'south africa' || normalized === 'southafrica') return '/uikit/world-certificates/za-certificate';
-
-    const matchKey = Object.keys(COUNTRY_FORM_ROUTES).find(
-        (k) => k.toLowerCase().trim() === normalized
-    );
-    return matchKey ? COUNTRY_FORM_ROUTES[matchKey] : null;
-}
 
 @Component({
     selector: 'app-company-request',
@@ -475,13 +414,6 @@ export class CompanyRequestComponent implements OnInit, OnDestroy {
             });
     }
 
-    private getFormRoute(type: string, countryName?: string | null): string {
-        if (type === 'EU' || !countryName || countryName === 'N/A') {
-            return '/uikit/certificate';
-        }
-
-        return getCountryCertificateRoute(countryName) || '/uikit/certificate';
-    }
 
     onFillForm(formItem: ActiveFormRequest) {
         if (formItem.hasFormSubmitted) {
@@ -503,9 +435,8 @@ export class CompanyRequestComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const route = this.getFormRoute(formItem.certificateType, formItem.countryName);
-
-        this.router.navigate([route], {
+        // All company certificate requests (EU and NonEU) use the standard application form
+        this.router.navigate(['/uikit/certificate'], {
             queryParams: {
                 requestId: formItem.id,
                 ref: formItem.referenceNumber,
